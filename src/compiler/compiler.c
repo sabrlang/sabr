@@ -36,16 +36,9 @@ bool sabr_compiler_load_file(sabr_compiler* const comp, const char* filename, si
 
 	while (true) {
 		char16_t out;
-		size_t rc = mbrtoc16(
-			&out,
-			u8_cvt_iter,
-			end - u8_cvt_iter + 1,
-			&(comp->convert_state)
-		);
+		size_t rc = mbrtoc16(&out, u8_cvt_iter, end - u8_cvt_iter + 1, &(comp->convert_state));
 		if (!rc) break;
-		if (rc == (size_t) -3) {
-			store_iter++;
-		}
+		if (rc == (size_t) -3) store_iter++;
 		if (rc > (size_t) -3) goto FAILURE_FILEPATH;
 
 		u8_cvt_iter += rc;
@@ -55,23 +48,78 @@ bool sabr_compiler_load_file(sabr_compiler* const comp, const char* filename, si
 
 	if (!_wfullpath(filename_full_windows, filename_windows, PATH_MAX)) goto FAILURE_FILEPATH;
 	if (!_fullpath(filename_full, filename, PATH_MAX)) goto FAILURE_FILEPATH;
+
+	if (_waccess(filename_full_windows, R_OK)) {
+		goto FREE_ALL;
+	}
+
+	file = _wfopen(filename_full_windows, L"rb");
 #else
 	if (!(realpath(filename, filename_full))) goto FAILURE_FILEPATH;
-#endif
 
-#if defined(_WIN32)
-	file = _wfopen(filename_full_windows, L"rb");
-#else
+	if (access(fname, R_OK)) {
+		goto FREE_ALL;
+	}
+
 	file = fopen(filename_full, "rb");
 #endif
 
-#if defined(_WIN32)
-	file = _wfopen(filename_full_windows, L"rb");
-#else
-	file = fopen(filename_full, "rb");
-#endif
+	if (!file) {
+		goto FREE_ALL;
+	}
+
+	fseek(file, 0, SEEK_END);
+	size_t size = ftell(file);
+	rewind(file);
+
+	char* textcode = (char*) malloc(size + 3);
+	
+	int filename_size = strlen(filename_full) + 1;
+	char* filename_full_new = (char*) malloc(filename_size);
+
+	if (!(textcode && filename_full_new)) {
+		fclose(file);
+		goto FREE_ALL;
+	}
+	
+	int read_result = fread(textcode, size, 1, file);
+	if (read_result != 1) {
+		fclose(file);
+		goto FREE_ALL;
+	}
+
+	fclose(file);
+
+	textcode[size] = ' ';
+	textcode[size + 1] = '\n';
+	textcode[size + 2] = '\0';
+
+	#if defined(_WIN32)
+		memcpy_s(filename_full_new, filename_size, filename_full, filename_size);
+	#else
+		memcpy(filename_full_new, filename_full, filename_size);
+	#endif
+
+	*index = comp->textcode_vector.size;
+	
+	if (!trie_insert(size_t, &comp->filename_trie, filename_full_new, *index)) {
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(cctl_ptr(char), &comp->filename_vector, filename_full_new)) {
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(cctl_ptr(char), &comp->textcode_vector, textcode)) {
+		goto FREE_ALL;
+	}
+
+	return true;
 
 FAILURE_FILEPATH:
+	goto FREE_ALL;
+
+FREE_ALL:
 	return false;
 }
 
