@@ -165,7 +165,8 @@ vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const ch
 	while (character) {
 		switch (character) {
 			case '\n': 
-				
+				current_pos.line++;
+				current_pos.column = 0;
 			case '\r':
 				if (comment == CMNT_PARSE_LINE) {
 					space = true;
@@ -213,10 +214,8 @@ vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const ch
 				if (!comment) {
 					if (string_parse) {
 						if (string_escape) string_escape = false;
-						else {
-							if (string_parse == STR_PARSE_SINGLE) {
-								string_parse = STR_PARSE_NONE;
-							}
+						else if (string_parse == STR_PARSE_SINGLE) {
+							string_parse = STR_PARSE_NONE;
 						}
 					}
 					else if (space) {
@@ -232,10 +231,8 @@ vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const ch
 				if (!comment) {
 					if (string_parse) {
 						if (string_escape) string_escape = false;
-						else {
-							if (string_parse == STR_PARSE_DOUBLE) {
-								string_parse = STR_PARSE_NONE;
-							}
+						else if (string_parse == STR_PARSE_DOUBLE) {
+							string_parse = STR_PARSE_NONE;
 						}
 					}
 					else if (space) {
@@ -251,10 +248,8 @@ vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const ch
 				if (!comment) {
 					if (string_parse) {
 						if (string_escape) string_escape = false;
-						else {
-							if (string_parse == STR_PARSE_PREPROC) {
-								brace_level++;
-							}
+						else if (string_parse == STR_PARSE_PREPROC) {
+							brace_level++;
 						}
 					}
 					else if (space) {
@@ -271,12 +266,10 @@ vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const ch
 				if (!comment) {
 					if (string_parse) {
 						if (string_escape) string_escape = false;
-						else {
-							if (string_parse == STR_PARSE_PREPROC) {
-								brace_level--;
-								if (brace_level == 0) {
-									string_parse = STR_PARSE_NONE;
-								}
+						else if (string_parse == STR_PARSE_PREPROC) {
+							brace_level--;
+							if (brace_level == 0) {
+								string_parse = STR_PARSE_NONE;
 							}
 						}
 					}
@@ -290,8 +283,7 @@ vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const ch
 			case '\\': {
 				if (!comment) {
 					if (string_parse) {
-						if (string_escape) string_escape = false;
-						else string_escape = true;
+						string_escape = !string_escape;
 					}
 					else if (space) {
 						space = false;
