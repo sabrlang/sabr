@@ -22,14 +22,17 @@
 	#endif
 #endif
 
-#include "utils.h"
 #include "console.h"
 #include "value.h"
 
 #include "compiler_cctl_define.h"
 
+#include "compiler_utils.h"
 #include "error_message.h"
+#include "preproc.h"
+#include "preproc_operation.h"
 #include "token.h"
+#include "word.h"
 
 typedef enum string_parse_mode_enum {
 	STR_PARSE_NONE,
@@ -52,8 +55,11 @@ struct sabr_compiler_struct {
 	vector(cctl_ptr(char)) filename_vector;
 	vector(cctl_ptr(char)) textcode_vector;
 
+	trie(word) preproc_dictionary;
+
 	mbstate_t convert_state;
 };
+
 
 bool sabr_compiler_init(sabr_compiler* const comp);
 bool sabr_compiler_del(sabr_compiler* const comp);
@@ -62,6 +68,7 @@ bool sabr_compiler_compile_file(sabr_compiler* const comp, const char* filename)
 bool sabr_compiler_load_file(sabr_compiler* const comp, const char* filename, size_t* index);
 
 vector(token)* sabr_compiler_preprocess_textcode(sabr_compiler* const comp, size_t textcode_index);
+vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector(token)* input_tokens);
 vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const char* textcode, size_t textcode_index, pos init_pos, bool is_generated);
 
 #endif

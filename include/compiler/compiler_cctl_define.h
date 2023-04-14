@@ -8,6 +8,7 @@
 #include "cctl/trie.h"
 
 #include "token.h"
+#include "word.h"
 
 cctl_ptr_def(char);
 
@@ -19,5 +20,8 @@ vector_imp_h(cctl_ptr(char));
 
 vector_fd(token);
 vector_imp_h(token);
+
+trie_fd(word);
+trie_imp_h(word);
 
 #endif
