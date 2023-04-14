@@ -1,4 +1,5 @@
 #include "compiler.h"
+#include "preproc_operation.h"
 
 bool sabr_compiler_init(sabr_compiler* const comp) {
 	setlocale(LC_ALL, "en_US.utf8");
@@ -14,8 +15,10 @@ bool sabr_compiler_init(sabr_compiler* const comp) {
 		word w;
 		w.type = WT_PREPROC_KWRD;
 		w.data.p_kwrd = (preproc_keyword) i;
-		if (!trie_insert(word, &comp->preproc_dictionary, preproc_keyword_names[i], w))
+		if (!trie_insert(word, &comp->preproc_dictionary, preproc_keyword_names[i], w)) {
+			fputs(sabr_errmsg_alloc, stderr);
 			return false;
+		}
 	}
 
 	return true;
@@ -67,17 +70,27 @@ bool sabr_compiler_load_file(sabr_compiler* const comp, const char* filename, si
 		size_t rc = mbrtoc16(&out, u8_cvt_iter, end - u8_cvt_iter + 1, &(comp->convert_state));
 		if (!rc) break;
 		if (rc == (size_t) -3) store_iter++;
-		if (rc > (size_t) -3) goto FAILURE_FILEPATH;
+		if (rc > (size_t) -3) {
+			fputs(sabr_errmsg_fullpath, stderr);
+			goto FREE_ALL;
+		}
 
 		u8_cvt_iter += rc;
 		*store_iter = out;
 		store_iter++;
 	}
 
-	if (!_wfullpath(filename_full_windows, filename_windows, PATH_MAX)) goto FAILURE_FILEPATH;
-	if (!_fullpath(filename_full, filename, PATH_MAX)) goto FAILURE_FILEPATH;
+	if (!_wfullpath(filename_full_windows, filename_windows, PATH_MAX)) {
+		fputs(sabr_errmsg_fullpath, stderr);
+		goto FREE_ALL;
+	}
+	if (!_fullpath(filename_full, filename, PATH_MAX)) {
+		fputs(sabr_errmsg_fullpath, stderr);
+		goto FREE_ALL;
+	}
 
 	if (_waccess(filename_full_windows, R_OK)) {
+		fputs(sabr_errmsg_open, stderr);
 		goto FREE_ALL;
 	}
 
@@ -86,6 +99,7 @@ bool sabr_compiler_load_file(sabr_compiler* const comp, const char* filename, si
 	if (!(realpath(filename, filename_full))) goto FAILURE_FILEPATH;
 
 	if (access(fname, R_OK)) {
+		fputs(sabr_errmsg_open, stderr);
 		goto FREE_ALL;
 	}
 
@@ -93,6 +107,7 @@ bool sabr_compiler_load_file(sabr_compiler* const comp, const char* filename, si
 #endif
 
 	if (!file) {
+		fputs(sabr_errmsg_open, stderr);
 		goto FREE_ALL;
 	}
 
@@ -107,12 +122,14 @@ bool sabr_compiler_load_file(sabr_compiler* const comp, const char* filename, si
 
 	if (!(textcode && filename_full_new)) {
 		fclose(file);
+		fputs(sabr_errmsg_alloc, stderr);
 		goto FREE_ALL;
 	}
 	
 	int read_result = fread(textcode, size, 1, file);
 	if (read_result != 1) {
 		fclose(file);
+		fputs(sabr_errmsg_read, stderr);
 		goto FREE_ALL;
 	}
 
@@ -131,23 +148,25 @@ bool sabr_compiler_load_file(sabr_compiler* const comp, const char* filename, si
 	*index = comp->textcode_vector.size;
 	
 	if (!trie_insert(size_t, &comp->filename_trie, filename_full_new, *index)) {
+		fputs(sabr_errmsg_alloc, stderr);
 		goto FREE_ALL;
 	}
 
 	if (!vector_push_back(cctl_ptr(char), &comp->filename_vector, filename_full_new)) {
+		fputs(sabr_errmsg_alloc, stderr);
 		goto FREE_ALL;
 	}
 
 	if (!vector_push_back(cctl_ptr(char), &comp->textcode_vector, textcode)) {
+		fputs(sabr_errmsg_alloc, stderr);
 		goto FREE_ALL;
 	}
 
 	return true;
 
-FAILURE_FILEPATH:
-	goto FREE_ALL;
-
 FREE_ALL:
+	free(textcode);
+	free(filename_full_new);
 	return false;
 }
 
@@ -158,7 +177,7 @@ vector(token)* sabr_compiler_preprocess_textcode(sabr_compiler* const comp, size
 	tokens = sabr_compiler_tokenize_string(comp, code, textcode_index, init_pos, false);
 
 	if (!tokens) {
-		return NULL;
+		fputs(sabr_errmsg_tokenize, stderr);
 	}
 	for (size_t i = 0; i < tokens->size; i++) {
 		token t = *vector_at(token, tokens, i);
@@ -166,7 +185,7 @@ vector(token)* sabr_compiler_preprocess_textcode(sabr_compiler* const comp, size
 
 	tokens = sabr_compiler_preprocess_tokens(comp, tokens);
 	if (!tokens) {
-		fputs("preprocess failure\n", stderr);
+		fputs(sabr_errmsg_preprocess, stderr);
 		return NULL;
 	}
 
@@ -183,6 +202,7 @@ vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector
 
 	output_tokens = (vector(token)*) malloc(sizeof(vector(token)));
 	if (!output_tokens) {
+		fputs(sabr_errmsg_alloc, stderr);
 		goto FREE_ALL;
 	}
 	vector_init(token, output_tokens);
@@ -206,6 +226,7 @@ vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector
 					for (size_t i = 0; i < evaled_tokens->size; i++) {
 						token evaled_token = *vector_at(token, evaled_tokens, i);
 						if (!vector_push_back(token, output_tokens, evaled_token)) {
+							fputs(sabr_errmsg_alloc, stderr);
 							goto FREE_ALL;
 						}
 					}
@@ -218,6 +239,7 @@ vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector
 		else {
 			t.data = sabr_new_string_copy(t.data);
 			if (!vector_push_back(token, output_tokens, t)) {
+				fputs(sabr_errmsg_alloc, stderr);
 				goto FREE_ALL;
 			}
 		}
@@ -250,11 +272,15 @@ vector(token)* sabr_compiler_preprocess_eval_token(sabr_compiler* const comp, to
 
 	input_tokens = sabr_compiler_tokenize_string(comp, input_string, input_index, input_pos, t.is_generated);
 	if (!input_tokens) {
-		fputs("Tokenizing failure\n", stderr);
+		fputs(sabr_errmsg_tokenize, stderr);
 		goto FREE_ALL;
 	}
 
 	output_tokens = sabr_compiler_preprocess_tokens(comp, input_tokens);
+	if (!output_tokens) {
+		fputs(sabr_errmsg_preprocess, stderr);
+		goto FREE_ALL;
+	}
 	free(input_string);
 	free(temp_input_string);
 
@@ -290,6 +316,7 @@ vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const ch
 	vector(token)* tokens = (vector(token)*) malloc(sizeof(vector(token)));
 
 	if (!tokens) {
+		fputs(sabr_errmsg_alloc, stderr);
 		return NULL;
 	}
 
@@ -320,6 +347,7 @@ vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const ch
 
 							t.data = sabr_new_string_slice(textcode, begin_index, end_index);
 							if (!t.data) {
+								fputs(sabr_errmsg_alloc, stderr);
 								goto FREE_ALL;
 							}
 
@@ -334,6 +362,7 @@ vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const ch
 
 
 							if (!vector_push_back(token, tokens, t)) {
+								fputs(sabr_errmsg_alloc, stderr);
 								goto FREE_ALL;
 							}
 

@@ -30,7 +30,6 @@
 #include "compiler_utils.h"
 #include "error_message.h"
 #include "preproc.h"
-#include "preproc_operation.h"
 #include "token.h"
 #include "word.h"
 

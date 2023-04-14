@@ -3,8 +3,6 @@
 
 #include "stdint.h"
 
-// #include "compiler.h"
-
 typedef enum preproc_keyword_enum {
 	PREPROC_DEFINE,
 	PREPROC_DEFINED,
