@@ -31,6 +31,7 @@ const bool sabr_compiler_preproc_define(sabr_compiler* comp, word w, token t, ve
 	}
 
 	free(identifier_token.data);
+
 	return true;
 
 FREE_ALL:

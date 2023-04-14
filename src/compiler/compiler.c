@@ -156,7 +156,24 @@ vector(token)* sabr_compiler_preprocess_textcode(sabr_compiler* const comp, size
 	const char* code = *vector_at(cctl_ptr(char), &comp->textcode_vector, textcode_index);
 	pos init_pos = {line: 1, column: 1};
 	tokens = sabr_compiler_tokenize_string(comp, code, textcode_index, init_pos, false);
-	sabr_compiler_preprocess_tokens(comp, tokens);
+
+	if (!tokens) {
+		return NULL;
+	}
+	for (size_t i = 0; i < tokens->size; i++) {
+		token t = *vector_at(token, tokens, i);
+	}
+
+	tokens = sabr_compiler_preprocess_tokens(comp, tokens);
+	if (!tokens) {
+		fputs("preprocess failure\n", stderr);
+		return NULL;
+	}
+
+	for (size_t i = 0; i < tokens->size; i++) {
+		token t = *vector_at(token, tokens, i);
+		printf("token : %s\n", t.data);
+	}
 
 	return tokens;
 }
@@ -181,21 +198,74 @@ vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector
 					}
 				} break;
 				case WT_PREPROC_IDFR: {
+					vector(token)* evaled_tokens;
+					evaled_tokens = sabr_compiler_preprocess_eval_token(comp, w->data.macro_code);
+					if (!evaled_tokens) {
+						goto FREE_ALL;
+					}
+					for (size_t i = 0; i < evaled_tokens->size; i++) {
+						token evaled_token = *vector_at(token, evaled_tokens, i);
+						if (!vector_push_back(token, output_tokens, evaled_token)) {
+							goto FREE_ALL;
+						}
+					}
+					free(evaled_tokens);
 				} break;
 				default:
 					break;
 			}
 		}
 		else {
+			t.data = sabr_new_string_copy(t.data);
 			if (!vector_push_back(token, output_tokens, t)) {
 				goto FREE_ALL;
 			}
 		}
 	}
 
+	sabr_free_token_vector(input_tokens);
+	return output_tokens;
+
 FREE_ALL:
 	sabr_free_token_vector(input_tokens);
 	sabr_free_token_vector(output_tokens);
+	return NULL;
+}
+
+vector(token)* sabr_compiler_preprocess_eval_token(sabr_compiler* const comp, token t) {
+	vector(token)* input_tokens = NULL;
+	vector(token)* output_tokens = NULL;
+	char* temp_input_string = NULL;
+	char* input_string = NULL;
+	pos input_pos = t.begin_pos;
+	size_t input_index = t.textcode_index;
+
+	if (t.data[0] == '{') {
+		temp_input_string = sabr_new_string_slice(t.data, 1, strlen(t.data) - 1);
+		input_pos.column++;
+	}
+	else temp_input_string = sabr_new_string_copy(t.data);
+
+	input_string = sabr_new_string_append(temp_input_string, " \n\0");
+
+	input_tokens = sabr_compiler_tokenize_string(comp, input_string, input_index, input_pos, t.is_generated);
+	if (!input_tokens) {
+		fputs("Tokenizing failure\n", stderr);
+		goto FREE_ALL;
+	}
+
+	output_tokens = sabr_compiler_preprocess_tokens(comp, input_tokens);
+	free(input_string);
+	free(temp_input_string);
+
+	return output_tokens;
+
+FREE_ALL:
+	free(input_string);
+	free(temp_input_string);
+	sabr_free_token_vector(input_tokens);
+	sabr_free_token_vector(output_tokens);
+
 	return NULL;
 }
 
@@ -261,6 +331,7 @@ vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const ch
 								t.end_pos = end_pos;
 								t.textcode_index = textcode_index;
 							}
+
 
 							if (!vector_push_back(token, tokens, t)) {
 								goto FREE_ALL;

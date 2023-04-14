@@ -69,6 +69,7 @@ bool sabr_compiler_load_file(sabr_compiler* const comp, const char* filename, si
 
 vector(token)* sabr_compiler_preprocess_textcode(sabr_compiler* const comp, size_t textcode_index);
 vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector(token)* input_tokens);
+vector(token)* sabr_compiler_preprocess_eval_token(sabr_compiler* const comp, token t);
 vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const char* textcode, size_t textcode_index, pos init_pos, bool is_generated);
 
 #endif

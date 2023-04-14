@@ -12,6 +12,16 @@ char* sabr_new_string_slice(const char* source, size_t begin_index, size_t end_i
 	return new_string;
 }
 
+char* sabr_new_string_copy(const char* source) {
+	return sabr_new_string_slice(source, 0, strlen(source));
+}
+
+char* sabr_new_string_append(const char* dest, const char* origin) {
+	char* new_string = NULL;
+	asprintf(&new_string, "%s%s", dest, origin);
+	return new_string;
+}
+
 void sabr_free_token_vector(vector(token)* tokens) {
 	if (tokens) {
 		for (size_t i = 0; i < tokens->size; i++) {
