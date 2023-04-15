@@ -11,6 +11,6 @@
 
 #define sabr_errmsg_stackunderflow "error : Stack underflow occurred\n"
 
-#define sabr_invalid_identifier_format "error : Invalid identifier format\n"
+#define sabr_errmsg_invalid_ident_fmt "error : Invalid identifier format\n"
 
 #endif

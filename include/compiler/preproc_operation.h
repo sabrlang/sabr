@@ -7,7 +7,7 @@ extern const bool (*preproc_keyword_functions[])(sabr_compiler* const comp, word
 
 const bool sabr_compiler_preproc_define(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
 const bool sabr_compiler_preproc_defined(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
-const bool sabr_compiler_preproc_under(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
+const bool sabr_compiler_preproc_undef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
 const bool sabr_compiler_preproc_import(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
 const bool sabr_compiler_preproc_include(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
 const bool sabr_compiler_preproc_eval(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
