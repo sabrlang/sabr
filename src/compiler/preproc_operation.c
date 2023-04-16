@@ -359,6 +359,12 @@ FREE_ALL:
 const bool sabr_compiler_preproc_concat(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
 	token text_token_a = {0, };
 	token text_token_b = {0, };
+	token result_token = {0, };
+	bool is_a_code_block;
+	bool is_b_code_block;
+	char* text_str_a = NULL;
+	char* text_str_b = NULL;
+	char* text_str_temp = NULL;
 
 	bool result = false;
 
@@ -379,8 +385,53 @@ const bool sabr_compiler_preproc_concat(sabr_compiler* comp, word w, token t, ve
 		goto FREE_ALL;
 	}
 
+	is_a_code_block = text_token_a.data[0] == '{';
+	is_b_code_block = text_token_b.data[0] == '{';
+
+	text_str_a = is_a_code_block
+		? sabr_new_string_slice(text_token_a.data, 1, strlen(text_token_a.data) - 1)
+		: sabr_new_string_copy(text_token_a.data);
+	if (!text_str_a) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+	
+	text_str_b = is_b_code_block
+		? sabr_new_string_slice(text_token_b.data, 1, strlen(text_token_b.data) - 1)
+		: sabr_new_string_copy(text_token_b.data);
+	if (!text_str_b) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (
+		asprintf(
+			&text_str_temp, "%s%s%s%s",
+			(is_a_code_block || is_b_code_block) ? "{" : "",
+			text_str_a, text_str_b,
+			(is_a_code_block || is_b_code_block) ? "}" : ""
+		) == -1
+	) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+	
+	result_token = t;
+	result_token.data = text_str_temp;
+	result_token.is_generated = true;
+
+	if (!vector_push_back(token, output_tokens, result_token)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
 	result = !result;
 FREE_ALL:
+	if (!result) {
+		free(text_str_temp);
+	}
+	free(text_str_a);
+	free(text_str_b);
 	free(text_token_a.data);
 	free(text_token_b.data);
 	return result;
