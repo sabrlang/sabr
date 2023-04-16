@@ -72,16 +72,11 @@ const bool sabr_compiler_preproc_defined(sabr_compiler* comp, word w, token t, v
 	word* identifier_word = trie_find(word, &comp->preproc_dictionary, identifier_token.data + 1);
 	int flag = identifier_word ? ((identifier_word->type == WT_PREPROC_IDFR) ? 1 : 0) : 0;
 
+	result_token = t;
 	if (asprintf(&(result_token.data), "%d", flag) == -1) {
 		fputs(sabr_errmsg_alloc, stderr);
 		goto FREE_ALL;
 	}
-
-	result_token.begin_pos = t.begin_pos;
-	result_token.end_pos = t.end_pos;
-	result_token.begin_index = t.begin_index;
-	result_token.end_index = t.end_index;
-	result_token.textcode_index = t.textcode_index;
 	result_token.is_generated = true;
 
 	if (!vector_push_back(token, output_tokens, result_token)) {
@@ -185,6 +180,8 @@ FREE_ALL:
 
 const bool sabr_compiler_preproc_include(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
 	token filename_token = {0, };
+	size_t textcode_index;
+	vector(token)* preprocessed_tokens = NULL;
 
 	bool result = false;
 
@@ -199,14 +196,36 @@ const bool sabr_compiler_preproc_include(sabr_compiler* comp, word w, token t, v
 		goto FREE_ALL;
 	}
 
+	if (!sabr_compiler_load_file(comp, filename_token.data, &textcode_index)) {
+		goto FREE_ALL;
+	}
+
+	preprocessed_tokens = sabr_compiler_preprocess_textcode(comp, textcode_index);
+	if (!preprocessed_tokens) {
+		goto FREE_ALL;
+	}
+
+	for (size_t i = 0; i < preprocessed_tokens->size; i++) {
+		if (!vector_push_back(token, output_tokens, *vector_at(token, preprocessed_tokens, i))) {
+			fputs(sabr_errmsg_alloc, stderr);
+			goto FREE_ALL;
+		}
+	}
+
 	result = !result;
 FREE_ALL:
+	if (!result) {
+		sabr_free_token_vector(preprocessed_tokens);
+	}
+	free(preprocessed_tokens);
 	free(filename_token.data);
 	return result;
 }
 
 const bool sabr_compiler_preproc_eval(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
 	token code_token = {0, };
+	token result_token = {0, };
+	vector(token)* evaled_tokens = NULL;
 
 	bool result = false;
 
@@ -221,13 +240,45 @@ const bool sabr_compiler_preproc_eval(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
+	if (code_token.data[0] == '$') {
+		evaled_tokens = sabr_compiler_preprocess_eval_token(comp, code_token);
+		if (!evaled_tokens) {
+			goto FREE_ALL;
+		}
+
+		for (size_t i = 0; i < evaled_tokens->size; i++) {
+			if (!vector_push_back(token, output_tokens, *vector_at(token, evaled_tokens, i))) {
+				fputs(sabr_errmsg_alloc, stderr);
+				goto FREE_ALL;
+			}
+		}
+	}
+	else {
+		result_token = code_token;
+		result_token.data = sabr_new_string_copy(code_token.data);
+		if (!result_token.data) {
+			fputs(sabr_errmsg_alloc, stderr);
+			goto FREE_ALL;
+		}
+		if (!vector_push_back(token, output_tokens, result_token)) {
+			fputs(sabr_errmsg_alloc, stderr);
+			goto FREE_ALL;
+		}
+	}
+
 	result = !result;
 FREE_ALL:
+	if (!result) {
+		sabr_free_token_vector(evaled_tokens);
+		free(result_token.data);
+	}
+	free(evaled_tokens);
 	free(code_token.data);
 	return result;
 }
 
 const bool sabr_compiler_preproc_if(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+	token code_token = {0, };
 	token code_token_a = {0, };
 	token code_token_b = {0, };
 	token flag_token = {0, };
