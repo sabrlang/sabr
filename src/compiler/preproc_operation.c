@@ -534,6 +534,8 @@ FREE_ALL:
 const bool sabr_compiler_preproc_compare(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
 	token text_token_a = {0, };
 	token text_token_b = {0, };
+	token result_token = {0, };
+	char* result_str = NULL;
 
 	bool result = false;
 
@@ -554,8 +556,25 @@ const bool sabr_compiler_preproc_compare(sabr_compiler* comp, word w, token t, v
 		goto FREE_ALL;
 	}
 
+	if (asprintf(&result_str, "%d", strcmp(text_token_a.data, text_token_b.data)) == -1) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	result_token = t;
+	result_token.data = result_str;
+	result_token.is_generated = true;
+
+	if (!vector_push_back(token, output_tokens, result_token)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
 	result = !result;
 FREE_ALL:
+	if (!result) {
+		free(result_str);
+	}
 	free(text_token_a.data);
 	free(text_token_b.data);
 	return result;
