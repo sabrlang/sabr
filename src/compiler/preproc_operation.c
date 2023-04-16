@@ -582,6 +582,9 @@ FREE_ALL:
 
 const bool sabr_compiler_preproc_len(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
 	token text_token = {0, };
+	token result_token = {0, };
+	char* result_str = NULL;
+	bool is_code_block;
 
 	bool result = false;
 
@@ -596,8 +599,27 @@ const bool sabr_compiler_preproc_len(sabr_compiler* comp, word w, token t, vecto
 		goto FREE_ALL;
 	}
 
+	is_code_block = text_token.data[0] == '{';
+
+	if (asprintf(&result_str, "%zu", strlen(text_token.data) - (is_code_block ? 2 : 0)) == -1) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	result_token = t;
+	result_token.data = result_str;
+	result_token.is_generated = true;
+
+	if (!vector_push_back(token, output_tokens, result_token)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
 	result = !result;
 FREE_ALL:
+	if (!result) {
+		free(result_str);
+	}
 	free(text_token.data);
 	return result;
 }
