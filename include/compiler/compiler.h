@@ -69,6 +69,11 @@ bool sabr_compiler_load_file(sabr_compiler* const comp, const char* filename, si
 vector(token)* sabr_compiler_preprocess_textcode(sabr_compiler* const comp, size_t textcode_index);
 vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector(token)* input_tokens);
 vector(token)* sabr_compiler_preprocess_eval_token(sabr_compiler* const comp, token t);
+bool sabr_compiler_preprocess_parse_value(sabr_compiler* const comp, token t, value* v);
 vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const char* textcode, size_t textcode_index, pos init_pos, bool is_generated);
+
+bool sabr_compiler_parse_zero_begin_num(const char* str, size_t index, bool negate, value* v);
+bool sabr_compiler_parse_base_n_num(const char* str, size_t index, bool negate, int base, value* v);
+bool sabr_compiler_parse_num(const char* str, value* v);
 
 #endif

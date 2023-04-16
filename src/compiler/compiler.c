@@ -301,6 +301,24 @@ FREE_ALL:
 	return NULL;
 }
 
+bool sabr_compiler_preprocess_parse_value(sabr_compiler* const comp, token t, value* v) {
+	switch (t.data[0]) {
+		case '+':
+			return sabr_compiler_parse_zero_begin_num(t.data, 1, false, v);
+		case '-':
+			return sabr_compiler_parse_zero_begin_num(t.data, 1, true, v);
+		case '0':
+			return sabr_compiler_parse_zero_begin_num(t.data, 0, false, v);
+		case '.':
+			return sabr_compiler_parse_num(t.data, v);
+		case '1' ... '9':
+			return sabr_compiler_parse_num(t.data, v);
+		default:
+			v->u = 0;
+			return true;
+	}
+}
+
 vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const char* textcode, size_t textcode_index, pos init_pos, bool is_generated) {
 	size_t current_index = 0;
 	size_t begin_index = 0;
@@ -508,4 +526,66 @@ vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const ch
 FREE_ALL:
 	sabr_free_token_vector(tokens);
 	return NULL;
+}
+
+bool sabr_compiler_parse_zero_begin_num(const char* str, size_t index, bool negate, value* v) {
+	size_t len = strlen(str);
+
+	if (len > 2) {
+		if (str[index] == '0') {
+			switch (str[index + 1]) {
+				case 'x':
+					return sabr_compiler_parse_base_n_num(str, index, negate, 16, v);
+				case 'o':
+					return sabr_compiler_parse_base_n_num(str, index, negate, 8, v);
+				case 'b':
+					return sabr_compiler_parse_base_n_num(str, index, negate, 2, v);
+				default:
+					return sabr_compiler_parse_num(str, v);
+			}
+		}
+	}
+	return sabr_compiler_parse_num(str, v);
+}
+
+bool sabr_compiler_parse_base_n_num(const char* str, size_t index, bool negate, int base, value* v) {
+	char* temp_str = str + index + 2;
+	char* stop;
+	errno = 0;
+	v->i = strtoll(temp_str, &stop, base);
+	if (errno == ERANGE) {
+		if (v->i == LLONG_MAX) {
+			v->u = strtoull(temp_str, &stop, base);
+		}
+	}
+	if (negate) v->i = -v->i;
+	if (*stop) {
+		fputs(sabr_errmsg_parse_num, stderr);
+		return false;
+	}
+
+	return true;
+}
+
+bool sabr_compiler_parse_num(const char* str, value* v) {
+	char* stop;
+
+	errno = 0;
+	if (strchr(str, '.')) {
+		v->f = strtod(str, &stop);
+	}
+	else {
+		v->i = strtoll(str, &stop, 10);
+		if (errno == ERANGE) {
+			if (v->i == LLONG_MAX) {
+				v->u = strtoull(str, &stop, 10);
+			}
+		}
+	}
+	if (*stop) {
+		fputs(sabr_errmsg_parse_num, stderr);
+		return false;
+	}
+	
+	return true;
 }
