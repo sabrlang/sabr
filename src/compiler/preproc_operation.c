@@ -441,6 +441,12 @@ const bool sabr_compiler_preproc_substr(sabr_compiler* comp, word w, token t, ve
 	token text_token = {0, };
 	token begin_token = {0, };
 	token end_token = {0, };
+	token result_token = {0, };
+	value begin_value;
+	value end_value;
+	bool is_code_block;
+	char* sliced_result_str = NULL;
+	char* final_result_str = NULL;
 
 	bool result = false;
 
@@ -467,8 +473,58 @@ const bool sabr_compiler_preproc_substr(sabr_compiler* comp, word w, token t, ve
 		goto FREE_ALL;
 	}
 
+	if (!sabr_compiler_preprocess_parse_value(comp, begin_token, &begin_value)) {
+		goto FREE_ALL;
+	}
+	if (!sabr_compiler_preprocess_parse_value(comp, end_token, &end_value)) {
+		goto FREE_ALL;
+	}
+
+	is_code_block = text_token.data[0] == '{';
+
+	size_t text_str_len = strlen(text_token.data) - (is_code_block ? 2 : 0);
+	if (begin_value.i < 0) { fputs(sabr_errmsg_out_of_index, stderr); goto FREE_ALL; }
+	if (begin_value.i >= text_str_len) { fputs(sabr_errmsg_out_of_index, stderr); goto FREE_ALL; }
+	if (end_value.i < 0) { fputs(sabr_errmsg_out_of_index, stderr); goto FREE_ALL; }
+	if (end_value.i >= text_str_len) { fputs(sabr_errmsg_out_of_index, stderr); goto FREE_ALL; }
+	if (begin_value.i > end_value.i) { fputs(sabr_errmsg_out_of_index, stderr); goto FREE_ALL; }
+
+	begin_value.u += (is_code_block ? 1 : 0);
+	end_value.u += (is_code_block ? 1 : 0);
+
+	sliced_result_str = sabr_new_string_slice(text_token.data, begin_value.u, end_value.u);
+	if (!sliced_result_str) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (
+		asprintf(
+			&final_result_str, "%s%s%s",
+			is_code_block ? "{" : "",
+			sliced_result_str,
+			is_code_block ? "}" : ""
+		) == -1
+	) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	result_token = t;
+	result_token.data = final_result_str;
+	result_token.is_generated = true;
+
+	if (!vector_push_back(token, output_tokens, result_token)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
 	result = !result;
 FREE_ALL:
+	if (!result) {
+		free(final_result_str);
+	}
+	free(sliced_result_str);
 	free(text_token.data);
 	free(begin_token.data);
 	free(end_token.data);

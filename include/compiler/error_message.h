@@ -14,5 +14,6 @@
 #define sabr_errmsg_invalid_ident_fmt "error : Invalid identifier format\n"
 
 #define sabr_errmsg_parse_num "error : Number parsing failure\n"
+#define sabr_errmsg_out_of_index "error : Out of index\n"
 
 #endif
