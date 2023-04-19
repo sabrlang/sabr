@@ -220,6 +220,8 @@ vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector
 			switch (w->type) {
 				case WT_PREPROC_KWRD: {
 					if (!preproc_keyword_functions[w->data.p_kwrd](comp, *w, t, output_tokens)) {
+						fprintf(stderr, console_yellow console_bold "%s" console_reset " in line %zu, column %zu\n", t.data, t.begin_pos.line, t.begin_pos.column);
+						fprintf(stderr, "in file " console_yellow console_bold "%s\n" console_reset, *vector_at(cctl_ptr(char), &comp->filename_vector, t.textcode_index));
 						goto FREE_ALL;
 					}
 				} break;
@@ -227,6 +229,8 @@ vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector
 					vector(token)* evaled_tokens;
 					evaled_tokens = sabr_compiler_preprocess_eval_token(comp, w->data.macro_code);
 					if (!evaled_tokens) {
+						fprintf(stderr, console_yellow console_bold "%s" console_reset " in line %zu, column %zu\n", t.data, t.begin_pos.line, t.begin_pos.column);
+						fprintf(stderr, "in file " console_yellow console_bold "%s\n" console_reset, *vector_at(cctl_ptr(char), &comp->filename_vector, t.textcode_index));
 						goto FREE_ALL;
 					}
 					for (size_t i = 0; i < evaled_tokens->size; i++) {

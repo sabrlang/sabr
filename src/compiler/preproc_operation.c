@@ -73,7 +73,7 @@ const bool sabr_compiler_preproc_defined(sabr_compiler* comp, word w, token t, v
 	int flag = identifier_word ? ((identifier_word->type == WT_PREPROC_IDFR) ? 1 : 0) : 0;
 
 	result_token = t;
-	if (asprintf(&(result_token.data), "%" PRId64, flag) == -1) {
+	if (asprintf(&(result_token.data), "%d", flag) == -1) {
 		fputs(sabr_errmsg_alloc, stderr);
 		goto FREE_ALL;
 	}
