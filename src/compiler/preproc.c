@@ -32,6 +32,7 @@ const char* preproc_keyword_names[] = {
 	"#/",
 	"#%",
 	"#u/",
+	
 	"#u%",
 	"#=",
 	"#!=",
@@ -39,6 +40,10 @@ const char* preproc_keyword_names[] = {
 	"#<=",
 	"#>",
 	"#>=",
+	"#u<",
+	"#u<=",
+	"#u>",
+	"#u>=",
 	"#f+",
 	"#f-",
 	"#f*",
