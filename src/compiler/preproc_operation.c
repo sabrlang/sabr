@@ -669,15 +669,23 @@ const bool sabr_compiler_preproc_nip(sabr_compiler* comp, word w, token t, vecto
 		goto FREE_ALL;
 	}
 
+	if (!vector_push_back(token, output_tokens, value_token_b)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
 	result = !result;
 FREE_ALL:
+	if (!result) {
+		free(value_token_b.data);
+	}
 	free(value_token_a.data);
-	free(value_token_b.data);
 	return result;
 }
 
 const bool sabr_compiler_preproc_dup(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
 	token value_token_a = {0, };
+	token value_token_a2 = {0, };
 
 	bool result = false;
 
@@ -692,14 +700,35 @@ const bool sabr_compiler_preproc_dup(sabr_compiler* comp, word w, token t, vecto
 		goto FREE_ALL;
 	}
 
+	value_token_a2 = value_token_a;
+	value_token_a2.data = sabr_new_string_copy(value_token_a.data);
+	if (!value_token_a2.data) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_a)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_a2)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
 	result = !result;
 FREE_ALL:
-	free(value_token_a.data);
+	if (!result) {
+		free(value_token_a.data);
+		free(value_token_a2.data);
+	}
 	return result;
 }
 
 const bool sabr_compiler_preproc_over(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
 	token value_token_a = {0, };
+	token value_token_a2 = {0, };
 	token value_token_b = {0, };
 
 	bool result = false;
@@ -721,16 +750,42 @@ const bool sabr_compiler_preproc_over(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
+	value_token_a2 = value_token_a;
+	value_token_a2.data = sabr_new_string_copy(value_token_a.data);
+	if (!value_token_a2.data) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_a)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_b)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_a2)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
 	result = !result;
 FREE_ALL:
-	free(value_token_a.data);
-	free(value_token_b.data);
+	if (!result) {
+		free(value_token_a.data);
+		free(value_token_a2.data);
+		free(value_token_b.data);
+	}
 	return result;
 }
 
 const bool sabr_compiler_preproc_tuck(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
 	token value_token_a = {0, };
 	token value_token_b = {0, };
+	token value_token_b2 = {0, };
 
 	bool result = false;
 
@@ -751,10 +806,35 @@ const bool sabr_compiler_preproc_tuck(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
+	value_token_b2 = value_token_a;
+	value_token_b2.data = sabr_new_string_copy(value_token_b.data);
+	if (!value_token_b2.data) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_b)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_a)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_b2)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
 	result = !result;
 FREE_ALL:
-	free(value_token_a.data);
-	free(value_token_b.data);
+	if (!result) {
+		free(value_token_a.data);
+		free(value_token_b.data);
+		free(value_token_b2.data);
+	}
 	return result;
 }
 
@@ -781,10 +861,22 @@ const bool sabr_compiler_preproc_swap(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
+	if (!vector_push_back(token, output_tokens, value_token_b)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_a)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
 	result = !result;
 FREE_ALL:
-	free(value_token_a.data);
-	free(value_token_b.data);
+	if (!result) {
+		free(value_token_a.data);
+		free(value_token_b.data);
+	}
 	return result;
 }
 
@@ -818,11 +910,28 @@ const bool sabr_compiler_preproc_rot(sabr_compiler* comp, word w, token t, vecto
 		goto FREE_ALL;
 	}
 
+	if (!vector_push_back(token, output_tokens, value_token_b)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_c)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_a)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
 	result = !result;
 FREE_ALL:
-	free(value_token_a.data);
-	free(value_token_b.data);
-	free(value_token_c.data);
+	if (!result) {
+		free(value_token_a.data);
+		free(value_token_b.data);
+		free(value_token_c.data);
+	}
 	return result;
 }
 
@@ -893,18 +1002,33 @@ const bool sabr_compiler_preproc_2nip(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
+	if (!vector_push_back(token, output_tokens, value_token_c)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_d)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
 	result = !result;
 FREE_ALL:
+	if (!result) {
+		free(value_token_c.data);
+		free(value_token_d.data);
+	}
+
 	free(value_token_a.data);
 	free(value_token_b.data);
-	free(value_token_c.data);
-	free(value_token_d.data);
 	return result;
 }
 
 const bool sabr_compiler_preproc_2dup(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
 	token value_token_a = {0, };
+	token value_token_a2 = {0, };
 	token value_token_b = {0, };
+	token value_token_b2 = {0, };
 
 	bool result = false;
 
@@ -925,17 +1049,57 @@ const bool sabr_compiler_preproc_2dup(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
+	value_token_a2 = value_token_a;
+	value_token_a2.data = sabr_new_string_copy(value_token_a.data);
+	if (!value_token_a2.data) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	value_token_b2 = value_token_b;
+	value_token_b2.data = sabr_new_string_copy(value_token_b.data);
+	if (!value_token_b2.data) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_a)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_b)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_a2)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_b2)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
 	result = !result;
 FREE_ALL:
-	free(value_token_a.data);
-	free(value_token_b.data);
+	if (!result) {
+		free(value_token_a.data);
+		free(value_token_a2.data);
+		free(value_token_b.data);
+		free(value_token_b2.data);
+	}
 
 	return result;
 }
 
 const bool sabr_compiler_preproc_2over(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
 	token value_token_a = {0, };
+	token value_token_a2 = {0, };
 	token value_token_b = {0, };
+	token value_token_b2 = {0, };
 	token value_token_c = {0, };
 	token value_token_d = {0, };
 
@@ -970,12 +1134,60 @@ const bool sabr_compiler_preproc_2over(sabr_compiler* comp, word w, token t, vec
 		goto FREE_ALL;
 	}
 
+	value_token_a2 = value_token_a;
+	value_token_a2.data = sabr_new_string_copy(value_token_a.data);
+	if (!value_token_a2.data) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	value_token_b2 = value_token_b;
+	value_token_b2.data = sabr_new_string_copy(value_token_b.data);
+	if (!value_token_b2.data) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_a)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_b)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_c)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_d)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_a2)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_b2)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
 	result = !result;
 FREE_ALL:
-	free(value_token_a.data);
-	free(value_token_b.data);
-	free(value_token_c.data);
-	free(value_token_d.data);
+	if (!result) {
+		free(value_token_a.data);
+		free(value_token_a2.data);
+		free(value_token_b.data);
+		free(value_token_b2.data);
+		free(value_token_c.data);
+		free(value_token_d.data);
+	}
 	return result;
 }
 
@@ -983,7 +1195,9 @@ const bool sabr_compiler_preproc_2tuck(sabr_compiler* comp, word w, token t, vec
 	token value_token_a = {0, };
 	token value_token_b = {0, };
 	token value_token_c = {0, };
+	token value_token_c2 = {0, };
 	token value_token_d = {0, };
+	token value_token_d2 = {0, };
 
 	bool result = false;
 
@@ -1016,12 +1230,60 @@ const bool sabr_compiler_preproc_2tuck(sabr_compiler* comp, word w, token t, vec
 		goto FREE_ALL;
 	}
 
+	value_token_c2 = value_token_c;
+	value_token_c2.data = sabr_new_string_copy(value_token_c.data);
+	if (!value_token_c2.data) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	value_token_d2 = value_token_d;
+	value_token_d2.data = sabr_new_string_copy(value_token_d.data);
+	if (!value_token_d2.data) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_c)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_d)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_a)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_b)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_c2)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_d2)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
 	result = !result;
 FREE_ALL:
-	free(value_token_a.data);
-	free(value_token_b.data);
-	free(value_token_c.data);
-	free(value_token_d.data);
+	if (!result) {
+		free(value_token_a.data);
+		free(value_token_b.data);
+		free(value_token_c.data);
+		free(value_token_c2.data);
+		free(value_token_d.data);
+		free(value_token_d2.data);
+	}
 	return result;
 }
 
@@ -1062,12 +1324,34 @@ const bool sabr_compiler_preproc_2swap(sabr_compiler* comp, word w, token t, vec
 		goto FREE_ALL;
 	}
 
+	if (!vector_push_back(token, output_tokens, value_token_c)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_d)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_a)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_b)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
 	result = !result;
 FREE_ALL:
-	free(value_token_a.data);
-	free(value_token_b.data);
-	free(value_token_c.data);
-	free(value_token_d.data);
+	if (!result) {
+		free(value_token_a.data);
+		free(value_token_b.data);
+		free(value_token_c.data);
+		free(value_token_d.data);
+	}
 	return result;
 }
 
@@ -1122,14 +1406,46 @@ const bool sabr_compiler_preproc_2rot(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
+	if (!vector_push_back(token, output_tokens, value_token_c)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_d)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_e)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_f)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_a)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, value_token_b)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
 	result = !result;
 FREE_ALL:
-	free(value_token_a.data);
-	free(value_token_b.data);
-	free(value_token_c.data);
-	free(value_token_d.data);
-	free(value_token_e.data);
-	free(value_token_f.data);
+	if (!result) {
+		free(value_token_a.data);
+		free(value_token_b.data);
+		free(value_token_c.data);
+		free(value_token_d.data);
+		free(value_token_e.data);
+		free(value_token_f.data);
+	}
 	return result;
 }
 
