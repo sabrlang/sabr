@@ -549,7 +549,7 @@ bool sabr_compiler_parse_zero_begin_num(const char* str, size_t index, bool nega
 }
 
 bool sabr_compiler_parse_base_n_num(const char* str, size_t index, bool negate, int base, value* v) {
-	char* temp_str = str + index + 2;
+	const char* temp_str = str + index + 2;
 	char* stop;
 	errno = 0;
 	v->i = strtoll(temp_str, &stop, base);

@@ -15,5 +15,6 @@
 
 #define sabr_errmsg_parse_num "error : Number parsing failure\n"
 #define sabr_errmsg_out_of_index "error : Out of index\n"
+#define sabr_errmsg_div_zero "error : Division by zero\n"
 
 #endif

@@ -1664,6 +1664,11 @@ const bool sabr_compiler_preproc_div(sabr_compiler* comp, word w, token t, vecto
 		goto FREE_ALL;
 	}
 
+	if (value_b.i == 0) {
+		fputs(sabr_errmsg_div_zero, stderr);
+		goto FREE_ALL;
+	}
+
 	result_value.i = value_a.i / value_b.i;
 
 	result_token = t;
@@ -1721,6 +1726,11 @@ const bool sabr_compiler_preproc_mod(sabr_compiler* comp, word w, token t, vecto
 	}
 
 	if (!sabr_compiler_preprocess_parse_value(comp, value_token_b, &value_b)) {
+		goto FREE_ALL;
+	}
+
+	if (value_b.i == 0) {
+		fputs(sabr_errmsg_div_zero, stderr);
 		goto FREE_ALL;
 	}
 
@@ -1784,6 +1794,11 @@ const bool sabr_compiler_preproc_udiv(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
+	if (value_b.u == 0) {
+		fputs(sabr_errmsg_div_zero, stderr);
+		goto FREE_ALL;
+	}
+
 	result_value.u = value_a.u / value_b.u;
 
 	result_token = t;
@@ -1841,6 +1856,11 @@ const bool sabr_compiler_preproc_umod(sabr_compiler* comp, word w, token t, vect
 	}
 
 	if (!sabr_compiler_preprocess_parse_value(comp, value_token_b, &value_b)) {
+		goto FREE_ALL;
+	}
+
+	if (value_b.u == 0) {
+		fputs(sabr_errmsg_div_zero, stderr);
 		goto FREE_ALL;
 	}
 
@@ -3364,7 +3384,7 @@ const bool sabr_compiler_preproc_ftoi(sabr_compiler* comp, word w, token t, vect
 
 	bool result = false;
 
-	if (output_tokens->size < 2) {
+	if (output_tokens->size < 1) {
 		fputs(sabr_errmsg_stackunderflow, stderr);
 		goto FREE_ALL;
 	}
@@ -3411,7 +3431,7 @@ const bool sabr_compiler_preproc_itof(sabr_compiler* comp, word w, token t, vect
 
 	bool result = false;
 
-	if (output_tokens->size < 2) {
+	if (output_tokens->size < 1) {
 		fputs(sabr_errmsg_stackunderflow, stderr);
 		goto FREE_ALL;
 	}
@@ -3458,7 +3478,7 @@ const bool sabr_compiler_preproc_fmti(sabr_compiler* comp, word w, token t, vect
 
 	bool result = false;
 
-	if (output_tokens->size < 2) {
+	if (output_tokens->size < 1) {
 		fputs(sabr_errmsg_stackunderflow, stderr);
 		goto FREE_ALL;
 	}
@@ -3505,7 +3525,7 @@ const bool sabr_compiler_preproc_fmtu(sabr_compiler* comp, word w, token t, vect
 
 	bool result = false;
 
-	if (output_tokens->size < 2) {
+	if (output_tokens->size < 1) {
 		fputs(sabr_errmsg_stackunderflow, stderr);
 		goto FREE_ALL;
 	}
@@ -3552,7 +3572,7 @@ const bool sabr_compiler_preproc_fmtf(sabr_compiler* comp, word w, token t, vect
 
 	bool result = false;
 
-	if (output_tokens->size < 2) {
+	if (output_tokens->size < 1) {
 		fputs(sabr_errmsg_stackunderflow, stderr);
 		goto FREE_ALL;
 	}
