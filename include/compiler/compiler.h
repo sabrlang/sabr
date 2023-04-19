@@ -2,8 +2,10 @@
 #define __COMPILER_H__
 
 #include <errno.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <locale.h>
+#include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
