@@ -42,6 +42,9 @@ const bool sabr_compiler_preproc_define(sabr_compiler* comp, word w, token t, ve
 
 	result = !result;
 FREE_ALL:
+	if (!result) {
+		free(macro_code_token.data);
+	}
 	free(code_token.data);
 	free(identifier_token.data);
 	return result;
@@ -228,7 +231,6 @@ FREE_ALL:
 const bool sabr_compiler_preproc_eval(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
 	token code_token = {0, };
 	token result_token = {0, };
-	vector(token)* evaled_tokens = NULL;
 
 	bool result = false;
 
@@ -243,17 +245,10 @@ const bool sabr_compiler_preproc_eval(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	if (code_token.data[0] == '$') {
-		evaled_tokens = sabr_compiler_preprocess_eval_token(comp, code_token, output_tokens);
-		if (!evaled_tokens) {
+	if (code_token.data[0] == '{') {
+		output_tokens = sabr_compiler_preprocess_eval_token(comp, code_token, output_tokens);
+		if (!output_tokens) {
 			goto FREE_ALL;
-		}
-
-		for (size_t i = 0; i < evaled_tokens->size; i++) {
-			if (!vector_push_back(token, output_tokens, *vector_at(token, evaled_tokens, i))) {
-				fputs(sabr_errmsg_alloc, stderr);
-				goto FREE_ALL;
-			}
 		}
 	}
 	else {
@@ -272,10 +267,8 @@ const bool sabr_compiler_preproc_eval(sabr_compiler* comp, word w, token t, vect
 	result = !result;
 FREE_ALL:
 	if (!result) {
-		sabr_free_token_vector(evaled_tokens);
 		free(result_token.data);
 	}
-	free(evaled_tokens);
 	free(code_token.data);
 	return result;
 }
@@ -287,7 +280,6 @@ const bool sabr_compiler_preproc_if(sabr_compiler* comp, word w, token t, vector
 	token flag_token = {0, };
 	value flag_value;
 	token result_token = {0, };
-	vector(token)* evaled_tokens = NULL;
 
 	bool result = false;
 
@@ -320,17 +312,10 @@ const bool sabr_compiler_preproc_if(sabr_compiler* comp, word w, token t, vector
 
 	code_token = flag_value.u ? code_token_a : code_token_b;
 
-	if (code_token.data[0] == '$') {
-		evaled_tokens = sabr_compiler_preprocess_eval_token(comp, code_token, output_tokens);
-		if (!evaled_tokens) {
+	if (code_token.data[0] == '{') {
+		output_tokens = sabr_compiler_preprocess_eval_token(comp, code_token, output_tokens);
+		if (!output_tokens) {
 			goto FREE_ALL;
-		}
-
-		for (size_t i = 0; i < evaled_tokens->size; i++) {
-			if (!vector_push_back(token, output_tokens, *vector_at(token, evaled_tokens, i))) {
-				fputs(sabr_errmsg_alloc, stderr);
-				goto FREE_ALL;
-			}
 		}
 	}
 	else {
@@ -349,10 +334,8 @@ const bool sabr_compiler_preproc_if(sabr_compiler* comp, word w, token t, vector
 	result = !result;
 FREE_ALL:
 	if (!result) {
-		sabr_free_token_vector(evaled_tokens);
 		free(result_token.data);
 	}
-	free(evaled_tokens);
 	free(code_token_a.data);
 	free(code_token_b.data);
 	free(flag_token.data);

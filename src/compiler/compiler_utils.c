@@ -39,9 +39,8 @@ void sabr_free_word_trie(trie(word)* dictionary) {
 	if (dictionary->existence) {
 		word w = dictionary->data;
 		switch (w.type) {
-			case WT_IDFR: {
+			case WT_PREPROC_IDFR: {
 				token t = w.data.macro_code;
-				printf("%s\n", t.data);
 				free(t.data);
 			} break;
 			default:
