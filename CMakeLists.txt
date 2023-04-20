@@ -73,6 +73,7 @@ add_executable(
 	${comp_srcs} ${common_srcs}
 )
 
+target_link_libraries(sabrc m)
 target_link_libraries(sabre m)
 
 message("CMAKE_SYSTEM_NAME: " ${CMAKE_SYSTEM_NAME})
