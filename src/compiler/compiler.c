@@ -50,6 +50,10 @@ bool sabr_compiler_compile_file(sabr_compiler* const comp, const char* filename)
 	}
 
 	preprocessed_tokens = sabr_compiler_preprocess_textcode(comp, textcode_index);
+	if (!preprocessed_tokens) {
+		sabr_free_token_vector(preprocessed_tokens);
+		return false;
+	}
 
 	return true;
 }

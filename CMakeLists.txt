@@ -13,6 +13,19 @@ add_compile_options(
 	-Wall
 )
 
+set(ASAN true)
+
+if(ASAN)
+	if(UNIX)
+		add_compile_options(
+			-fsanitize=address
+			-static-libasan
+			-lrt
+			-static-libgcc
+		)
+	endif()
+endif()
+
 set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
 set(CMAKE_C_FLAGS_RELEASE "-O2")
 
