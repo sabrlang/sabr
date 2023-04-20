@@ -19,9 +19,10 @@ if(ASAN)
 	if(UNIX)
 		add_compile_options(
 			-fsanitize=address
-			-static-libasan
-			-lrt
-			-static-libgcc
+			-fno-omit-frame-pointer
+		)
+		add_link_options(
+			-fsanitize=address
 		)
 	endif()
 endif()

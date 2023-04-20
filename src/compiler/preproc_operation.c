@@ -147,7 +147,10 @@ const bool sabr_compiler_preproc_import(sabr_compiler* comp, word w, token t, ve
 		goto FREE_ALL;
 	}
 #else
-	if (!(realpath(filename_token.data, filename_full))) goto FAILURE_FILEPATH;
+	if (!(realpath(filename_token.data, filename_full))) {
+		fputs(sabr_errmsg_fullpath, stderr);
+		goto FREE_ALL;
+	}
 #endif
 
 	if (!trie_find(size_t, &comp->filename_trie, filename_full)) {

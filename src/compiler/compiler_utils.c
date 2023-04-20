@@ -28,6 +28,7 @@ void sabr_free_token_vector(vector(token)* tokens) {
 			token t = *vector_at(token, tokens, i);
 			free(t.data);
 		}
+		vector_free(token, tokens);
 		free(tokens);
 	}
 }
@@ -44,6 +45,7 @@ void sabr_free_word_trie(trie(word)* dictionary) {
 				free(t.data);
 			} break;
 			default:
+				break;
 		}
 	}
 

@@ -2,6 +2,7 @@
 #define __PREPROC_H__
 
 #include "stdint.h"
+#include "stddef.h"
 
 typedef enum preproc_keyword_enum {
 	PREPROC_DEFINE,
