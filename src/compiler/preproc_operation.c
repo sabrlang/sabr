@@ -244,7 +244,7 @@ const bool sabr_compiler_preproc_eval(sabr_compiler* comp, word w, token t, vect
 	}
 
 	if (code_token.data[0] == '$') {
-		evaled_tokens = sabr_compiler_preprocess_eval_token(comp, code_token);
+		evaled_tokens = sabr_compiler_preprocess_eval_token(comp, code_token, output_tokens);
 		if (!evaled_tokens) {
 			goto FREE_ALL;
 		}
@@ -321,7 +321,7 @@ const bool sabr_compiler_preproc_if(sabr_compiler* comp, word w, token t, vector
 	code_token = flag_value.u ? code_token_a : code_token_b;
 
 	if (code_token.data[0] == '$') {
-		evaled_tokens = sabr_compiler_preprocess_eval_token(comp, code_token);
+		evaled_tokens = sabr_compiler_preprocess_eval_token(comp, code_token, output_tokens);
 		if (!evaled_tokens) {
 			goto FREE_ALL;
 		}

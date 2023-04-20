@@ -194,11 +194,7 @@ vector(token)* sabr_compiler_preprocess_textcode(sabr_compiler* const comp, size
 		goto FREE_ALL;
 	}
 
-	// for (size_t i = 0; i < tokens->size; i++) {
-	// 	token t = *vector_at(token, tokens, i);
-	// }
-
-	tokens = sabr_compiler_preprocess_tokens(comp, tokens);
+	tokens = sabr_compiler_preprocess_tokens(comp, tokens, NULL);
 	if (!tokens) {
 		fputs(sabr_errmsg_preprocess, stderr);
 		goto FREE_ALL;
@@ -216,15 +212,17 @@ FREE_ALL:
 	return NULL;
 }
 
-vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector(token)* input_tokens) {
-	vector(token)* output_tokens;
+vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector(token)* input_tokens, vector(token)* output_tokens) {
+	// vector(token)* output_tokens;
 
-	output_tokens = (vector(token)*) malloc(sizeof(vector(token)));
 	if (!output_tokens) {
-		fputs(sabr_errmsg_alloc, stderr);
-		goto FREE_ALL;
+		output_tokens = (vector(token)*) malloc(sizeof(vector(token)));
+		if (!output_tokens) {
+			fputs(sabr_errmsg_alloc, stderr);
+			goto FREE_ALL;
+		}
+		vector_init(token, output_tokens);
 	}
-	vector_init(token, output_tokens);
 
 	for (size_t i = 0; i < input_tokens->size; i++) {
 		token t = *vector_at(token, input_tokens, i);
@@ -240,20 +238,20 @@ vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector
 				} break;
 				case WT_PREPROC_IDFR: {
 					vector(token)* evaled_tokens;
-					evaled_tokens = sabr_compiler_preprocess_eval_token(comp, w->data.macro_code);
-					if (!evaled_tokens) {
+					output_tokens = sabr_compiler_preprocess_eval_token(comp, w->data.macro_code, output_tokens);
+					if (!output_tokens) {
 						fprintf(stderr, console_yellow console_bold "%s" console_reset " in line %zu, column %zu\n", t.data, t.begin_pos.line, t.begin_pos.column);
 						fprintf(stderr, "in file " console_yellow console_bold "%s\n" console_reset, *vector_at(cctl_ptr(char), &comp->filename_vector, t.textcode_index));
 						goto FREE_ALL;
 					}
-					for (size_t i = 0; i < evaled_tokens->size; i++) {
-						token evaled_token = *vector_at(token, evaled_tokens, i);
-						if (!vector_push_back(token, output_tokens, evaled_token)) {
-							fputs(sabr_errmsg_alloc, stderr);
-							goto FREE_ALL;
-						}
-					}
-					free(evaled_tokens);
+					// for (size_t i = 0; i < evaled_tokens->size; i++) {
+					// 	token evaled_token = *vector_at(token, evaled_tokens, i);
+					// 	if (!vector_push_back(token, output_tokens, evaled_token)) {
+					// 		fputs(sabr_errmsg_alloc, stderr);
+					// 		goto FREE_ALL;
+					// 	}
+					// }
+					// free(evaled_tokens);
 				} break;
 				default:
 					break;
@@ -277,9 +275,9 @@ FREE_ALL:
 	return NULL;
 }
 
-vector(token)* sabr_compiler_preprocess_eval_token(sabr_compiler* const comp, token t) {
+vector(token)* sabr_compiler_preprocess_eval_token(sabr_compiler* const comp, token t, vector(token)* output_tokens) {
 	vector(token)* input_tokens = NULL;
-	vector(token)* output_tokens = NULL;
+	// vector(token)* output_tokens = NULL;
 	char* temp_input_string = NULL;
 	char* input_string = NULL;
 	pos input_pos = t.begin_pos;
@@ -299,7 +297,7 @@ vector(token)* sabr_compiler_preprocess_eval_token(sabr_compiler* const comp, to
 		goto FREE_ALL;
 	}
 
-	output_tokens = sabr_compiler_preprocess_tokens(comp, input_tokens);
+	output_tokens = sabr_compiler_preprocess_tokens(comp, input_tokens, output_tokens);
 	if (!output_tokens) {
 		fputs(sabr_errmsg_preprocess, stderr);
 		goto FREE_ALL;
@@ -400,7 +398,6 @@ vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const ch
 								t.end_pos = end_pos;
 								t.textcode_index = textcode_index;
 							}
-
 
 							if (!vector_push_back(token, tokens, t)) {
 								fputs(sabr_errmsg_alloc, stderr);
