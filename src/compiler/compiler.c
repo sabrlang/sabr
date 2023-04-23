@@ -269,7 +269,7 @@ vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector
 					}
 				} break;
 				case WT_PREPROC_IDFR: {
-					output_tokens = sabr_compiler_preprocess_eval_token(comp, w->data.macro_code, output_tokens);
+					output_tokens = sabr_compiler_preprocess_eval_token(comp, w->data.macro_code, true, output_tokens);
 					if (!output_tokens) {
 						fprintf(stderr, console_yellow console_bold "%s" console_reset " in line %zu, column %zu\n", t.data, t.begin_pos.line, t.begin_pos.column);
 						fprintf(stderr, "in file " console_yellow console_bold "%s\n" console_reset, *vector_at(cctl_ptr(char), &comp->filename_vector, t.textcode_index));
@@ -298,7 +298,7 @@ FREE_ALL:
 	return NULL;
 }
 
-vector(token)* sabr_compiler_preprocess_eval_token(sabr_compiler* const comp, token t, vector(token)* output_tokens) {
+vector(token)* sabr_compiler_preprocess_eval_token(sabr_compiler* const comp, token t, bool has_local, vector(token)* output_tokens) {
 	bool result = false;
 	vector(token)* input_tokens = NULL;
 	trie(word)* preproc_local_dictionary = NULL;
@@ -321,15 +321,18 @@ vector(token)* sabr_compiler_preprocess_eval_token(sabr_compiler* const comp, to
 		goto FREE_ALL;
 	}
 
-	preproc_local_dictionary = (trie(word)*) malloc(sizeof(trie(word)));
-	if (!preproc_local_dictionary) {
-		fputs(sabr_errmsg_alloc, stderr);
-		goto FREE_ALL;
-	}
-	trie_init(word, preproc_local_dictionary);
-	if (!vector_push_back(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack, preproc_local_dictionary)) {
-		fputs(sabr_errmsg_alloc, stderr);
-		goto FREE_ALL;
+	if (has_local) {
+		preproc_local_dictionary = (trie(word)*) malloc(sizeof(trie(word)));
+		if (!preproc_local_dictionary) {
+			fputs(sabr_errmsg_alloc, stderr);
+			goto FREE_ALL;
+		}
+
+		trie_init(word, preproc_local_dictionary);
+		if (!vector_push_back(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack, preproc_local_dictionary)) {
+			fputs(sabr_errmsg_alloc, stderr);
+			goto FREE_ALL;
+		}
 	}
 
 	output_tokens = sabr_compiler_preprocess_tokens(comp, input_tokens, output_tokens);
@@ -351,9 +354,11 @@ FREE_ALL:
 		output_tokens = NULL;
 	}
 
-	sabr_free_word_trie(preproc_local_dictionary);
-	free(preproc_local_dictionary);
-	vector_pop_back(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack);
+	if (has_local) {
+		sabr_free_word_trie(preproc_local_dictionary);
+		free(preproc_local_dictionary);
+		vector_pop_back(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack);
+	}
 
 	return output_tokens;;
 }
