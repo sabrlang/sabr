@@ -57,6 +57,7 @@ struct sabr_compiler_struct {
 	vector(cctl_ptr(char)) textcode_vector;
 
 	trie(word) preproc_dictionary;
+	vector(cctl_ptr(trie(word))) preproc_local_dictionary_stack;
 
 	mbstate_t convert_state;
 };
