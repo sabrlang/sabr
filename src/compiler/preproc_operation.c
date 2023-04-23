@@ -472,8 +472,8 @@ const bool sabr_compiler_preproc_substr(sabr_compiler* comp, word w, token t, ve
 	if (begin_value.i < 0) { fputs(sabr_errmsg_out_of_index, stderr); goto FREE_ALL; }
 	if (begin_value.i >= text_str_len) { fputs(sabr_errmsg_out_of_index, stderr); goto FREE_ALL; }
 	if (end_value.i < 0) { fputs(sabr_errmsg_out_of_index, stderr); goto FREE_ALL; }
-	if (end_value.i >= text_str_len) { fputs(sabr_errmsg_out_of_index, stderr); goto FREE_ALL; }
-	if (begin_value.i > end_value.i) { fputs(sabr_errmsg_out_of_index, stderr); goto FREE_ALL; }
+	if (end_value.i > text_str_len) { fputs(sabr_errmsg_out_of_index, stderr); goto FREE_ALL; }
+	if (begin_value.i >= end_value.i) { fputs(sabr_errmsg_out_of_index, stderr); goto FREE_ALL; }
 
 	begin_value.u += (is_code_block ? 1 : 0);
 	end_value.u += (is_code_block ? 1 : 0);
