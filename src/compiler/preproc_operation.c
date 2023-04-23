@@ -1,6 +1,6 @@
 #include "preproc_operation.h"
 
-const bool sabr_compiler_preproc_define(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+const bool sabr_compiler_preproc_def(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
 	token code_token = {0, };
 	token identifier_token = {0, };
 
@@ -58,7 +58,7 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_defined(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+const bool sabr_compiler_preproc_isdef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
 	token identifier_token = {0, };
 	token result_token = {0, };
 
@@ -131,6 +131,14 @@ const bool sabr_compiler_preproc_undef(sabr_compiler* comp, word w, token t, vec
 FREE_ALL:
 	free(identifier_token.data);
 	return result;
+}
+
+
+const bool sabr_compiler_preproc_ldef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+}
+const bool sabr_compiler_preproc_lisdef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+}
+const bool sabr_compiler_preproc_lundef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
 }
 
 const bool sabr_compiler_preproc_import(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
@@ -3607,9 +3615,12 @@ FREE_ALL:
 }
 
 const bool (*preproc_keyword_functions[])(sabr_compiler* const comp, word w, token t, vector(token)* output_tokens) = {
-	sabr_compiler_preproc_define,
-	sabr_compiler_preproc_defined,
+	sabr_compiler_preproc_def,
+	sabr_compiler_preproc_isdef,
 	sabr_compiler_preproc_undef,
+	sabr_compiler_preproc_ldef,
+	sabr_compiler_preproc_lisdef,
+	sabr_compiler_preproc_lundef,
 	sabr_compiler_preproc_import,
 	sabr_compiler_preproc_include,
 	sabr_compiler_preproc_eval,
