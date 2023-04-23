@@ -35,9 +35,17 @@ const bool sabr_compiler_preproc_define(sabr_compiler* comp, word w, token t, ve
 	macro_word.type = WT_PREPROC_IDFR;
 	macro_word.data.macro_code = macro_code_token;
 
-	if (!trie_insert(word, &comp->preproc_dictionary, identifier_token.data + 1, macro_word)) {
-		fputs(sabr_errmsg_alloc, stderr);
-		goto FREE_ALL;
+	word* identifier_word = trie_find(word, &comp->preproc_dictionary, identifier_token.data + 1);
+	if (identifier_word) {
+		token prev_macro_code_token = identifier_word->data.macro_code;
+		free(prev_macro_code_token.data);
+		identifier_word->data.macro_code = macro_code_token;
+	}
+	else {
+		if (!trie_insert(word, &comp->preproc_dictionary, identifier_token.data + 1, macro_word)) {
+			fputs(sabr_errmsg_alloc, stderr);
+			goto FREE_ALL;
+		}
 	}
 
 	result = !result;

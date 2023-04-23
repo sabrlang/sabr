@@ -201,13 +201,13 @@ vector(token)* sabr_compiler_preprocess_textcode(sabr_compiler* const comp, size
 		goto FREE_ALL;
 	}
 
-	// printf("Preprocess : %s\n", *vector_at(cctl_ptr(char), &comp->filename_vector, textcode_index));
-	
-	// for (size_t i = 0; i < tokens->size; i++) {
-	// 	token t = *vector_at(token, tokens, i);
-	// 	printf("token : %s\n", t.data);
-	// }
-	// printf("\n");
+	printf("Preprocess : %s\n", *vector_at(cctl_ptr(char), &comp->filename_vector, textcode_index));
+
+	for (size_t i = 0; i < tokens->size; i++) {
+		token t = *vector_at(token, tokens, i);
+		printf("token : %s\n", t.data);
+	}
+	printf("\n");
 
 	return tokens;
 
