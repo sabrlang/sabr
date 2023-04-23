@@ -133,6 +133,59 @@ FREE_ALL:
 	return result;
 }
 
+const bool sabr_compiler_preproc_getdef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+	token identifier_token = {0, };
+	token result_token = {0, };
+
+	bool result = false;
+
+	if (output_tokens->size < 1) {
+		fputs(sabr_errmsg_stackunderflow, stderr);
+		goto FREE_ALL;
+	}
+
+	identifier_token = *vector_back(token, output_tokens);
+	if (!vector_pop_back(token, output_tokens)) {
+		fputs(sabr_errmsg_stackunderflow, stderr);
+		goto FREE_ALL;
+	}
+
+	if (identifier_token.data[0] != '$') {
+		fputs(sabr_errmsg_invalid_ident_fmt, stderr);
+		goto FREE_ALL;
+	}
+	
+	result_token = t;
+	result_token.is_generated = false;
+
+	word* identifier_word = trie_find(word, &comp->preproc_dictionary, identifier_token.data + 1);
+	if (identifier_word) {
+		token macro_code = identifier_word->data.macro_code;
+		printf("%s", macro_code.data);
+		result_token.data = sabr_new_string_copy(macro_code.data);
+	}
+	else {
+		result_token.data = sabr_new_string_copy("{}");
+	}
+	if (!result_token.data) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, result_token)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	result = !result;
+FREE_ALL:
+	if (!result) {
+		free(result_token.data);
+	}
+	free(identifier_token.data);
+	return result;
+}
+
 const bool sabr_compiler_preproc_ldef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
 	token code_token = {0, };
 	token identifier_token = {0, };
@@ -263,6 +316,59 @@ const bool sabr_compiler_preproc_lundef(sabr_compiler* comp, word w, token t, ve
 
 	result = !result;
 FREE_ALL:
+	free(identifier_token.data);
+	return result;
+}
+
+const bool sabr_compiler_preproc_lgetdef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+	token identifier_token = {0, };
+	token result_token = {0, };
+
+	bool result = false;
+
+	if (output_tokens->size < 1) {
+		fputs(sabr_errmsg_stackunderflow, stderr);
+		goto FREE_ALL;
+	}
+
+	identifier_token = *vector_back(token, output_tokens);
+	if (!vector_pop_back(token, output_tokens)) {
+		fputs(sabr_errmsg_stackunderflow, stderr);
+		goto FREE_ALL;
+	}
+
+	if (identifier_token.data[0] != '$') {
+		fputs(sabr_errmsg_invalid_ident_fmt, stderr);
+		goto FREE_ALL;
+	}
+	
+	result_token = t;
+	result_token.is_generated = false;
+
+	trie(word)* preproc_local_dictionary = *vector_back(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack);
+	word* identifier_word = trie_find(word, preproc_local_dictionary, identifier_token.data + 1);
+	if (identifier_word) {
+		token macro_code = identifier_word->data.macro_code;
+		result_token.data = sabr_new_string_copy(macro_code.data);
+	}
+	else {
+		result_token.data = sabr_new_string_copy("{}");
+	}
+	if (!result_token.data) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!vector_push_back(token, output_tokens, result_token)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	result = !result;
+FREE_ALL:
+	if (!result) {
+		free(result_token.data);
+	}
 	free(identifier_token.data);
 	return result;
 }
@@ -3744,9 +3850,11 @@ const bool (*preproc_keyword_functions[])(sabr_compiler* const comp, word w, tok
 	sabr_compiler_preproc_def,
 	sabr_compiler_preproc_isdef,
 	sabr_compiler_preproc_undef,
+	sabr_compiler_preproc_getdef,
 	sabr_compiler_preproc_ldef,
 	sabr_compiler_preproc_lisdef,
 	sabr_compiler_preproc_lundef,
+	sabr_compiler_preproc_lgetdef,
 	sabr_compiler_preproc_import,
 	sabr_compiler_preproc_include,
 	sabr_compiler_preproc_eval,
