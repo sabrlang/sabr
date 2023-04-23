@@ -236,6 +236,7 @@ FREE_ALL:
 	}
 
 	sabr_free_word_trie(preproc_local_dictionary);
+	free(preproc_local_dictionary);
 	vector_pop_back(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack);
 
 	return tokens;
@@ -351,6 +352,7 @@ FREE_ALL:
 	}
 
 	sabr_free_word_trie(preproc_local_dictionary);
+	free(preproc_local_dictionary);
 	vector_pop_back(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack);
 
 	return output_tokens;;
