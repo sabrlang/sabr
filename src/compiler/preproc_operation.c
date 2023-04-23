@@ -187,6 +187,7 @@ FREE_ALL:
 	if (!result) {
 		sabr_free_token_vector(preprocessed_tokens);
 	}
+	vector_free(token, preprocessed_tokens);
 	free(preprocessed_tokens);
 	free(filename_token.data);
 	return result;
