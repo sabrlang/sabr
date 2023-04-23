@@ -186,6 +186,7 @@ vector(token)* sabr_compiler_preprocess_textcode(sabr_compiler* const comp, size
 	vector(token)* tokens = NULL;
 	const char* code = *vector_at(cctl_ptr(char), &comp->textcode_vector, textcode_index);
 	pos init_pos = {.line = 1, .column = 1};
+
 	tokens = sabr_compiler_tokenize_string(comp, code, textcode_index, init_pos, false);
 
 	if (!tokens) {
@@ -195,14 +196,18 @@ vector(token)* sabr_compiler_preprocess_textcode(sabr_compiler* const comp, size
 
 	tokens = sabr_compiler_preprocess_tokens(comp, tokens, NULL);
 	if (!tokens) {
+
 		fputs(sabr_errmsg_preprocess, stderr);
 		goto FREE_ALL;
 	}
 
-	for (size_t i = 0; i < tokens->size; i++) {
-		token t = *vector_at(token, tokens, i);
-		printf("token : %s\n", t.data);
-	}
+	// printf("Preprocess : %s\n", *vector_at(cctl_ptr(char), &comp->filename_vector, textcode_index));
+	
+	// for (size_t i = 0; i < tokens->size; i++) {
+	// 	token t = *vector_at(token, tokens, i);
+	// 	printf("token : %s\n", t.data);
+	// }
+	// printf("\n");
 
 	return tokens;
 
