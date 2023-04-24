@@ -69,7 +69,10 @@ const char* preproc_keyword_names[] = {
 	"#itof",
 	"#fmti",
 	"#fmtu",
-	"#fmtf"
+	"#fmtf",
+	"#echo",
+	"#emit",
+	"#show"
 };
 
 size_t preproc_keyword_names_len = sizeof(preproc_keyword_names) / sizeof(char*);

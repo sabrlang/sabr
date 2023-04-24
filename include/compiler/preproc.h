@@ -73,7 +73,10 @@ typedef enum preproc_keyword_enum {
 	PREPROC_ITOF,
 	PREPROC_FMTI,
 	PREPROC_FMTU,
-	PREPROC_FMTF
+	PREPROC_FMTF,
+	PREPROC_ECHO,
+	PREPROC_EMIT,
+	PREPROC_SHOW
 } preproc_keyword;
 
 extern const char* preproc_keyword_names[];

@@ -220,13 +220,13 @@ vector(token)* sabr_compiler_preprocess_textcode(sabr_compiler* const comp, size
 		goto FREE_ALL;
 	}
 
-	printf("Preprocess : %s\n", *vector_at(cctl_ptr(char), &comp->filename_vector, textcode_index));
+	// printf("Preprocess : %s\n", *vector_at(cctl_ptr(char), &comp->filename_vector, textcode_index));
 
-	for (size_t i = 0; i < tokens->size; i++) {
-		token t = *vector_at(token, tokens, i);
-		printf("token : %s\n", t.data);
-	}
-	printf("\n");
+	// for (size_t i = 0; i < tokens->size; i++) {
+	// 	token t = *vector_at(token, tokens, i);
+	// 	printf("token : %s\n", t.data);
+	// }
+	// printf("\n");
 
 	result = true;
 FREE_ALL:
@@ -308,10 +308,11 @@ vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector
 			}
 
 			bool is_code_block = *new_t_data == '{';
+			bool is_string = (*new_t_data == '\'') || *new_t_data == '\"';
 
 			if (
-				(brace_stack != 0) ||
-				(brace_existence && !is_code_block)
+				(!is_string && (brace_stack != 0)) ||
+				(!is_string && brace_existence && !is_code_block)
 			) {
 				fputs(sabr_errmsg_wrong_token_fmt, stderr);
 				fprintf(stderr, console_yellow console_bold "%s" console_reset " in line %zu, column %zu\n", t.data, t.begin_pos.line, t.begin_pos.column);

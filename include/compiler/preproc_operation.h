@@ -75,5 +75,8 @@ const bool sabr_compiler_preproc_itof(sabr_compiler* comp, word w, token t, vect
 const bool sabr_compiler_preproc_fmti(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
 const bool sabr_compiler_preproc_fmtu(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
 const bool sabr_compiler_preproc_fmtf(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
+const bool sabr_compiler_preproc_echo(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
+const bool sabr_compiler_preproc_emit(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
+const bool sabr_compiler_preproc_show(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
 
 #endif

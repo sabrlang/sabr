@@ -555,7 +555,7 @@ const bool sabr_compiler_preproc_substr(sabr_compiler* comp, word w, token t, ve
 	token result_token = {0, };
 	value begin_value;
 	value end_value;
-	bool is_code_block;
+	bool is_string;
 	char* sliced_result_str = NULL;
 	char* final_result_str = NULL;
 
@@ -591,17 +591,32 @@ const bool sabr_compiler_preproc_substr(sabr_compiler* comp, word w, token t, ve
 		goto FREE_ALL;
 	}
 
-	is_code_block = text_token.data[0] == '{';
+	char string_begin[2] = {0, };
+	char string_end[2] = {0, };
+	switch (text_token.data[0]) {
+		case '{':
+			string_begin[0] = '{';
+			string_end[0] = '}';
+			is_string = true;
+			break;
+		case '\'':
+		case '\"':
+			string_begin[0] = text_token.data[0];
+			string_end[0] = text_token.data[0];
+			is_string = true;
+			break;
+		default: break;
+	}
 
-	size_t text_str_len = strlen(text_token.data) - (is_code_block ? 2 : 0);
+	size_t text_str_len = strlen(text_token.data) - (is_string ? 2 : 0);
 	if (begin_value.i < 0) { fputs(sabr_errmsg_out_of_index, stderr); goto FREE_ALL; }
 	if (begin_value.i >= text_str_len) { fputs(sabr_errmsg_out_of_index, stderr); goto FREE_ALL; }
 	if (end_value.i < 0) { fputs(sabr_errmsg_out_of_index, stderr); goto FREE_ALL; }
 	if (end_value.i > text_str_len) { fputs(sabr_errmsg_out_of_index, stderr); goto FREE_ALL; }
 	if (begin_value.i >= end_value.i) { fputs(sabr_errmsg_out_of_index, stderr); goto FREE_ALL; }
 
-	begin_value.u += (is_code_block ? 1 : 0);
-	end_value.u += (is_code_block ? 1 : 0);
+	begin_value.u += (is_string ? 1 : 0);
+	end_value.u += (is_string ? 1 : 0);
 
 	sliced_result_str = sabr_new_string_slice(text_token.data, begin_value.u, end_value.u);
 	if (!sliced_result_str) {
@@ -612,9 +627,9 @@ const bool sabr_compiler_preproc_substr(sabr_compiler* comp, word w, token t, ve
 	if (
 		asprintf(
 			&final_result_str, "%s%s%s",
-			is_code_block ? "{" : "",
+			string_begin,
 			sliced_result_str,
-			is_code_block ? "}" : ""
+			string_end
 		) == -1
 	) {
 		fputs(sabr_errmsg_alloc, stderr);
@@ -695,7 +710,7 @@ const bool sabr_compiler_preproc_len(sabr_compiler* comp, word w, token t, vecto
 	token text_token = {0, };
 	token result_token = {0, };
 	char* result_str = NULL;
-	bool is_code_block;
+	bool is_string;
 
 	bool result = false;
 
@@ -709,10 +724,16 @@ const bool sabr_compiler_preproc_len(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_stackunderflow, stderr);
 		goto FREE_ALL;
 	}
+	switch (text_token.data[0]) {
+		case '{':
+		case '\'':
+		case '\"':
+			is_string = true;
+			break;
+		default: break;
+	}
 
-	is_code_block = text_token.data[0] == '{';
-
-	if (asprintf(&result_str, "%zu", strlen(text_token.data) - (is_code_block ? 2 : 0)) == -1) {
+	if (asprintf(&result_str, "%zu", strlen(text_token.data) - (is_string ? 2 : 0)) == -1) {
 		fputs(sabr_errmsg_alloc, stderr);
 		goto FREE_ALL;
 	}
@@ -3722,6 +3743,82 @@ FREE_ALL:
 	return result;
 }
 
+const bool sabr_compiler_preproc_echo(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+	token value_token_a = {0, };
+
+	bool result = false;
+
+	if (output_tokens->size < 1) {
+		fputs(sabr_errmsg_stackunderflow, stderr);
+		goto FREE_ALL;
+	}
+	
+	value_token_a = *vector_back(token, output_tokens);
+	if (!vector_pop_back(token, output_tokens)) {
+		fputs(sabr_errmsg_stackunderflow, stderr);
+		goto FREE_ALL;
+	}
+
+	printf("%s", value_token_a.data);
+
+	result = true;
+FREE_ALL:
+	free(value_token_a.data);
+	return result;
+}
+
+const bool sabr_compiler_preproc_emit(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+	token value_token_a = {0, };
+	value value_a;
+
+	bool result = false;
+
+	if (output_tokens->size < 1) {
+		fputs(sabr_errmsg_stackunderflow, stderr);
+		goto FREE_ALL;
+	}
+	
+	value_token_a = *vector_back(token, output_tokens);
+	if (!vector_pop_back(token, output_tokens)) {
+		fputs(sabr_errmsg_stackunderflow, stderr);
+		goto FREE_ALL;
+	}
+
+	if (!sabr_compiler_preprocess_parse_value(comp, value_token_a, &value_a)) {
+		goto FREE_ALL;
+	}
+
+	if (value_a.u < 127) {
+		putchar(value_a.u);
+	}
+	else {
+		char out[8];
+		size_t rc = c32rtomb(out, (char32_t) value_a.u, &(comp->convert_state));
+		if (rc == -1) {
+			goto FREE_ALL;
+		}
+		out[rc] = 0;
+		fputs(out, stdout);
+	}
+
+	result = true;
+FREE_ALL:
+	free(value_token_a.data);
+	return result;
+}
+
+const bool sabr_compiler_preproc_show(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+	printf("%zu - [ ", output_tokens->size);
+	for (size_t i = 0; i < output_tokens->size; i++) {
+		token t = *vector_at(token, output_tokens, i);
+		printf("%s ", t.data);
+	}
+	fputs("]\n", stdout);
+
+	return true;
+}
+
+
 const bool (*preproc_keyword_functions[])(sabr_compiler* const comp, word w, token t, vector(token)* output_tokens) = {
 	sabr_compiler_preproc_func,
 	sabr_compiler_preproc_macro,
@@ -3791,5 +3888,8 @@ const bool (*preproc_keyword_functions[])(sabr_compiler* const comp, word w, tok
 	sabr_compiler_preproc_itof,
 	sabr_compiler_preproc_fmti,
 	sabr_compiler_preproc_fmtu,
-	sabr_compiler_preproc_fmtf
+	sabr_compiler_preproc_fmtf,
+	sabr_compiler_preproc_echo,
+	sabr_compiler_preproc_emit,
+	sabr_compiler_preproc_show
 };
