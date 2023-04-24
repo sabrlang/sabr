@@ -185,7 +185,6 @@ const bool sabr_compiler_preproc_getdef_base(sabr_compiler* comp, word w, token 
 	word* identifier_word = trie_find(word, dictionary, identifier_token.data + 1);
 	if (identifier_word) {
 		token macro_code = identifier_word->data.def_data.def_code;
-		printf("%s", macro_code.data);
 		result_token.data = sabr_new_string_copy(macro_code.data);
 	}
 	else {
