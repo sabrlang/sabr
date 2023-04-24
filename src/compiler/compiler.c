@@ -243,6 +243,7 @@ FREE_ALL:
 }
 
 vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector(token)* input_tokens, vector(token)* output_tokens) {
+	char* new_t_data = NULL;
 	if (!output_tokens) {
 		output_tokens = (vector(token)*) malloc(sizeof(vector(token)));
 		if (!output_tokens) {
@@ -283,8 +284,44 @@ vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector
 			}
 		}
 		else {
-			t.data = sabr_new_string_copy(t.data);
-			if (!vector_push_back(token, output_tokens, t)) {
+			new_t_data = NULL;
+			token new_t = {0, };
+			new_t = t;
+
+			new_t_data = sabr_new_string_copy(t.data);
+			if (!new_t_data) {
+				fputs(sabr_errmsg_alloc, stderr);
+				goto FREE_ALL;
+			}
+
+			ssize_t brace_stack = 0;
+			bool brace_existence = false;
+			for (char* ch = new_t_data; *ch != '\0'; ch++) {
+				if (*ch == '{') {
+					brace_stack++;
+					brace_existence = true;
+				}
+				else if (*ch == '}') {
+					brace_stack--;
+					brace_existence = true;
+				}
+			}
+
+			bool is_code_block = *new_t_data == '{';
+
+			if (
+				(brace_stack != 0) ||
+				(brace_existence && !is_code_block)
+			) {
+				fputs(sabr_errmsg_wrong_token_fmt, stderr);
+				fprintf(stderr, console_yellow console_bold "%s" console_reset " in line %zu, column %zu\n", t.data, t.begin_pos.line, t.begin_pos.column);
+				fprintf(stderr, "in file " console_yellow console_bold "%s\n" console_reset, *vector_at(cctl_ptr(char), &comp->filename_vector, t.textcode_index));
+				goto FREE_ALL;
+			}
+
+			new_t.data = new_t_data;
+
+			if (!vector_push_back(token, output_tokens, new_t)) {
 				fputs(sabr_errmsg_alloc, stderr);
 				goto FREE_ALL;
 			}
@@ -297,6 +334,7 @@ vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector
 FREE_ALL:
 	sabr_free_token_vector(input_tokens);
 	sabr_free_token_vector(output_tokens);
+	free(new_t_data);
 	return NULL;
 }
 

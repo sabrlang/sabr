@@ -17,4 +17,6 @@
 #define sabr_errmsg_out_of_index "error : Out of index\n"
 #define sabr_errmsg_div_zero "error : Division by zero\n"
 
+#define sabr_errmsg_wrong_token_fmt "error : Wrong token format\n"
+
 #endif
