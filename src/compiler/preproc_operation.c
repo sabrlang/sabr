@@ -57,7 +57,7 @@ const bool sabr_compiler_preproc_def_base(sabr_compiler* comp, word w, token t, 
 		}
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(macro_code_token.data);
@@ -109,7 +109,7 @@ const bool sabr_compiler_preproc_isdef_base(sabr_compiler* comp, word w, token t
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -146,7 +146,7 @@ const bool sabr_compiler_preproc_undef_base(sabr_compiler* comp, word w, token t
 	);
 	trie_remove(word, dictionary, identifier_token.data + 1);
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	free(identifier_token.data);
 	return result;
@@ -200,7 +200,7 @@ const bool sabr_compiler_preproc_getdef_base(sabr_compiler* comp, word w, token 
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -298,7 +298,7 @@ const bool sabr_compiler_preproc_import(sabr_compiler* comp, word w, token t, ve
 		}
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		sabr_free_token_vector(preprocessed_tokens);
@@ -343,7 +343,7 @@ const bool sabr_compiler_preproc_include(sabr_compiler* comp, word w, token t, v
 		}
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		sabr_free_token_vector(preprocessed_tokens);
@@ -389,7 +389,7 @@ const bool sabr_compiler_preproc_eval(sabr_compiler* comp, word w, token t, vect
 		}
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -456,7 +456,7 @@ const bool sabr_compiler_preproc_if(sabr_compiler* comp, word w, token t, vector
 		}
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -536,7 +536,7 @@ const bool sabr_compiler_preproc_concat(sabr_compiler* comp, word w, token t, ve
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(text_str_temp);
@@ -630,7 +630,7 @@ const bool sabr_compiler_preproc_substr(sabr_compiler* comp, word w, token t, ve
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(final_result_str);
@@ -681,7 +681,7 @@ const bool sabr_compiler_preproc_compare(sabr_compiler* comp, word w, token t, v
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_str);
@@ -726,7 +726,7 @@ const bool sabr_compiler_preproc_len(sabr_compiler* comp, word w, token t, vecto
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_str);
@@ -751,7 +751,7 @@ const bool sabr_compiler_preproc_drop(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	free(value_token_a.data);
 	return result;
@@ -785,7 +785,7 @@ const bool sabr_compiler_preproc_nip(sabr_compiler* comp, word w, token t, vecto
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(value_token_b.data);
@@ -828,7 +828,7 @@ const bool sabr_compiler_preproc_dup(sabr_compiler* comp, word w, token t, vecto
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(value_token_a.data);
@@ -883,7 +883,7 @@ const bool sabr_compiler_preproc_over(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(value_token_a.data);
@@ -939,7 +939,7 @@ const bool sabr_compiler_preproc_tuck(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(value_token_a.data);
@@ -982,7 +982,7 @@ const bool sabr_compiler_preproc_swap(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(value_token_a.data);
@@ -1036,7 +1036,7 @@ const bool sabr_compiler_preproc_rot(sabr_compiler* comp, word w, token t, vecto
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(value_token_a.data);
@@ -1069,7 +1069,7 @@ const bool sabr_compiler_preproc_2drop(sabr_compiler* comp, word w, token t, vec
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	free(value_token_a.data);
 	free(value_token_b.data);
@@ -1123,7 +1123,7 @@ const bool sabr_compiler_preproc_2nip(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(value_token_c.data);
@@ -1194,7 +1194,7 @@ const bool sabr_compiler_preproc_2dup(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(value_token_a.data);
@@ -1289,7 +1289,7 @@ const bool sabr_compiler_preproc_2over(sabr_compiler* comp, word w, token t, vec
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(value_token_a.data);
@@ -1385,7 +1385,7 @@ const bool sabr_compiler_preproc_2tuck(sabr_compiler* comp, word w, token t, vec
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(value_token_a.data);
@@ -1455,7 +1455,7 @@ const bool sabr_compiler_preproc_2swap(sabr_compiler* comp, word w, token t, vec
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(value_token_a.data);
@@ -1547,7 +1547,7 @@ const bool sabr_compiler_preproc_2rot(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(value_token_a.data);
@@ -1610,7 +1610,7 @@ const bool sabr_compiler_preproc_add(sabr_compiler* comp, word w, token t, vecto
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -1670,7 +1670,7 @@ const bool sabr_compiler_preproc_sub(sabr_compiler* comp, word w, token t, vecto
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -1730,7 +1730,7 @@ const bool sabr_compiler_preproc_mul(sabr_compiler* comp, word w, token t, vecto
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -1795,7 +1795,7 @@ const bool sabr_compiler_preproc_div(sabr_compiler* comp, word w, token t, vecto
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -1860,7 +1860,7 @@ const bool sabr_compiler_preproc_mod(sabr_compiler* comp, word w, token t, vecto
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -1925,7 +1925,7 @@ const bool sabr_compiler_preproc_udiv(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -1990,7 +1990,7 @@ const bool sabr_compiler_preproc_umod(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -2050,7 +2050,7 @@ const bool sabr_compiler_preproc_equ(sabr_compiler* comp, word w, token t, vecto
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -2110,7 +2110,7 @@ const bool sabr_compiler_preproc_neq(sabr_compiler* comp, word w, token t, vecto
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -2170,7 +2170,7 @@ const bool sabr_compiler_preproc_grt(sabr_compiler* comp, word w, token t, vecto
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -2230,7 +2230,7 @@ const bool sabr_compiler_preproc_geq(sabr_compiler* comp, word w, token t, vecto
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -2290,7 +2290,7 @@ const bool sabr_compiler_preproc_lst(sabr_compiler* comp, word w, token t, vecto
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -2350,7 +2350,7 @@ const bool sabr_compiler_preproc_leq(sabr_compiler* comp, word w, token t, vecto
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -2410,7 +2410,7 @@ const bool sabr_compiler_preproc_ugrt(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -2470,7 +2470,7 @@ const bool sabr_compiler_preproc_ugeq(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -2530,7 +2530,7 @@ const bool sabr_compiler_preproc_ulst(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -2590,7 +2590,7 @@ const bool sabr_compiler_preproc_uleq(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -2650,7 +2650,7 @@ const bool sabr_compiler_preproc_fadd(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -2710,7 +2710,7 @@ const bool sabr_compiler_preproc_fsub(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -2770,7 +2770,7 @@ const bool sabr_compiler_preproc_fmul(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -2830,7 +2830,7 @@ const bool sabr_compiler_preproc_fdiv(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -2890,7 +2890,7 @@ const bool sabr_compiler_preproc_fmod(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -2950,7 +2950,7 @@ const bool sabr_compiler_preproc_fgrt(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -3010,7 +3010,7 @@ const bool sabr_compiler_preproc_fgeq(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -3070,7 +3070,7 @@ const bool sabr_compiler_preproc_flst(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -3130,7 +3130,7 @@ const bool sabr_compiler_preproc_fleq(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -3190,7 +3190,7 @@ const bool sabr_compiler_preproc_and(sabr_compiler* comp, word w, token t, vecto
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -3250,7 +3250,7 @@ const bool sabr_compiler_preproc_or(sabr_compiler* comp, word w, token t, vector
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -3310,7 +3310,7 @@ const bool sabr_compiler_preproc_xor(sabr_compiler* comp, word w, token t, vecto
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -3358,7 +3358,7 @@ const bool sabr_compiler_preproc_not(sabr_compiler* comp, word w, token t, vecto
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -3417,7 +3417,7 @@ const bool sabr_compiler_preproc_lsft(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -3477,7 +3477,7 @@ const bool sabr_compiler_preproc_rsft(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -3525,7 +3525,7 @@ const bool sabr_compiler_preproc_ftoi(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -3572,7 +3572,7 @@ const bool sabr_compiler_preproc_itof(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -3619,7 +3619,7 @@ const bool sabr_compiler_preproc_fmti(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -3666,7 +3666,7 @@ const bool sabr_compiler_preproc_fmtu(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
@@ -3713,7 +3713,7 @@ const bool sabr_compiler_preproc_fmtf(sabr_compiler* comp, word w, token t, vect
 		goto FREE_ALL;
 	}
 
-	result = !result;
+	result = true;
 FREE_ALL:
 	if (!result) {
 		free(result_token.data);
