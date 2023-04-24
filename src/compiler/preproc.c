@@ -1,11 +1,13 @@
 #include "preproc.h"
 
 const char* preproc_keyword_names[] = {
-	"#def",
+	"#func",
+	"#macro",
 	"#isdef",
 	"#undef",
 	"#getdef",
-	"#ldef",
+	"#lfunc",
+	"#lmacro",
 	"#lisdef",
 	"#lundef",
 	"#lgetdef",

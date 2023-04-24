@@ -14,7 +14,7 @@ bool sabr_compiler_init(sabr_compiler* const comp) {
 	for (size_t i = 0; i < preproc_keyword_names_len; i++) {
 		word w;
 		w.type = WT_PREPROC_KWRD;
-		w.data.p_kwrd = (preproc_keyword) i;
+		w.data.kwrd = (preproc_keyword) i;
 		if (!trie_insert(word, &comp->preproc_dictionary, preproc_keyword_names[i], w)) {
 			fputs(sabr_errmsg_alloc, stderr);
 			return false;
@@ -262,14 +262,16 @@ vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector
 		if (w) {
 			switch (w->type) {
 				case WT_PREPROC_KWRD: {
-					if (!preproc_keyword_functions[w->data.p_kwrd](comp, *w, t, output_tokens)) {
+					if (!preproc_keyword_functions[w->data.kwrd](comp, *w, t, output_tokens)) {
 						fprintf(stderr, console_yellow console_bold "%s" console_reset " in line %zu, column %zu\n", t.data, t.begin_pos.line, t.begin_pos.column);
 						fprintf(stderr, "in file " console_yellow console_bold "%s\n" console_reset, *vector_at(cctl_ptr(char), &comp->filename_vector, t.textcode_index));
 						goto FREE_ALL;
 					}
 				} break;
 				case WT_PREPROC_IDFR: {
-					output_tokens = sabr_compiler_preprocess_eval_token(comp, w->data.macro_code, true, output_tokens);
+					preproc_def_data def_data = w->data.def_data;
+					token def_code = def_data.def_code;
+					output_tokens = sabr_compiler_preprocess_eval_token(comp, def_code, def_data.is_func, output_tokens);
 					if (!output_tokens) {
 						fprintf(stderr, console_yellow console_bold "%s" console_reset " in line %zu, column %zu\n", t.data, t.begin_pos.line, t.begin_pos.column);
 						fprintf(stderr, "in file " console_yellow console_bold "%s\n" console_reset, *vector_at(cctl_ptr(char), &comp->filename_vector, t.textcode_index));

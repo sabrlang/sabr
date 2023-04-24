@@ -14,10 +14,16 @@ enum word_type_enum {
 	WT_IDFR
 };
 
+typedef struct preproc_def_data_struct preproc_def_data;
+struct preproc_def_data_struct {
+	token def_code;
+	bool is_func;
+};
+
 typedef union word_data_union word_data;
 union word_data_union {
-	token macro_code;
-	preproc_keyword p_kwrd;
+	preproc_def_data def_data;
+	preproc_keyword kwrd;
 };
 
 typedef struct word_struct word;

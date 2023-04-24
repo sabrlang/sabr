@@ -1,6 +1,6 @@
 #include "preproc_operation.h"
 
-const bool sabr_compiler_preproc_def(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+const bool sabr_compiler_preproc_def_base(sabr_compiler* comp, word w, token t, vector(token)* output_tokens, bool is_local, bool is_func) {
 	token code_token = {0, };
 	token identifier_token = {0, };
 
@@ -31,18 +31,27 @@ const bool sabr_compiler_preproc_def(sabr_compiler* comp, word w, token t, vecto
 	token macro_code_token = code_token;
 	macro_code_token.data = sabr_new_string_copy(code_token.data);
 
+	preproc_def_data def_data;
+	def_data.def_code = macro_code_token;
+	def_data.is_func = is_func;
+
 	word macro_word;
 	macro_word.type = WT_PREPROC_IDFR;
-	macro_word.data.macro_code = macro_code_token;
+	macro_word.data.def_data = def_data;
 
-	word* identifier_word = trie_find(word, &comp->preproc_dictionary, identifier_token.data + 1);
+	trie(word)* dictionary = (
+		is_local
+		? *vector_back(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack)
+		: &comp->preproc_dictionary
+	);
+	word* identifier_word = trie_find(word, dictionary, identifier_token.data + 1);
 	if (identifier_word) {
-		token prev_macro_code_token = identifier_word->data.macro_code;
+		token prev_macro_code_token = identifier_word->data.def_data.def_code;
 		free(prev_macro_code_token.data);
-		identifier_word->data.macro_code = macro_code_token;
+		identifier_word->data.def_data = def_data;
 	}
 	else {
-		if (!trie_insert(word, &comp->preproc_dictionary, identifier_token.data + 1, macro_word)) {
+		if (!trie_insert(word, dictionary, identifier_token.data + 1, macro_word)) {
 			fputs(sabr_errmsg_alloc, stderr);
 			goto FREE_ALL;
 		}
@@ -58,7 +67,7 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_isdef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+const bool sabr_compiler_preproc_isdef_base(sabr_compiler* comp, word w, token t, vector(token)* output_tokens, bool is_local) {
 	token identifier_token = {0, };
 	token result_token = {0, };
 
@@ -80,7 +89,12 @@ const bool sabr_compiler_preproc_isdef(sabr_compiler* comp, word w, token t, vec
 		goto FREE_ALL;
 	}
 	
-	word* identifier_word = trie_find(word, &comp->preproc_dictionary, identifier_token.data + 1);
+	trie(word)* dictionary = (
+		is_local
+		? *vector_back(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack)
+		: &comp->preproc_dictionary
+	);
+	word* identifier_word = trie_find(word, dictionary, identifier_token.data + 1);
 	int flag = identifier_word ? ((identifier_word->type == WT_PREPROC_IDFR) ? 1 : 0) : 0;
 
 	result_token = t;
@@ -104,7 +118,7 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_undef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+const bool sabr_compiler_preproc_undef_base(sabr_compiler* comp, word w, token t, vector(token)* output_tokens, bool is_local) {
 	token identifier_token = {0, };
 
 	bool result = false;
@@ -125,7 +139,12 @@ const bool sabr_compiler_preproc_undef(sabr_compiler* comp, word w, token t, vec
 		goto FREE_ALL;
 	}
 
-	trie_remove(word, &comp->preproc_dictionary, identifier_token.data + 1);
+	trie(word)* dictionary = (
+		is_local
+		? *vector_back(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack)
+		: &comp->preproc_dictionary
+	);
+	trie_remove(word, dictionary, identifier_token.data + 1);
 
 	result = !result;
 FREE_ALL:
@@ -133,7 +152,7 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_getdef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+const bool sabr_compiler_preproc_getdef_base(sabr_compiler* comp, word w, token t, vector(token)* output_tokens, bool is_local) {
 	token identifier_token = {0, };
 	token result_token = {0, };
 
@@ -158,9 +177,14 @@ const bool sabr_compiler_preproc_getdef(sabr_compiler* comp, word w, token t, ve
 	result_token = t;
 	result_token.is_generated = false;
 
-	word* identifier_word = trie_find(word, &comp->preproc_dictionary, identifier_token.data + 1);
+	trie(word)* dictionary = (
+		is_local
+		? *vector_back(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack)
+		: &comp->preproc_dictionary
+	);
+	word* identifier_word = trie_find(word, dictionary, identifier_token.data + 1);
 	if (identifier_word) {
-		token macro_code = identifier_word->data.macro_code;
+		token macro_code = identifier_word->data.def_data.def_code;
 		printf("%s", macro_code.data);
 		result_token.data = sabr_new_string_copy(macro_code.data);
 	}
@@ -186,191 +210,44 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_ldef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token code_token = {0, };
-	token identifier_token = {0, };
-
-	bool result = false;
-
-	if (output_tokens->size < 2) {
-		fputs(sabr_errmsg_stackunderflow, stderr);
-		goto FREE_ALL;
-	}
-
-	code_token = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
-		fputs(sabr_errmsg_stackunderflow, stderr);
-		goto FREE_ALL;
-	}
-
-	identifier_token = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
-		fputs(sabr_errmsg_stackunderflow, stderr);
-		goto FREE_ALL;
-	}
-
-	if (identifier_token.data[0] != '$') {
-		fputs(sabr_errmsg_invalid_ident_fmt, stderr);
-		goto FREE_ALL;
-	}
-
-	token macro_code_token = code_token;
-	macro_code_token.data = sabr_new_string_copy(code_token.data);
-
-	word macro_word;
-	macro_word.type = WT_PREPROC_IDFR;
-	macro_word.data.macro_code = macro_code_token;
-
-	trie(word)* preproc_local_dictionary = *vector_back(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack);
-	word* identifier_word = trie_find(word, preproc_local_dictionary, identifier_token.data + 1);
-	if (identifier_word) {
-		token prev_macro_code_token = identifier_word->data.macro_code;
-		free(prev_macro_code_token.data);
-		identifier_word->data.macro_code = macro_code_token;
-	}
-	else {
-		if (!trie_insert(word, preproc_local_dictionary, identifier_token.data + 1, macro_word)) {
-			fputs(sabr_errmsg_alloc, stderr);
-			goto FREE_ALL;
-		}
-	}
-
-	result = !result;
-FREE_ALL:
-	if (!result) {
-		free(macro_code_token.data);
-	}
-	free(code_token.data);
-	free(identifier_token.data);
-	return result;
+const bool sabr_compiler_preproc_func(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+	return sabr_compiler_preproc_def_base(comp, w, t, output_tokens, false, true);
 }
+
+const bool sabr_compiler_preproc_macro(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+	return sabr_compiler_preproc_def_base(comp, w, t, output_tokens, false, false);
+}
+
+const bool sabr_compiler_preproc_isdef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+	return sabr_compiler_preproc_isdef_base(comp, w, t, output_tokens, false);
+}
+
+const bool sabr_compiler_preproc_undef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+	return sabr_compiler_preproc_undef_base(comp, w, t, output_tokens, false);
+}
+
+const bool sabr_compiler_preproc_getdef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+	return sabr_compiler_preproc_getdef_base(comp, w, t, output_tokens, false);
+}
+
+const bool sabr_compiler_preproc_lfunc(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+	return sabr_compiler_preproc_def_base(comp, w, t, output_tokens, true, true);
+}
+
+const bool sabr_compiler_preproc_lmacro(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+	return sabr_compiler_preproc_def_base(comp, w, t, output_tokens, true, false);
+}
+
 const bool sabr_compiler_preproc_lisdef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token identifier_token = {0, };
-	token result_token = {0, };
-
-	bool result = false;
-
-	if (output_tokens->size < 1) {
-		fputs(sabr_errmsg_stackunderflow, stderr);
-		goto FREE_ALL;
-	}
-
-	identifier_token = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
-		fputs(sabr_errmsg_stackunderflow, stderr);
-		goto FREE_ALL;
-	}
-
-	if (identifier_token.data[0] != '$') {
-		fputs(sabr_errmsg_invalid_ident_fmt, stderr);
-		goto FREE_ALL;
-	}
-	
-	trie(word)* preproc_local_dictionary = *vector_back(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack);
-	word* identifier_word = trie_find(word, preproc_local_dictionary, identifier_token.data + 1);
-	int flag = identifier_word ? ((identifier_word->type == WT_PREPROC_IDFR) ? 1 : 0) : 0;
-
-	result_token = t;
-	if (asprintf(&(result_token.data), "%d", flag) == -1) {
-		fputs(sabr_errmsg_alloc, stderr);
-		goto FREE_ALL;
-	}
-	result_token.is_generated = true;
-
-	if (!vector_push_back(token, output_tokens, result_token)) {
-		fputs(sabr_errmsg_alloc, stderr);
-		goto FREE_ALL;
-	}
-
-	result = !result;
-FREE_ALL:
-	if (!result) {
-		free(result_token.data);
-	}
-	free(identifier_token.data);
-	return result;
+	return sabr_compiler_preproc_isdef_base(comp, w, t, output_tokens, true);
 }
+
 const bool sabr_compiler_preproc_lundef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token identifier_token = {0, };
-
-	bool result = false;
-
-	if (output_tokens->size < 1) {
-		fputs(sabr_errmsg_stackunderflow, stderr);
-		goto FREE_ALL;
-	}
-
-	identifier_token = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
-		fputs(sabr_errmsg_stackunderflow, stderr);
-		goto FREE_ALL;
-	}
-
-	if (identifier_token.data[0] != '$') {
-		fputs(sabr_errmsg_invalid_ident_fmt, stderr);
-		goto FREE_ALL;
-	}
-
-	trie(word)* preproc_local_dictionary = *vector_back(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack);
-	trie_remove(word, preproc_local_dictionary, identifier_token.data + 1);
-
-	result = !result;
-FREE_ALL:
-	free(identifier_token.data);
-	return result;
+	return sabr_compiler_preproc_undef_base(comp, w, t, output_tokens, true);
 }
 
 const bool sabr_compiler_preproc_lgetdef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token identifier_token = {0, };
-	token result_token = {0, };
-
-	bool result = false;
-
-	if (output_tokens->size < 1) {
-		fputs(sabr_errmsg_stackunderflow, stderr);
-		goto FREE_ALL;
-	}
-
-	identifier_token = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
-		fputs(sabr_errmsg_stackunderflow, stderr);
-		goto FREE_ALL;
-	}
-
-	if (identifier_token.data[0] != '$') {
-		fputs(sabr_errmsg_invalid_ident_fmt, stderr);
-		goto FREE_ALL;
-	}
-	
-	result_token = t;
-	result_token.is_generated = false;
-
-	trie(word)* preproc_local_dictionary = *vector_back(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack);
-	word* identifier_word = trie_find(word, preproc_local_dictionary, identifier_token.data + 1);
-	if (identifier_word) {
-		token macro_code = identifier_word->data.macro_code;
-		result_token.data = sabr_new_string_copy(macro_code.data);
-	}
-	else {
-		result_token.data = sabr_new_string_copy("{}");
-	}
-	if (!result_token.data) {
-		fputs(sabr_errmsg_alloc, stderr);
-		goto FREE_ALL;
-	}
-
-	if (!vector_push_back(token, output_tokens, result_token)) {
-		fputs(sabr_errmsg_alloc, stderr);
-		goto FREE_ALL;
-	}
-
-	result = !result;
-FREE_ALL:
-	if (!result) {
-		free(result_token.data);
-	}
-	free(identifier_token.data);
-	return result;
+	return sabr_compiler_preproc_getdef_base(comp, w, t, output_tokens, true);
 }
 
 const bool sabr_compiler_preproc_import(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
@@ -3847,11 +3724,13 @@ FREE_ALL:
 }
 
 const bool (*preproc_keyword_functions[])(sabr_compiler* const comp, word w, token t, vector(token)* output_tokens) = {
-	sabr_compiler_preproc_def,
+	sabr_compiler_preproc_func,
+	sabr_compiler_preproc_macro,
 	sabr_compiler_preproc_isdef,
 	sabr_compiler_preproc_undef,
 	sabr_compiler_preproc_getdef,
-	sabr_compiler_preproc_ldef,
+	sabr_compiler_preproc_lfunc,
+	sabr_compiler_preproc_lmacro,
 	sabr_compiler_preproc_lisdef,
 	sabr_compiler_preproc_lundef,
 	sabr_compiler_preproc_lgetdef,

@@ -40,7 +40,7 @@ void sabr_free_word_trie(trie(word)* dictionary) {
 		word w = dictionary->data;
 		switch (w.type) {
 			case WT_PREPROC_IDFR: {
-				token t = w.data.macro_code;
+				token t = w.data.def_data.def_code;
 				free(t.data);
 			} break;
 			default:
