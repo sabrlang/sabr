@@ -433,10 +433,15 @@ vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const ch
 
 	size_t brace_level = 0;
 
+	char* error_token_str = NULL;
+
 	comment_parse_mode comment = CMNT_PARSE_NONE;
 	string_parse_mode string_parse = STR_PARSE_NONE;
 	bool string_escape = false;
+	bool string_parsed = false;
 	bool space = true;
+
+	bool break_flag = false;
 	
 	char character = *(textcode + current_index);
 	
@@ -493,6 +498,7 @@ vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const ch
 							}
 
 							space = true;
+							string_parsed = false;
 						}
 					}
 				}
@@ -503,6 +509,7 @@ vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const ch
 						if (string_escape) string_escape = false;
 						else if (string_parse == STR_PARSE_SINGLE) {
 							string_parse = STR_PARSE_NONE;
+							string_parsed = true;
 						}
 					}
 					else if (space) {
@@ -512,6 +519,9 @@ vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const ch
 						string_parse = STR_PARSE_SINGLE;
 						string_escape = false;
 					}
+					else {
+						goto WRONG_TOKEN;
+					}
 				}
 			} break;
 			case '\"': {
@@ -520,6 +530,7 @@ vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const ch
 						if (string_escape) string_escape = false;
 						else if (string_parse == STR_PARSE_DOUBLE) {
 							string_parse = STR_PARSE_NONE;
+							string_parsed = true;
 						}
 					}
 					else if (space) {
@@ -528,6 +539,9 @@ vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const ch
 						begin_pos = current_pos;
 						string_parse = STR_PARSE_DOUBLE;
 						string_escape = false;
+					}
+					else {
+						goto WRONG_TOKEN;
 					}
 				}
 			} break;
@@ -547,6 +561,9 @@ vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const ch
 						string_escape = false;
 						brace_level++;
 					}
+					else {
+						goto WRONG_TOKEN;
+					}
 				}
 			} break;
 			case '}': {
@@ -557,6 +574,7 @@ vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const ch
 							brace_level--;
 							if (brace_level == 0) {
 								string_parse = STR_PARSE_NONE;
+								string_parsed = true;
 							}
 						}
 					}
@@ -564,6 +582,9 @@ vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const ch
 						space = false;
 						begin_index = current_index;
 						begin_pos = current_pos;
+					}
+					else {
+						goto WRONG_TOKEN;
 					}
 				}
 			} break;
@@ -612,6 +633,9 @@ vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const ch
 						begin_index = current_index;
 						begin_pos = current_pos;
 					}
+					else if (string_parsed) {
+						goto WRONG_TOKEN;
+					}
 				}
 			}
 		}
@@ -624,10 +648,40 @@ vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const ch
 		
 	}
 
+	if (string_parse) {
+		current_index = begin_index;
+		character = *(textcode + current_index);
+		goto WRONG_TOKEN;
+	}
+
 	return tokens;
 FREE_ALL:
 	sabr_free_token_vector(tokens);
 	return NULL;
+
+WRONG_TOKEN:
+	fputs(sabr_errmsg_wrong_token_fmt, stderr);
+
+	break_flag = false;
+	while (character) {
+		switch (character) {
+			case '\n': case '\r': case '\t': case ' ':
+				break_flag = true;
+			break;
+		}
+		if (break_flag) break;
+		current_index++;
+		character = *(textcode + current_index);
+	}
+	error_token_str = sabr_new_string_slice(textcode, begin_index, current_index);
+	if (!error_token_str) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
+	fprintf(stderr, console_yellow console_bold "%s" console_reset " in line %zu, column %zu\n", error_token_str, begin_pos.line, begin_pos.column);
+	fprintf(stderr, "in file " console_yellow console_bold "%s\n" console_reset, *vector_at(cctl_ptr(char), &comp->filename_vector, textcode_index));
+	goto FREE_ALL;
 }
 
 bool sabr_compiler_parse_zero_begin_num(const char* str, size_t index, bool negate, value* v) {
