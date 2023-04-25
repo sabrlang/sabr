@@ -81,10 +81,12 @@
 	} \
 	\
 	void vector_func(free, TYPE)(vector(TYPE)* p_v) { \
-		vector_func(clear, TYPE)(p_v); \
-		free(p_v->p_data); \
-		vector_func(init, TYPE)(p_v); \
-		return; \
+		if (p_v) { \
+			vector_func(clear, TYPE)(p_v); \
+			free(p_v->p_data); \
+			vector_func(init, TYPE)(p_v); \
+			return; \
+		} \
 	} \
 	\
 	bool vector_func(push_back, TYPE)(vector(TYPE)* p_v, TYPE item) { \
