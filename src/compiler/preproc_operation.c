@@ -471,11 +471,11 @@ const bool sabr_compiler_preproc_concat(sabr_compiler* comp, word w, token t, ve
 	token text_token_a = {0, };
 	token text_token_b = {0, };
 	token result_token = {0, };
-	bool is_a_code_block;
-	bool is_b_code_block;
 	char* text_str_a = NULL;
 	char* text_str_b = NULL;
 	char* text_str_temp = NULL;
+	string_parse_mode token_a_str_parse = STR_PARSE_NONE;
+	string_parse_mode token_b_str_parse = STR_PARSE_NONE;
 
 	bool result = false;
 
@@ -496,31 +496,69 @@ const bool sabr_compiler_preproc_concat(sabr_compiler* comp, word w, token t, ve
 		goto FREE_ALL;
 	}
 
-	is_a_code_block = text_token_a.data[0] == '{';
-	is_b_code_block = text_token_b.data[0] == '{';
+	char string_begin[2] = {0, };
+	char string_end[2] = {0, };
 
-	text_str_a = is_a_code_block
-		? sabr_new_string_slice(text_token_a.data, 1, strlen(text_token_a.data) - 1)
-		: sabr_new_string_copy(text_token_a.data);
-	if (!text_str_a) {
-		fputs(sabr_errmsg_alloc, stderr);
-		goto FREE_ALL;
+	switch (text_token_a.data[0]) {
+		case '{': token_a_str_parse = STR_PARSE_PREPROC; break;
+		case '\'': token_a_str_parse = STR_PARSE_SINGLE; break;
+		case '\"': token_a_str_parse = STR_PARSE_DOUBLE; break;
+		default: break;
 	}
-	
-	text_str_b = is_b_code_block
-		? sabr_new_string_slice(text_token_b.data, 1, strlen(text_token_b.data) - 1)
-		: sabr_new_string_copy(text_token_b.data);
-	if (!text_str_b) {
-		fputs(sabr_errmsg_alloc, stderr);
-		goto FREE_ALL;
+	switch (text_token_b.data[0]) {
+		case '{': token_b_str_parse = STR_PARSE_PREPROC; break;
+		case '\'': token_b_str_parse = STR_PARSE_SINGLE; break;
+		case '\"': token_b_str_parse = STR_PARSE_DOUBLE; break;
+		default: break;
 	}
+
+	if (token_a_str_parse) {
+		text_str_a = sabr_new_string_slice(text_token_a.data, 1, strlen(text_token_a.data) - 1);
+		text_str_b = (token_a_str_parse == token_b_str_parse)
+			? sabr_new_string_slice(text_token_b.data, 1, strlen(text_token_b.data) - 1)
+			: sabr_new_string_copy(text_token_b.data);
+		switch (token_a_str_parse) {
+			case STR_PARSE_PREPROC:
+				string_begin[0] = '{'; string_end[0] = '}';
+				break;
+			case STR_PARSE_SINGLE:
+				string_begin[0] = '\''; string_end[0] = '\'';
+				break;
+			case STR_PARSE_DOUBLE:
+				string_begin[0] = '\"'; string_end[0] = '\"';
+				break;
+			default:
+				break;
+		}
+	}
+	else {
+		text_str_a = sabr_new_string_copy(text_token_a.data);
+		text_str_b = (token_b_str_parse)
+			? sabr_new_string_slice(text_token_b.data, 1, strlen(text_token_b.data) - 1)
+			: sabr_new_string_copy(text_token_b.data);
+		switch (token_b_str_parse) {
+			case STR_PARSE_PREPROC:
+				string_begin[0] = '{'; string_end[0] = '}';
+				break;
+			case STR_PARSE_SINGLE:
+				string_begin[0] = '\''; string_end[0] = '\'';
+				break;
+			case STR_PARSE_DOUBLE:
+				string_begin[0] = '\"'; string_end[0] = '\"';
+				break;
+			default:
+				break;
+		}
+	}
+	if (!text_str_a) { fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL; }
+	if (!text_str_b) { fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL; }
 
 	if (
 		asprintf(
 			&text_str_temp, "%s%s%s%s",
-			(is_a_code_block || is_b_code_block) ? "{" : "",
+			string_begin,
 			text_str_a, text_str_b,
-			(is_a_code_block || is_b_code_block) ? "}" : ""
+			string_end
 		) == -1
 	) {
 		fputs(sabr_errmsg_alloc, stderr);
