@@ -235,6 +235,9 @@ const bool sabr_compiler_preproc_import(sabr_compiler* comp, word w, token t, ve
 	token filename_token = {0, };
 	char filename_full[PATH_MAX] = {0, };
 	size_t textcode_index;
+	char* filename_str = NULL;
+	char* current_filename_str = NULL;
+	bool local_file = false;
 	vector(token)* preprocessed_tokens = NULL;
 
 	bool result = false;
@@ -248,12 +251,36 @@ const bool sabr_compiler_preproc_import(sabr_compiler* comp, word w, token t, ve
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
+	filename_str = filename_token.data;
+	local_file = (*filename_str == ':');
+	if (local_file) filename_str++;
+
+	current_filename_str = *vector_at(cctl_ptr(char), &comp->filename_vector, t.textcode_index);
+
+	char import_filename[PATH_MAX];
+	char binary_path[PATH_MAX] = {0, };
+
 #if defined(_WIN32)
-	if (!_fullpath(filename_full, filename_token.data, PATH_MAX)) {
+	char drive[_MAX_DRIVE];
+	char pivot_dir[_MAX_DIR];
+
+	if (local_file) {
+		_splitpath(current_filename_str, drive, pivot_dir, NULL, NULL);
+	}
+	else {
+		_splitpath(binary_path, drive, pivot_dir, NULL, NULL);
+		strcat(pivot_dir, "../lib");
+	}
+	_makepath(import_filename, drive, pivot_dir, filename_str, ".sabrc");
+	
+#endif
+
+#if defined(_WIN32)
+	if (!_fullpath(filename_full, import_filename, PATH_MAX)) {
 		fputs(sabr_errmsg_fullpath, stderr); goto FREE_ALL;
 	}
 #else
-	if (!(realpath(filename_token.data, filename_full))) {
+	if (!(realpath(filename_str, filename_full))) {
 		fputs(sabr_errmsg_fullpath, stderr); goto FREE_ALL;
 	}
 #endif
