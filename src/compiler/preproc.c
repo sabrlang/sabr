@@ -12,7 +12,6 @@ const char* preproc_keyword_names[] = {
 	"#lundef",
 	"#lgetdef",
 	"#import",
-	"#include",
 	"#eval",
 	"#if",
 	"#concat",

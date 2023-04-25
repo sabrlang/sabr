@@ -269,7 +269,9 @@ const bool sabr_compiler_preproc_import(sabr_compiler* comp, word w, token t, ve
 		_splitpath(current_filename_str, drive, pivot_dir, NULL, NULL);
 	}
 	else {
-		GetModuleFileName(NULL, binary_path, PATH_MAX);
+		if (!GetModuleFileName(NULL, binary_path, PATH_MAX)) {
+			fputs(sabr_errmsg_fullpath, stderr); goto FREE_ALL;
+		}
 		_splitpath(binary_path, drive, pivot_dir, NULL, NULL);
 		strcat(pivot_dir, "../lib");
 	}
@@ -328,43 +330,6 @@ FREE_ALL:
 		preprocessed_tokens = NULL;
 	}
 	vector_free(token, preprocessed_tokens);
-	free(preprocessed_tokens);
-	free(filename_token.data);
-	return result;
-}
-
-const bool sabr_compiler_preproc_include(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token filename_token = {0, };
-	size_t textcode_index;
-	vector(token)* preprocessed_tokens = NULL;
-
-	bool result = false;
-
-	if (output_tokens->size < 1) {
-		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
-	}
-	
-	filename_token = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
-		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
-	}
-
-	if (!sabr_compiler_load_file(comp, filename_token.data, &textcode_index)) goto FREE_ALL;
-
-	preprocessed_tokens = sabr_compiler_preprocess_textcode(comp, textcode_index);
-	if (!preprocessed_tokens) goto FREE_ALL;
-
-	for (size_t i = 0; i < preprocessed_tokens->size; i++) {
-		if (!vector_push_back(token, output_tokens, *vector_at(token, preprocessed_tokens, i))) {
-			fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
-		}
-	}
-
-	result = true;
-FREE_ALL:
-	if (!result) {
-		sabr_free_token_vector(preprocessed_tokens);
-	}
 	free(preprocessed_tokens);
 	free(filename_token.data);
 	return result;
@@ -3508,7 +3473,6 @@ const bool (*preproc_keyword_functions[])(sabr_compiler* const comp, word w, tok
 	sabr_compiler_preproc_lundef,
 	sabr_compiler_preproc_lgetdef,
 	sabr_compiler_preproc_import,
-	sabr_compiler_preproc_include,
 	sabr_compiler_preproc_eval,
 	sabr_compiler_preproc_if,
 	sabr_compiler_preproc_concat,
