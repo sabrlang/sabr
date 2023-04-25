@@ -237,6 +237,7 @@ const bool sabr_compiler_preproc_import(sabr_compiler* comp, word w, token t, ve
 	size_t textcode_index;
 	char* filename_str = NULL;
 	char* current_filename_str = NULL;
+
 	bool local_file = false;
 	vector(token)* preprocessed_tokens = NULL;
 
@@ -268,11 +269,33 @@ const bool sabr_compiler_preproc_import(sabr_compiler* comp, word w, token t, ve
 		_splitpath(current_filename_str, drive, pivot_dir, NULL, NULL);
 	}
 	else {
+		GetModuleFileName(NULL, binary_path, PATH_MAX);
 		_splitpath(binary_path, drive, pivot_dir, NULL, NULL);
 		strcat(pivot_dir, "../lib");
 	}
 	_makepath(import_filename, drive, pivot_dir, filename_str, ".sabrc");
-	
+#else
+	char temp_path_filename[PATH_MAX] = {0, };
+	char temp_path_dirname[PATH_MAX] = {0, };
+	char* pivot_dir = NULL;
+	if (local_file) {
+		strcpy(temp_path_filename, current_filename_str);
+		pivot_dir = dirname(temp_path_filename);
+		strcpy(temp_path_dirname, pivot_dir);
+		strcat(temp_path_dirname, "/");
+	}
+	else {
+		if (readlink("/proc/self/exe", binary_path, PATH_MAX) < 0) {
+			fputs(sabr_errmsg_fullpath, stderr); goto FREE_ALL;
+		}
+		strcpy(temp_path_filename, binary_path);
+		pivot_dir = dirname(temp_path_filename);
+		strcpy(temp_path_dirname, pivot_dir);
+		strcat(temp_path_dirname, "/../lib/");
+	}
+	strcpy(import_filename, temp_path_dirname);
+	strcat(import_filename, filename_str);
+	strcat(import_filename, ".sabrc");
 #endif
 
 #if defined(_WIN32)
@@ -280,7 +303,7 @@ const bool sabr_compiler_preproc_import(sabr_compiler* comp, word w, token t, ve
 		fputs(sabr_errmsg_fullpath, stderr); goto FREE_ALL;
 	}
 #else
-	if (!(realpath(filename_str, filename_full))) {
+	if (!(realpath(import_filename, filename_full))) {
 		fputs(sabr_errmsg_fullpath, stderr); goto FREE_ALL;
 	}
 #endif
@@ -302,6 +325,7 @@ const bool sabr_compiler_preproc_import(sabr_compiler* comp, word w, token t, ve
 FREE_ALL:
 	if (!result) {
 		sabr_free_token_vector(preprocessed_tokens);
+		preprocessed_tokens = NULL;
 	}
 	vector_free(token, preprocessed_tokens);
 	free(preprocessed_tokens);
