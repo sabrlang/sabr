@@ -17,6 +17,7 @@ const char* preproc_keyword_names[] = {
 	"#if",
 	"#concat",
 	"#substr",
+	"#trim",
 	"#compare",
 	"#len",
 	"#drop",

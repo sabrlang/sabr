@@ -26,6 +26,7 @@ const bool sabr_compiler_preproc_eval(sabr_compiler* comp, word w, token t, vect
 const bool sabr_compiler_preproc_if(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
 const bool sabr_compiler_preproc_concat(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
 const bool sabr_compiler_preproc_substr(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
+const bool sabr_compiler_preproc_trim(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
 const bool sabr_compiler_preproc_compare(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
 const bool sabr_compiler_preproc_len(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
 const bool sabr_compiler_preproc_drop(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);

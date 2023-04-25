@@ -635,6 +635,83 @@ FREE_ALL:
 	return result;
 }
 
+const bool sabr_compiler_preproc_trim(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+	token text_token = {0, };
+	token result_token = {0, };
+	char* sliced_result_str = NULL;
+	char* final_result_str = NULL;
+	bool is_string = false;
+
+	bool result = false;
+
+	if (output_tokens->size < 1) {
+		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
+	}
+	
+	text_token = *vector_back(token, output_tokens);
+	if (!vector_pop_back(token, output_tokens)) {
+		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
+	}
+
+	size_t begin_index = 0;
+	size_t end_index = strlen(text_token.data);
+
+	char string_begin[2] = {0, };
+	char string_end[2] = {0, };
+	switch (text_token.data[0]) {
+		case '{':
+			string_begin[0] = '{';
+			string_end[0] = '}';
+			is_string = true;
+			break;
+		case '\'':
+		case '\"':
+			string_begin[0] = text_token.data[0];
+			string_end[0] = text_token.data[0];
+			is_string = true;
+			break;
+		default: break;
+	}
+
+	char* ch = text_token.data;
+	if (is_string) { ch++; begin_index++; }
+	while (*ch && isspace(*ch)) { ch++; begin_index++; }
+	
+	ch = text_token.data + end_index - 1;
+	if (is_string) { ch--; end_index--; }
+	while (ch >= text_token.data + begin_index && isspace(*ch)) { ch--; end_index--; }
+
+	sliced_result_str = sabr_new_string_slice(text_token.data, begin_index, end_index);
+	if (!sliced_result_str) {
+		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
+	}
+
+	if (
+		asprintf(
+			&final_result_str, "%s%s%s",
+			string_begin,
+			sliced_result_str,
+			string_end
+		) == -1
+	) {
+		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
+	}
+
+	result_token = t;
+	result_token.data = final_result_str;
+	result_token.is_generated = true;
+
+	if (!vector_push_back(token, output_tokens, result_token)) {
+		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
+	}
+
+	result = true;
+FREE_ALL:
+	free(text_token.data);
+
+	return result;
+}
+
 const bool sabr_compiler_preproc_compare(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
 	token text_token_a = {0, };
 	token text_token_b = {0, };
@@ -3385,6 +3462,7 @@ const bool (*preproc_keyword_functions[])(sabr_compiler* const comp, word w, tok
 	sabr_compiler_preproc_if,
 	sabr_compiler_preproc_concat,
 	sabr_compiler_preproc_substr,
+	sabr_compiler_preproc_trim,
 	sabr_compiler_preproc_compare,
 	sabr_compiler_preproc_len,
 	sabr_compiler_preproc_drop,
