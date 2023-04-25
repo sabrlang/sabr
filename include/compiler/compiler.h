@@ -1,6 +1,7 @@
 #ifndef __COMPILER_H__
 #define __COMPILER_H__
 
+#include <ctype.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
