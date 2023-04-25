@@ -559,6 +559,9 @@ const bool sabr_compiler_preproc_substr(sabr_compiler* comp, word w, token t, ve
 	char* sliced_result_str = NULL;
 	char* final_result_str = NULL;
 
+	vector(size_t) index_list;
+	vector_init(size_t, &index_list);
+
 	bool result = false;
 
 	if (output_tokens->size < 3) {
@@ -608,17 +611,31 @@ const bool sabr_compiler_preproc_substr(sabr_compiler* comp, word w, token t, ve
 		default: break;
 	}
 
-	size_t text_str_len = strlen(text_token.data) - (is_string ? 2 : 0);
+	size_t len_u8 = strlen(text_token.data);
+	size_t len_u32 = 0;
+	char* ch = text_token.data;
+
+	while (*ch) {
+		if (((signed char) *ch) >= -64) {
+			vector_push_back(size_t, &index_list, ch - text_token.data);
+			len_u32++;
+		}
+		ch++;
+	}
+	vector_push_back(size_t, &index_list, len_u8);
+
+	size_t len = len_u32 - (is_string ? 2 : 0);
+
 	if (begin_value.i < 0) { fputs(sabr_errmsg_out_of_index, stderr); goto FREE_ALL; }
-	if (begin_value.i >= text_str_len) { fputs(sabr_errmsg_out_of_index, stderr); goto FREE_ALL; }
 	if (end_value.i < 0) { fputs(sabr_errmsg_out_of_index, stderr); goto FREE_ALL; }
-	if (end_value.i > text_str_len) { fputs(sabr_errmsg_out_of_index, stderr); goto FREE_ALL; }
+	if (begin_value.i >= len) { fputs(sabr_errmsg_out_of_index, stderr); goto FREE_ALL; }
+	if (end_value.i > len) { fputs(sabr_errmsg_out_of_index, stderr); goto FREE_ALL; }
 	if (begin_value.i >= end_value.i) { fputs(sabr_errmsg_out_of_index, stderr); goto FREE_ALL; }
 
-	begin_value.u += (is_string ? 1 : 0);
-	end_value.u += (is_string ? 1 : 0);
+	size_t begin_index = *vector_at(size_t, &index_list, begin_value.i + (is_string ? 1 : 0));
+	size_t end_index = *vector_at(size_t, &index_list, end_value.i + (is_string ? 1 : 0));
 
-	sliced_result_str = sabr_new_string_slice(text_token.data, begin_value.u, end_value.u);
+	sliced_result_str = sabr_new_string_slice(text_token.data, begin_index, end_index);
 	if (!sliced_result_str) {
 		fputs(sabr_errmsg_alloc, stderr);
 		goto FREE_ALL;
@@ -654,6 +671,9 @@ FREE_ALL:
 	free(text_token.data);
 	free(begin_token.data);
 	free(end_token.data);
+
+	vector_free(size_t, &index_list);
+
 	return result;
 }
 
@@ -733,7 +753,16 @@ const bool sabr_compiler_preproc_len(sabr_compiler* comp, word w, token t, vecto
 		default: break;
 	}
 
-	if (asprintf(&result_str, "%zu", strlen(text_token.data) - (is_string ? 2 : 0)) == -1) {
+	size_t len_u32 = 0;
+	char* ch = text_token.data;
+	while (*ch) {
+		if (((signed char) *ch) >= -64) {
+			len_u32++;
+		}
+		ch++;
+	}
+
+	if (asprintf(&result_str, "%zu", len_u32 - (is_string ? 2 : 0)) == -1) {
 		fputs(sabr_errmsg_alloc, stderr);
 		goto FREE_ALL;
 	}
