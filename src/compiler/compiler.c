@@ -350,7 +350,7 @@ vector(token)* sabr_compiler_preprocess_eval_token(sabr_compiler* const comp, to
 
 	if (t.data[0] == '{') {
 		temp_input_string = sabr_new_string_slice(t.data, 1, strlen(t.data) - 1);
-		input_pos.column++;
+		if (!t.is_generated) input_pos.column++;
 	}
 	else temp_input_string = sabr_new_string_copy(t.data);
 
@@ -472,7 +472,7 @@ vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const ch
 							if (string_escape) string_escape = false;
 						}
 						else {
-							token t;
+							token t = {0, };
 
 							end_index = current_index;
 							end_pos = current_pos;
