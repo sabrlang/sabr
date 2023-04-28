@@ -443,8 +443,6 @@ const bool sabr_compiler_preproc_while(sabr_compiler* comp, word w, token t, vec
 	bool is_flag_code_token_brace = false;
 	bool is_code_token_brace = false;
 
-	size_t loop_count = 0;
-
 	preproc_stop_flag* current_preproc_stop = NULL;
 
 	bool result = false;
