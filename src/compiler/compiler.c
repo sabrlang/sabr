@@ -244,6 +244,8 @@ FREE_ALL:
 
 vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector(token)* input_tokens, vector(token)* output_tokens) {
 	char* new_t_data = NULL;
+	bool preproc_stop = false;
+
 	if (!output_tokens) {
 		output_tokens = (vector(token)*) malloc(sizeof(vector(token)));
 		if (!output_tokens) {
@@ -268,6 +270,10 @@ vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector
 						fprintf(stderr, "in file " console_yellow console_bold "%s\n" console_reset, *vector_at(cctl_ptr(char), &comp->filename_vector, t.textcode_index));
 						goto FREE_ALL;
 					}
+					if (comp->preproc_stop) {
+						preproc_stop = true;
+						break;
+					}
 				} break;
 				case WT_PREPROC_IDFR: {
 					preproc_def_data def_data = w->data.def_data;
@@ -282,6 +288,7 @@ vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector
 				default:
 					break;
 			}
+			if (preproc_stop) break;
 		}
 		else {
 			new_t_data = NULL;

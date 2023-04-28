@@ -23,6 +23,9 @@ const bool sabr_compiler_preproc_lgetdef(sabr_compiler* comp, word w, token t, v
 const bool sabr_compiler_preproc_import(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
 const bool sabr_compiler_preproc_eval(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
 const bool sabr_compiler_preproc_if(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
+const bool sabr_compiler_preproc_while(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
+const bool sabr_compiler_preproc_break(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
+const bool sabr_compiler_preproc_continue(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
 const bool sabr_compiler_preproc_concat(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
 const bool sabr_compiler_preproc_substr(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
 const bool sabr_compiler_preproc_trim(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);

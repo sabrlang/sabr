@@ -433,6 +433,110 @@ FREE_ALL:
 	return result;
 }
 
+const bool sabr_compiler_preproc_while(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+	token code_token = {0, };
+	token flag_code_token = {0, };
+	token flag_token = {0, };
+	value flag_value;
+	token result_token = {0, };
+
+	bool is_flag_code_token_brace = false;
+	bool is_code_token_brace = false;
+
+	bool result = false;
+	bool loop_break = false;
+
+	if (output_tokens->size < 2) {
+		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
+	}
+	
+	code_token = *vector_back(token, output_tokens);
+	if (!vector_pop_back(token, output_tokens)) {
+		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
+	}
+	
+	flag_code_token = *vector_back(token, output_tokens);
+	if (!vector_pop_back(token, output_tokens)) {
+		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
+	}
+
+	is_flag_code_token_brace = flag_code_token.data[0] == '{';
+	is_code_token_brace = code_token.data[0] == '{';
+
+	while (true) {
+		
+		if (is_flag_code_token_brace) {
+			output_tokens = sabr_compiler_preprocess_eval_token(comp, flag_code_token, false, output_tokens);
+			if (!output_tokens) goto FREE_ALL;
+			flag_token = *vector_back(token, output_tokens);
+			if (!vector_pop_back(token, output_tokens)) {
+				fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
+			}
+		}
+		else {
+			flag_token = flag_code_token;
+			flag_token.data = sabr_new_string_copy(flag_code_token.data);
+			if (!flag_token.data) {
+				fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
+			}
+		}
+		if (!sabr_compiler_preprocess_parse_value(comp, flag_token, &flag_value)) goto FREE_ALL;
+		if (!flag_value.u) break;
+
+		if (is_code_token_brace) {
+			output_tokens = sabr_compiler_preprocess_eval_token(comp, code_token, false, output_tokens);
+			if (!output_tokens) goto FREE_ALL;
+		}
+		else {
+			result_token = code_token;
+			result_token.data = sabr_new_string_copy(code_token.data);
+			if (!result_token.data) {
+				fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
+			}
+			if (!vector_push_back(token, output_tokens, result_token)) {
+				fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
+			}
+		}
+
+		switch (comp->preproc_stop) {
+			case PPS_BREAK:
+				loop_break = true;
+				break;
+			default:
+				break;
+		}
+		comp->preproc_stop = PPS_NONE;
+		if (loop_break) break;
+
+		if (!memset(&flag_token, 0, sizeof(token))) {
+			fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
+		}
+		if (!memset(&result_token, 0, sizeof(token))) {
+			fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
+		}
+	}
+
+	result = true;
+FREE_ALL:
+	if (!result) {
+		free(result_token.data);
+	}
+	free(code_token.data);
+	free(flag_code_token.data);
+	free(flag_token.data);
+	return result;
+}
+
+const bool sabr_compiler_preproc_break(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+	comp->preproc_stop = PPS_BREAK;
+	return true;
+}
+
+const bool sabr_compiler_preproc_continue(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+	comp->preproc_stop = PPS_CONTINUE;
+	return true;
+}
+
 const bool sabr_compiler_preproc_concat(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
 	token text_token_a = {0, };
 	token text_token_b = {0, };
@@ -3475,6 +3579,9 @@ const bool (*preproc_keyword_functions[])(sabr_compiler* const comp, word w, tok
 	sabr_compiler_preproc_import,
 	sabr_compiler_preproc_eval,
 	sabr_compiler_preproc_if,
+	sabr_compiler_preproc_while,
+	sabr_compiler_preproc_break,
+	sabr_compiler_preproc_continue,
 	sabr_compiler_preproc_concat,
 	sabr_compiler_preproc_substr,
 	sabr_compiler_preproc_trim,
