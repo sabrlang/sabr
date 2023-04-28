@@ -3,7 +3,6 @@
 
 bool sabr_compiler_init(sabr_compiler* const comp) {
 	setlocale(LC_ALL, "en_US.utf8");
-	if (!memset(&comp->convert_state, 0, sizeof(mbstate_t))) return false;
 
 	trie_init(size_t, &comp->filename_trie);
 
@@ -25,6 +24,10 @@ bool sabr_compiler_init(sabr_compiler* const comp) {
 	vector_init(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack);
 
 	vector_init(preproc_stop_flag, &comp->preproc_stop_stack);
+
+	comp->tab_size = 4;
+
+	if (!memset(&comp->convert_state, 0, sizeof(mbstate_t))) return false;
 
 	return true;
 }
@@ -394,11 +397,6 @@ vector(token)* sabr_compiler_preprocess_eval_token(sabr_compiler* const comp, to
 			fputs(sabr_errmsg_alloc, stderr);
 			goto FREE_ALL;
 		}
-
-		if (!vector_push_back(preproc_stop_flag, &comp->preproc_stop_stack, PPS_NONE)) {
-			fputs(sabr_errmsg_alloc, stderr);
-			goto FREE_ALL;
-		}
 	}
 
 	output_tokens = sabr_compiler_preprocess_tokens(comp, input_tokens, output_tokens);
@@ -492,6 +490,8 @@ vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const ch
 				}
 			case '\t':
 			case ' ': {
+				if (character == '\t')
+					current_pos.column += comp->tab_size - 1;
 				if (!comment) {
 					if (!space) {
 						if (string_parse) {

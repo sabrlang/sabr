@@ -61,6 +61,8 @@ struct sabr_compiler_struct {
 	vector(cctl_ptr(trie(word))) preproc_local_dictionary_stack;
 	vector(preproc_stop_flag) preproc_stop_stack;
 
+	size_t tab_size;
+
 	mbstate_t convert_state;
 };
 
