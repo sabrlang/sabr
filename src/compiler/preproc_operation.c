@@ -548,14 +548,20 @@ FREE_ALL:
 
 const bool sabr_compiler_preproc_break(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
 	preproc_stop_flag* current_preproc_stop = vector_back(preproc_stop_flag, &comp->preproc_stop_stack);
-	if (*current_preproc_stop != PPS_LOOP) return false;
+	if (*current_preproc_stop != PPS_LOOP) {
+		fputs(sabr_errmsg_wrong_break_continue, stderr);
+		return false;
+	}
 	*current_preproc_stop = PPS_BREAK;
 	return true;
 }
 
 const bool sabr_compiler_preproc_continue(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
 	preproc_stop_flag* current_preproc_stop = vector_back(preproc_stop_flag, &comp->preproc_stop_stack);
-	if (*current_preproc_stop != PPS_LOOP) return false;
+	if (*current_preproc_stop != PPS_LOOP) {
+		fputs(sabr_errmsg_wrong_break_continue, stderr);
+		return false;
+	}
 	*current_preproc_stop = PPS_CONTINUE;
 	return true;
 }

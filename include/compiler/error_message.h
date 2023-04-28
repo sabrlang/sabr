@@ -18,5 +18,6 @@
 #define sabr_errmsg_div_zero "error : Division by zero\n"
 
 #define sabr_errmsg_wrong_token_fmt "error : Wrong token format\n"
+#define sabr_errmsg_wrong_break_continue "error : #break or #continue keywords must be inside #loop\n"
 
 #endif
