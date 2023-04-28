@@ -394,6 +394,11 @@ vector(token)* sabr_compiler_preprocess_eval_token(sabr_compiler* const comp, to
 			fputs(sabr_errmsg_alloc, stderr);
 			goto FREE_ALL;
 		}
+
+		if (!vector_push_back(preproc_stop_flag, &comp->preproc_stop_stack, PPS_NONE)) {
+			fputs(sabr_errmsg_alloc, stderr);
+			goto FREE_ALL;
+		}
 	}
 
 	output_tokens = sabr_compiler_preprocess_tokens(comp, input_tokens, output_tokens);
@@ -419,6 +424,7 @@ FREE_ALL:
 		sabr_free_word_trie(preproc_local_dictionary);
 		free(preproc_local_dictionary);
 		vector_pop_back(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack);
+		vector_pop_back(preproc_stop_flag, &comp->preproc_stop_stack);
 	}
 
 	return output_tokens;;
