@@ -23,6 +23,8 @@ bool sabr_compiler_init(sabr_compiler* const comp) {
 
 	vector_init(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack);
 
+	comp->preproc_stop = PPS_NONE;
+
 	return true;
 }
 
