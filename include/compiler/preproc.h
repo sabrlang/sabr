@@ -82,6 +82,13 @@ typedef enum preproc_keyword_enum {
 	PREPROC_SHOW
 } preproc_keyword;
 
+typedef enum preproc_stop_flag_enum {
+	PPS_NONE,
+	PPS_BREAK,
+	PPS_CONTINUE,
+	PPS_LOOP
+} preproc_stop_flag;
+
 extern const char* preproc_keyword_names[];
 extern size_t preproc_keyword_names_len;
 

@@ -7,6 +7,7 @@
 #include "cctl/vector.h"
 #include "cctl/trie.h"
 
+#include "preproc.h"
 #include "token.h"
 #include "word.h"
 
@@ -30,5 +31,8 @@ vector_imp_h(cctl_ptr(trie(word)));
 
 vector_fd(size_t);
 vector_imp_h(size_t);
+
+vector_fd(preproc_stop_flag);
+vector_imp_h(preproc_stop_flag);
 
 #endif

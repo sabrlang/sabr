@@ -49,12 +49,6 @@ typedef enum comment_parse_mode_enum {
 	CMNT_PARSE_STACK
 } comment_parse_mode;
 
-typedef enum preproc_stop_flag_enum {
-	PPS_NONE,
-	PPS_BREAK,
-	PPS_CONTINUE
-} preproc_stop_flag;
-
 typedef struct sabr_compiler_struct sabr_compiler;
 
 struct sabr_compiler_struct {
@@ -65,7 +59,7 @@ struct sabr_compiler_struct {
 
 	trie(word) preproc_dictionary;
 	vector(cctl_ptr(trie(word))) preproc_local_dictionary_stack;
-	preproc_stop_flag preproc_stop;
+	vector(preproc_stop_flag) preproc_stop_stack;
 
 	mbstate_t convert_state;
 };

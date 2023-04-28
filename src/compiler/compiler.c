@@ -3,6 +3,7 @@
 
 bool sabr_compiler_init(sabr_compiler* const comp) {
 	setlocale(LC_ALL, "en_US.utf8");
+	if (!memset(&comp->convert_state, 0, sizeof(mbstate_t))) return false;
 
 	trie_init(size_t, &comp->filename_trie);
 
@@ -23,7 +24,7 @@ bool sabr_compiler_init(sabr_compiler* const comp) {
 
 	vector_init(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack);
 
-	comp->preproc_stop = PPS_NONE;
+	vector_init(preproc_stop_flag, &comp->preproc_stop_stack);
 
 	return true;
 }
@@ -45,6 +46,8 @@ bool sabr_compiler_del(sabr_compiler* const comp) {
 	for (size_t i = 0; i < comp->preproc_local_dictionary_stack.size; i++)
 		sabr_free_word_trie(*vector_at(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack, i));
 	vector_free(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack);
+
+	vector_free(preproc_stop_flag, &comp->preproc_stop_stack);
 
 	return true;
 }
@@ -216,6 +219,11 @@ vector(token)* sabr_compiler_preprocess_textcode(sabr_compiler* const comp, size
 		goto FREE_ALL;
 	}
 
+	if (!vector_push_back(preproc_stop_flag, &comp->preproc_stop_stack, PPS_NONE)) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FREE_ALL;
+	}
+
 	tokens = sabr_compiler_preprocess_tokens(comp, tokens, NULL);
 	if (!tokens) {
 		fputs(sabr_errmsg_preprocess, stderr);
@@ -240,6 +248,7 @@ FREE_ALL:
 	sabr_free_word_trie(preproc_local_dictionary);
 	free(preproc_local_dictionary);
 	vector_pop_back(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack);
+	vector_pop_back(preproc_stop_flag, &comp->preproc_stop_stack);
 
 	return tokens;
 }
@@ -272,7 +281,8 @@ vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector
 						fprintf(stderr, "in file " console_yellow console_bold "%s\n" console_reset, *vector_at(cctl_ptr(char), &comp->filename_vector, t.textcode_index));
 						goto FREE_ALL;
 					}
-					if (comp->preproc_stop) {
+					preproc_stop_flag* current_preproc_stop = vector_back(preproc_stop_flag, &comp->preproc_stop_stack);
+					if (*current_preproc_stop == PPS_BREAK || *current_preproc_stop == PPS_CONTINUE) {
 						preproc_stop = true;
 						break;
 					}
@@ -330,6 +340,7 @@ vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector
 			}
 
 			new_t.data = new_t_data;
+			new_t_data = NULL;
 
 			if (!vector_push_back(token, output_tokens, new_t)) {
 				fputs(sabr_errmsg_alloc, stderr);
