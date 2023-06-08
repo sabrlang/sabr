@@ -1,8 +1,9 @@
 #ifndef __WORD_H__
 #define __WORD_H__
 
-#include "token.h"
+#include "kwrd.h"
 #include "preproc.h"
+#include "token.h"
 
 typedef enum word_type_enum word_type;
 enum word_type_enum {
@@ -23,7 +24,9 @@ struct preproc_def_data_struct {
 typedef union word_data_union word_data;
 union word_data_union {
 	preproc_def_data def_data;
-	preproc_keyword kwrd;
+	preproc_keyword preproc_kwrd;
+	keyword kwrd;
+	size_t identifer_index;
 };
 
 typedef struct word_struct word;

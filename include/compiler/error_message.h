@@ -14,10 +14,16 @@
 #define sabr_errmsg_invalid_ident_fmt "error : Invalid identifier format\n"
 
 #define sabr_errmsg_parse_num "error : Number parsing failure\n"
+#define sabr_errmsg_parse_str "error : String parsing failure\n"
+
 #define sabr_errmsg_out_of_index "error : Out of index\n"
 #define sabr_errmsg_div_zero "error : Division by zero\n"
 
 #define sabr_errmsg_wrong_token_fmt "error : Wrong token format\n"
 #define sabr_errmsg_wrong_break_continue "error : #break or #continue keywords must be inside #loop\n"
+
+#define sabr_errmsg_kwrd_ident "error : Keywords and build-in-functions cannot be identifier\n"
+
+#define sabr_errmsg_wrong_escape_sequence "error : Wrong escape sequence\n"
 
 #endif

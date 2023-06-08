@@ -29,9 +29,13 @@
 #include "value.h"
 
 #include "compiler_cctl_define.h"
+#include "cctl_define.h"
 
+#include "bytecode.h"
 #include "compiler_utils.h"
 #include "error_message.h"
+#include "kwrd.h"
+#include "opcode.h"
 #include "preproc.h"
 #include "token.h"
 #include "word.h"
@@ -61,6 +65,10 @@ struct sabr_compiler_struct {
 	vector(cctl_ptr(trie(word))) preproc_local_dictionary_stack;
 	vector(preproc_stop_flag) preproc_stop_stack;
 
+	trie(word) dictionary;
+	size_t identifier_count;
+	vector(cctl_ptr(vector(keyword_data))) keyword_data_stack;
+
 	size_t tab_size;
 
 	mbstate_t convert_state;
@@ -79,8 +87,22 @@ vector(token)* sabr_compiler_preprocess_eval_token(sabr_compiler* const comp, to
 bool sabr_compiler_preprocess_parse_value(sabr_compiler* const comp, token t, value* v);
 vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const char* textcode, size_t textcode_index, pos init_pos, bool is_generated);
 
+bytecode* sabr_compiler_compile_tokens(sabr_compiler* const comp, vector(token)* tokens);
+
 bool sabr_compiler_parse_zero_begin_num(const char* str, size_t index, bool negate, value* v);
 bool sabr_compiler_parse_base_n_num(const char* str, size_t index, bool negate, int base, value* v);
 bool sabr_compiler_parse_num(const char* str, value* v);
+bool sabr_compiler_parse_identifier(sabr_compiler* const comp, const char* str, value* v);
+bool sabr_compiler_is_can_be_identifier(const char* str);
+vector(value)* sabr_compiler_parse_string(sabr_compiler* const comp, const char* str);
+bool sabr_compiler_parse_string_escape_hex(char** ch_addr, char* num_parse_stop, char* num_parse, size_t* num_parse_count, value* v, int length);
+
+bool sabr_compiler_compile_keyword(sabr_compiler* const comp, bytecode* bc_data, keyword kwrd);
+
+bool sabr_compiler_write_bytecode(bytecode* bc_data, opcode oc);
+bool sabr_compiler_write_bytecode_with_null(bytecode* bc_data, opcode oc);
+bool sabr_compiler_write_bytecode_with_value(bytecode* bc_data, opcode oc, value v);
+
+bytecode_operation* sabr_compiler_get_bytecode_operation(bytecode* bc_data, size_t index);
 
 #endif

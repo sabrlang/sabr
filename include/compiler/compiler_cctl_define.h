@@ -9,6 +9,7 @@
 
 #include "preproc.h"
 #include "token.h"
+#include "value.h"
 #include "word.h"
 
 
@@ -34,5 +35,15 @@ vector_imp_h(size_t);
 
 vector_fd(preproc_stop_flag);
 vector_imp_h(preproc_stop_flag);
+
+vector_fd(value);
+vector_imp_h(value);
+
+vector_fd(keyword_data);
+vector_imp_h(keyword_data);
+
+cctl_ptr_def(vector(keyword_data));
+vector_fd(cctl_ptr(vector(keyword_data)));
+vector_imp_h(cctl_ptr(vector(keyword_data)));
 
 #endif

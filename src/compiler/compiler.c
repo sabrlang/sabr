@@ -10,20 +10,31 @@ bool sabr_compiler_init(sabr_compiler* const comp) {
 	vector_init(cctl_ptr(char), &comp->textcode_vector);
 
 	trie_init(word, &comp->preproc_dictionary);
-
 	for (size_t i = 0; i < preproc_keyword_names_len; i++) {
 		word w;
 		w.type = WT_PREPROC_KWRD;
-		w.data.kwrd = (preproc_keyword) i;
+		w.data.preproc_kwrd = (preproc_keyword) i;
 		if (!trie_insert(word, &comp->preproc_dictionary, preproc_keyword_names[i], w)) {
 			fputs(sabr_errmsg_alloc, stderr);
 			return false;
 		}
 	}
-
 	vector_init(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack);
-
 	vector_init(preproc_stop_flag, &comp->preproc_stop_stack);
+
+	trie_init(word, &comp->dictionary);
+	for (size_t i = 0; i < keyword_names_len; i++) {
+		word w;
+		w.type = WT_KWRD;
+		w.data.kwrd = (keyword) i;
+		if (!trie_insert(word, &comp->dictionary, keyword_names[i], w)) {
+			fputs(sabr_errmsg_alloc, stderr);
+			return false;
+		}
+	}
+	comp->identifier_count = 0;
+
+	vector_init(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack);
 
 	comp->tab_size = 4;
 
@@ -52,12 +63,19 @@ bool sabr_compiler_del(sabr_compiler* const comp) {
 
 	vector_free(preproc_stop_flag, &comp->preproc_stop_stack);
 
+	sabr_free_word_trie(&comp->dictionary);
+
+	for (size_t i = 0; i < comp->keyword_data_stack.size; i++)
+		vector_free(keyword_data, *vector_at(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack, i));
+	vector_free(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack);
+
 	return true;
 }
 
 bool sabr_compiler_compile_file(sabr_compiler* const comp, const char* filename) {
 	size_t textcode_index;
 	vector(token)* preprocessed_tokens;
+	bytecode* compiled_bytecode;
 
 	if (!sabr_compiler_load_file(comp, filename, &textcode_index)) {
 		return false;
@@ -69,6 +87,24 @@ bool sabr_compiler_compile_file(sabr_compiler* const comp, const char* filename)
 		return false;
 	}
 	
+	compiled_bytecode = sabr_compiler_compile_tokens(comp, preprocessed_tokens);
+	if (!compiled_bytecode) {
+		sabr_free_token_vector(preprocessed_tokens);
+		return false;
+	}
+
+	size_t j = 0;
+	for (size_t i = 0; i < compiled_bytecode->bcop_vec.size; i++) {
+		bytecode_operation bc = *vector_at(bytecode_operation, &compiled_bytecode->bcop_vec, i);
+		printf("%5zu\t%5zu\t\t%-10.20s", i, j, opcode_names[bc.oc]);
+		if (bc.has_operand) {
+			printf("\t\t%zu", bc.operand.u);
+			j += 8;
+		}
+		j++;
+		putchar('\n');
+	}
+
 	sabr_free_token_vector(preprocessed_tokens);
 
 	return true;
@@ -279,7 +315,7 @@ vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector
 		if (w) {
 			switch (w->type) {
 				case WT_PREPROC_KWRD: {
-					if (!preproc_keyword_functions[w->data.kwrd](comp, *w, t, output_tokens)) {
+					if (!preproc_keyword_functions[w->data.preproc_kwrd](comp, *w, t, output_tokens)) {
 						fprintf(stderr, console_yellow console_bold "%s" console_reset " in line %zu, column %zu\n", t.data, t.begin_pos.line, t.begin_pos.column);
 						fprintf(stderr, "in file " console_yellow console_bold "%s\n" console_reset, *vector_at(cctl_ptr(char), &comp->filename_vector, t.textcode_index));
 						goto FREE_ALL;
@@ -492,6 +528,7 @@ vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const ch
 			case ' ': {
 				if (character == '\t')
 					current_pos.column += comp->tab_size - 1;
+				
 				if (!comment) {
 					if (!space) {
 						if (string_parse) {
@@ -710,6 +747,120 @@ WRONG_TOKEN:
 	goto FREE_ALL;
 }
 
+bytecode* sabr_compiler_compile_tokens(sabr_compiler* const comp, vector(token)* tokens) {
+	bool result = false;
+
+	bytecode* bc_data = (bytecode*) malloc(sizeof(bytecode));
+
+	if (!bc_data) {
+		fputs(sabr_errmsg_alloc, stderr);
+		return NULL;
+	}
+	vector_init(bytecode_operation, &bc_data->bcop_vec);
+	bc_data->current_index = 0;
+	bc_data->current_pos = 0;
+
+	value temp_value;
+	vector(value)* string_values = NULL;
+
+	token current_token = {0, };
+
+	for (size_t i = 0; i < tokens->size; i++) {
+		current_token = *vector_at(token, tokens, i);
+		word* w = NULL;
+		w = trie_find(word, &comp->dictionary, current_token.data);
+		if (w) {
+			switch (w->type) {
+				case WT_KWRD:
+					if (!sabr_compiler_compile_keyword(comp, bc_data, w->data.kwrd)) goto PRINT_ERR_POS;
+					break;
+				case WT_IDFR:
+					temp_value.u = w->data.identifer_index;
+					if (!sabr_compiler_write_bytecode_with_value(bc_data, OP_CALL, temp_value)) goto PRINT_ERR_POS;
+					break;
+				default:
+					break;
+			}
+		}
+		else {
+			switch (current_token.data[0]) {
+				case '+':
+					if (!sabr_compiler_parse_zero_begin_num(current_token.data, 1, false, &temp_value)) goto PRINT_ERR_POS;
+					if (!sabr_compiler_write_bytecode_with_value(bc_data, OP_VALUE, temp_value)) goto PRINT_ERR_POS;
+					break;
+				case '-':
+					if (!sabr_compiler_parse_zero_begin_num(current_token.data, 1, true, &temp_value)) goto PRINT_ERR_POS;
+					if (!sabr_compiler_write_bytecode_with_value(bc_data, OP_VALUE, temp_value)) goto PRINT_ERR_POS;
+					break;
+				case '0':
+					if (!sabr_compiler_parse_zero_begin_num(current_token.data, 0, false, &temp_value)) goto PRINT_ERR_POS;
+					if (!sabr_compiler_write_bytecode_with_value(bc_data, OP_VALUE, temp_value)) goto PRINT_ERR_POS;
+					break;
+				case '.':
+				case '1' ... '9':
+					if (!sabr_compiler_parse_num(current_token.data, &temp_value)) goto PRINT_ERR_POS;
+					if (!sabr_compiler_write_bytecode_with_value(bc_data, OP_VALUE, temp_value)) goto PRINT_ERR_POS;
+					break;
+				case '$':
+					if (!sabr_compiler_parse_identifier(comp, current_token.data + 1, &temp_value)) goto PRINT_ERR_POS;
+					if (!sabr_compiler_write_bytecode_with_value(bc_data, OP_VALUE, temp_value)) goto PRINT_ERR_POS;
+					break;
+				case '{':
+					break;
+				case '\'':
+					string_values = sabr_compiler_parse_string(comp, current_token.data);
+					if (!string_values) goto PRINT_ERR_POS;
+					for (size_t j = string_values->size - 1; j < -1; j--) {
+						temp_value = *vector_at(value, string_values, j);
+						if (!sabr_compiler_write_bytecode_with_value(bc_data, OP_VALUE, temp_value)) goto PRINT_ERR_POS;
+					}
+					vector_free(value, string_values);
+					free(string_values);
+					string_values = NULL;
+					break;
+				case '\"':
+					string_values = sabr_compiler_parse_string(comp, current_token.data);
+					if (!string_values) goto PRINT_ERR_POS;
+					
+					if (!sabr_compiler_write_bytecode(bc_data, OP_ARRAY)) goto PRINT_ERR_POS;
+
+					for (size_t j = 0; j < string_values->size; j++) {
+						temp_value = *vector_at(value, string_values, j);
+						if (!sabr_compiler_write_bytecode_with_value(bc_data, OP_VALUE, temp_value)) goto PRINT_ERR_POS;
+						if ((!sabr_compiler_write_bytecode(bc_data, OP_ARRAY_COMMA)) && (j != string_values->size - 1)) goto PRINT_ERR_POS;
+					}
+					
+					if (!sabr_compiler_write_bytecode(bc_data, OP_ARRAY_END)) goto PRINT_ERR_POS;
+
+					vector_free(value, string_values);
+					free(string_values);
+					string_values = NULL;
+					break;
+				default:
+			}
+		}
+	}
+
+	result = true;
+
+FREE_ALL:
+	if (string_values) {
+		vector_free(value, string_values);
+		free(string_values);
+	}
+	if (!result) {
+		vector_free(bytecode_operation, &bc_data->bcop_vec);
+		free(bc_data);
+		bc_data = NULL;
+	}
+	return bc_data;
+
+PRINT_ERR_POS:
+	fprintf(stderr, console_yellow console_bold "%s" console_reset " in line %zu, column %zu\n", current_token.data, current_token.begin_pos.line, current_token.begin_pos.column);
+	fprintf(stderr, "in file " console_yellow console_bold "%s\n" console_reset, *vector_at(cctl_ptr(char), &comp->filename_vector, current_token.textcode_index));
+	goto FREE_ALL;
+}
+
 bool sabr_compiler_parse_zero_begin_num(const char* str, size_t index, bool negate, value* v) {
 	size_t len = strlen(str);
 
@@ -770,4 +921,638 @@ bool sabr_compiler_parse_num(const char* str, value* v) {
 	}
 	
 	return true;
+}
+
+bool sabr_compiler_parse_identifier(sabr_compiler* const comp, const char* str, value* v) {
+	word* w = NULL;
+	w = trie_find(word, &comp->dictionary, str);
+
+	if (w) {
+		if (w->type != WT_IDFR) {
+			fputs(sabr_errmsg_kwrd_ident, stderr);
+			return false;
+		}
+		v->u = w->data.identifer_index;
+	}
+	else {
+		if (!sabr_compiler_is_can_be_identifier(str)) {
+			fputs(sabr_errmsg_invalid_ident_fmt, stderr); return false;
+		}
+
+		comp->identifier_count++;
+
+		word new_identifier_word = {0, };
+		
+		new_identifier_word.type = WT_IDFR;
+		new_identifier_word.data.identifer_index = comp->identifier_count;
+
+		if (!trie_insert(word, &comp->dictionary, str, new_identifier_word)) {
+			fputs(sabr_errmsg_alloc, stderr); return false;
+		}
+		v->u = comp->identifier_count;
+	}
+	return true;
+}
+
+bool sabr_compiler_is_can_be_identifier(const char* str) {
+	const char* ch = str;
+	size_t len = strlen(str);
+	if (len < 1) return false;
+	switch (*ch) {
+		case '+': case '-': case '.':
+			switch (*(++ch)) { case '0' ... '9': return false; }
+			break;
+		case '0' ... '9':
+		case '@': case '(': case ')': case '{': case '}': case '#': case '$':
+		case '\\': case '\'': case '\"': case '\0':
+			return false;
+	}
+	return true;
+}
+
+vector(value)* sabr_compiler_parse_string(sabr_compiler* const comp, const char* str) {
+	char* ch = NULL;
+	vector(value)* vec = (vector(value)*) malloc(sizeof(vector(value)));
+	if (!vec) {
+		fputs(sabr_errmsg_alloc, stderr);
+		return NULL;
+	}
+	vector_init(value, vec);
+
+	size_t len = strlen(str);
+	ch = sabr_new_string_slice(str, 1, len - 1);
+	if (!ch) {
+		fputs(sabr_errmsg_alloc, stderr);
+		goto FAILURE;
+	}
+	char* end = ch + len - 1;
+
+	size_t num_parse_count;
+
+	value v;
+
+	while (*ch) {
+		if (((signed char) *ch) > -1) {
+			char* num_parse_stop = NULL;
+			char num_parse[9] = {0, };
+			num_parse_stop = 0;
+
+			if (*ch == '\\') {
+				ch++;
+				switch (*ch) {
+					case 'a': v.u = '\a'; break; case 'b': v.u = '\b'; break;
+					case 'e': v.u = '\e'; break; case 'f': v.u = '\f'; break;
+					case 'n': v.u = '\n'; break; case 'r': v.u = '\r'; break;
+					case 't': v.u = '\t'; break; case 'v': v.u = '\v'; break;
+					case '\\': v.u = '\\'; break; case '\'': v.u = '\''; break; case '\"': v.u = '\"'; break;
+					case '0' ... '7':
+						while ((*ch >= '0') && (*ch <= '7') && (num_parse_count < 3)) {
+							num_parse[num_parse_count] = *ch;
+							ch++;
+							num_parse_count++;
+						}
+						ch--;
+						v.u = strtoull(num_parse, &num_parse_stop, 8);
+						break;
+					case 'x':
+						if (!sabr_compiler_parse_string_escape_hex(
+							&ch, num_parse_stop, num_parse, &num_parse_count, &v, 2
+						)) {
+							fputs(sabr_errmsg_wrong_escape_sequence, stderr); goto FAILURE;
+						}
+						break;
+					case 'u':
+						if (!sabr_compiler_parse_string_escape_hex(
+							&ch, num_parse_stop, num_parse, &num_parse_count, &v, 4
+						)) {
+							fputs(sabr_errmsg_wrong_escape_sequence, stderr); goto FAILURE;
+						}
+						break;
+					case 'U':
+						if (!sabr_compiler_parse_string_escape_hex(
+							&ch, num_parse_stop, num_parse, &num_parse_count, &v, 8
+						)) {
+							fputs(sabr_errmsg_wrong_escape_sequence, stderr); goto FAILURE;
+						}
+						break;
+					default: fputs(sabr_errmsg_wrong_escape_sequence, stderr); goto FAILURE;
+				}
+			}
+			else if ((*ch == '\'') || (*ch == '\"')) {
+				goto FAILURE;
+			}
+			else {
+				v.u = *ch;
+			}
+			ch++;
+		}
+		else {
+			char32_t out;
+			size_t rc;
+			rc = mbrtoc32(&out, ch, end - ch, &(comp->convert_state));
+			if ((rc > ((size_t) -4)) || (rc == 0)) {
+				goto FAILURE;
+			}
+			ch += rc;
+			v.u = out;
+		}
+		if (!vector_push_back(value, vec, v)) {
+			fputs(sabr_errmsg_alloc, stderr);
+			goto FAILURE;
+		}
+	}
+
+	return vec;
+FAILURE:
+	fputs(sabr_errmsg_parse_str, stderr);
+	vector_free(value, vec);
+	free(vec);
+	free(ch);
+	return NULL;
+}
+
+bool sabr_compiler_parse_string_escape_hex(char** ch_addr, char* num_parse_stop, char* num_parse, size_t* num_parse_count, value* v, int length) {
+	(*ch_addr)++;
+
+	while (
+		(
+			((**ch_addr >= '0') && (**ch_addr <= '9')) ||
+			((**ch_addr >= 'a') && (**ch_addr <= 'f')) ||
+			((**ch_addr >= 'A') && (**ch_addr <= 'F'))
+		) && ((*num_parse_count) < length)
+	) {
+		num_parse[*num_parse_count] = **ch_addr;
+		(*ch_addr)++;
+		(*num_parse_count)++;
+	}
+	if ((*num_parse_count) != length) {
+		return false;
+	}
+	(*ch_addr)--;
+	v->u = strtoull(num_parse, &num_parse_stop, 16);
+	return true;
+}
+
+bool sabr_compiler_compile_keyword(sabr_compiler* const comp, bytecode* bc_data, keyword kwrd) {
+	keyword_data current_kd;
+	current_kd.kwrd = kwrd;
+	current_kd.index = bc_data->current_index;
+	current_kd.pos = bc_data->current_pos;
+
+	value temp_value = {0, };
+
+	vector(keyword_data)* temp_kd_vec = NULL;
+
+	switch (current_kd.kwrd) {
+		case KWRD_IF:
+			temp_kd_vec = (vector(keyword_data)*) malloc(sizeof(vector(keyword_data)));
+			if (!temp_kd_vec) goto FAILURE_ALLOC;
+			vector_init(keyword_data, temp_kd_vec);
+			if (!vector_push_back(keyword_data, temp_kd_vec, current_kd)) goto FAILURE_ALLOC;
+			if (!vector_push_back(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack, temp_kd_vec))
+				goto FAILURE_ALLOC;
+			if (!sabr_compiler_write_bytecode_with_null(bc_data, OP_IF)) goto FREE_ALL;
+			break;
+		case KWRD_ELSE:
+			if (!comp->keyword_data_stack.size) goto FAILURE_WRONG;
+			temp_kd_vec = *vector_back(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack);
+			if (!vector_push_back(keyword_data, temp_kd_vec, current_kd)) goto FAILURE_ALLOC;
+			if (!sabr_compiler_write_bytecode_with_null(bc_data, OP_JUMP)) goto FREE_ALL;
+			break;
+		case KWRD_LOOP:
+			temp_kd_vec = (vector(keyword_data)*) malloc(sizeof(vector(keyword_data)));
+			if (!temp_kd_vec) goto FAILURE_ALLOC;
+			vector_init(keyword_data, temp_kd_vec);
+			if (!vector_push_back(keyword_data, temp_kd_vec, current_kd)) goto FAILURE_ALLOC;
+			if (!vector_push_back(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack, temp_kd_vec))
+				goto FAILURE_ALLOC;
+			break;
+		case KWRD_WHILE:
+			if (!comp->keyword_data_stack.size) goto FAILURE_WRONG;
+			temp_kd_vec = *vector_back(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack);
+			if (!vector_push_back(keyword_data, temp_kd_vec, current_kd)) goto FAILURE_ALLOC;
+			if (!sabr_compiler_write_bytecode_with_null(bc_data, OP_IF)) goto FREE_ALL;
+			break;
+		case KWRD_BREAK:
+		case KWRD_CONTINUE:
+			if (!comp->keyword_data_stack.size) goto FAILURE_WRONG;
+			temp_kd_vec = *vector_back(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack);
+			if (!vector_push_back(keyword_data, temp_kd_vec, current_kd)) goto FAILURE_ALLOC;
+			if (!sabr_compiler_write_bytecode_with_null(bc_data, OP_JUMP)) goto FREE_ALL;
+			break;
+		case KWRD_FOR:
+		case KWRD_UFOR:
+		case KWRD_FFOR:
+			value for_type;
+			temp_kd_vec = (vector(keyword_data)*) malloc(sizeof(vector(keyword_data)));
+			if (!temp_kd_vec) goto FAILURE_ALLOC;
+			vector_init(keyword_data, temp_kd_vec);
+			if (!vector_push_back(keyword_data, temp_kd_vec, current_kd)) goto FAILURE_ALLOC;
+			if (!vector_push_back(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack, temp_kd_vec))
+				goto FAILURE_ALLOC;
+			
+			switch (current_kd.kwrd) {
+				case KWRD_FOR: for_type.u = 0; break;
+				case KWRD_UFOR: for_type.u = 1; break;
+				case KWRD_FFOR: for_type.u = 2; break;
+				default: break;
+			}
+			for_type.u = current_kd.kwrd - KWRD_FOR;
+
+			if (!sabr_compiler_write_bytecode_with_value(bc_data, OP_FOR, for_type)) goto FREE_ALL;
+			if (!sabr_compiler_write_bytecode_with_null(bc_data, OP_NONE)) goto FREE_ALL;
+			break;
+		case KWRD_FROM:
+			if (!comp->keyword_data_stack.size) goto FAILURE_WRONG;
+			temp_kd_vec = *vector_back(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack);
+			if (!vector_push_back(keyword_data, temp_kd_vec, current_kd)) goto FAILURE_ALLOC;
+			if (!sabr_compiler_write_bytecode(bc_data, OP_FOR_FROM)) goto FREE_ALL;
+			if (!sabr_compiler_write_bytecode_with_null(bc_data, OP_NONE)) goto FREE_ALL;
+			break;
+		case KWRD_TO:
+			if (!comp->keyword_data_stack.size) goto FAILURE_WRONG;
+			temp_kd_vec = *vector_back(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack);
+			if (!vector_push_back(keyword_data, temp_kd_vec, current_kd)) goto FAILURE_ALLOC;
+			if (!sabr_compiler_write_bytecode(bc_data, OP_FOR_TO)) goto FREE_ALL;
+			if (!sabr_compiler_write_bytecode_with_null(bc_data, OP_NONE)) goto FREE_ALL;
+			break;
+		case KWRD_STEP:
+			if (!comp->keyword_data_stack.size) goto FAILURE_WRONG;
+			temp_kd_vec = *vector_back(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack);
+			if (!vector_push_back(keyword_data, temp_kd_vec, current_kd)) goto FAILURE_ALLOC;
+			if (!sabr_compiler_write_bytecode(bc_data, OP_FOR_STEP)) goto FREE_ALL;
+			if (!sabr_compiler_write_bytecode_with_null(bc_data, OP_NONE)) goto FREE_ALL;
+			break;
+		case KWRD_SWITCH:
+			temp_kd_vec = (vector(keyword_data)*) malloc(sizeof(vector(keyword_data)));
+			if (!temp_kd_vec) goto FAILURE_ALLOC;
+			vector_init(keyword_data, temp_kd_vec);
+			if (!vector_push_back(keyword_data, temp_kd_vec, current_kd)) goto FAILURE_ALLOC;
+			if (!vector_push_back(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack, temp_kd_vec))
+				goto FAILURE_ALLOC;
+			if (!sabr_compiler_write_bytecode(bc_data, OP_SWITCH)) goto FREE_ALL;
+			break;
+		case KWRD_CASE:
+			if (!comp->keyword_data_stack.size) goto FAILURE_WRONG;
+			temp_kd_vec = *vector_back(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack);
+			if (!vector_push_back(keyword_data, temp_kd_vec, current_kd)) goto FAILURE_ALLOC;
+			if (!sabr_compiler_write_bytecode(bc_data, OP_SWITCH_CASE)) goto FREE_ALL;
+			if (!sabr_compiler_write_bytecode(bc_data, OP_EQU)) goto FREE_ALL;
+			if (!sabr_compiler_write_bytecode_with_null(bc_data, OP_IF)) goto FREE_ALL;
+			break;
+		case KWRD_PASS:
+			if (!comp->keyword_data_stack.size) goto FAILURE_WRONG;
+			temp_kd_vec = *vector_back(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack);
+			if (!vector_push_back(keyword_data, temp_kd_vec, current_kd)) goto FAILURE_ALLOC;
+			if (!sabr_compiler_write_bytecode_with_null(bc_data, OP_JUMP)) goto FREE_ALL;
+			break;
+		case KWRD_FUNC:
+			temp_kd_vec = (vector(keyword_data)*) malloc(sizeof(vector(keyword_data)));
+			if (!temp_kd_vec) goto FAILURE_ALLOC;
+			vector_init(keyword_data, temp_kd_vec);
+			if (!vector_push_back(keyword_data, temp_kd_vec, current_kd)) goto FAILURE_ALLOC;
+			if (!vector_push_back(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack, temp_kd_vec))
+				goto FAILURE_ALLOC;
+			if (!sabr_compiler_write_bytecode_with_null(bc_data, OP_FUNC)) goto FREE_ALL;
+			break;
+		case KWRD_MACRO:
+			temp_kd_vec = (vector(keyword_data)*) malloc(sizeof(vector(keyword_data)));
+			if (!temp_kd_vec) goto FAILURE_ALLOC;
+			vector_init(keyword_data, temp_kd_vec);
+			if (!vector_push_back(keyword_data, temp_kd_vec, current_kd)) goto FAILURE_ALLOC;
+			if (!vector_push_back(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack, temp_kd_vec))
+				goto FAILURE_ALLOC;
+			if (!sabr_compiler_write_bytecode_with_null(bc_data, OP_MACRO)) goto FREE_ALL;
+			break;
+		case KWRD_DEFER:
+			if (!comp->keyword_data_stack.size) goto FAILURE_WRONG;
+			temp_kd_vec = *vector_back(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack);
+			if (!vector_push_back(keyword_data, temp_kd_vec, current_kd)) goto FAILURE_ALLOC;
+			break;
+		case KWRD_RETURN:
+			if (!comp->keyword_data_stack.size) goto FAILURE_WRONG;
+			temp_kd_vec = *vector_back(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack);
+			if (!vector_push_back(keyword_data, temp_kd_vec, current_kd)) goto FAILURE_ALLOC;
+			if (!sabr_compiler_write_bytecode_with_null(bc_data, OP_NONE)) goto FREE_ALL;
+			break;
+		case KWRD_STRUCT:
+			temp_kd_vec = (vector(keyword_data)*) malloc(sizeof(vector(keyword_data)));
+			if (!temp_kd_vec) goto FAILURE_ALLOC;
+			vector_init(keyword_data, temp_kd_vec);
+			if (!vector_push_back(keyword_data, temp_kd_vec, current_kd)) goto FAILURE_ALLOC;
+			if (!vector_push_back(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack, temp_kd_vec))
+				goto FAILURE_ALLOC;
+			if (!sabr_compiler_write_bytecode(bc_data, OP_STRUCT)) goto FREE_ALL;
+			break;
+		case KWRD_MEMBER:
+			if (!comp->keyword_data_stack.size) goto FAILURE_WRONG;
+			temp_kd_vec = *vector_back(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack);
+			if (!vector_push_back(keyword_data, temp_kd_vec, current_kd)) goto FAILURE_ALLOC;
+			if (!sabr_compiler_write_bytecode(bc_data, OP_MEMBER)) goto FREE_ALL;
+			break;
+		case KWRD_END: {
+			value pos;
+			if (comp->keyword_data_stack.size == 0) goto FREE_ALL;
+			temp_kd_vec = *vector_back(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack);
+			keyword_data* first_kd = vector_front(keyword_data, temp_kd_vec);
+			keyword_data* inner_kd = NULL;
+
+			switch (first_kd->kwrd) {
+				case KWRD_IF:
+					for (size_t i = 1; i < temp_kd_vec->size; i++) {
+						keyword_data* iter_kd = vector_at(keyword_data, temp_kd_vec, i);
+						switch (iter_kd->kwrd) {
+							case KWRD_ELSE:
+								if (inner_kd) goto FREE_ALL;
+								inner_kd = iter_kd;
+								break;
+							case KWRD_BREAK: case KWRD_CONTINUE: case KWRD_RETURN:
+								vector(keyword_data)* next_kd_vec;
+								if (comp->keyword_data_stack.size < 2) goto FREE_ALL;
+								next_kd_vec = *vector_at(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack, comp->keyword_data_stack.size - 2);
+								if (!vector_push_back(keyword_data, next_kd_vec, *iter_kd)) goto FAILURE_ALLOC;
+								break;
+							default: goto FREE_ALL;
+						}
+					}
+					if (inner_kd) {
+						pos.u = inner_kd->pos + 9;
+						sabr_compiler_get_bytecode_operation(bc_data, first_kd->index)->operand = pos;
+						pos.u = current_kd.pos;
+						sabr_compiler_get_bytecode_operation(bc_data, inner_kd->index)->operand = pos;
+					}
+					else {
+						pos.u = current_kd.pos;
+						sabr_compiler_get_bytecode_operation(bc_data, first_kd->index)->operand = pos;
+					}
+					break;
+				case KWRD_LOOP:
+					for (size_t i = 1; i < temp_kd_vec->size; i++) {
+						keyword_data* iter_kd = vector_at(keyword_data, temp_kd_vec, i);
+						switch (iter_kd->kwrd) {
+							case KWRD_WHILE:
+								if (inner_kd) goto FREE_ALL;
+								inner_kd = iter_kd;
+								pos.u = current_kd.pos + 9;
+								sabr_compiler_get_bytecode_operation(bc_data, inner_kd->index)->operand = pos;
+								break;
+							case KWRD_BREAK:
+								pos.u = current_kd.pos + 9;
+								sabr_compiler_get_bytecode_operation(bc_data, iter_kd->index)->operand = pos;
+								break;
+							case KWRD_CONTINUE:
+								pos.u = first_kd->pos;
+								sabr_compiler_get_bytecode_operation(bc_data, iter_kd->index)->operand = pos;
+								break;
+							case KWRD_RETURN:
+								vector(keyword_data)* next_kd_vec;
+								if (comp->keyword_data_stack.size < 2) goto FREE_ALL;
+								next_kd_vec = *vector_at(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack, comp->keyword_data_stack.size - 2);
+								if (!vector_push_back(keyword_data, next_kd_vec, *iter_kd)) goto FAILURE_ALLOC;
+								break;
+							default: goto FREE_ALL;
+						}
+					}
+					pos.u = first_kd->pos;
+					if (!sabr_compiler_write_bytecode_with_value(bc_data, OP_JUMP, pos)) goto FREE_ALL;
+					break;
+				case KWRD_FOR: case KWRD_UFOR: case KWRD_FFOR: {
+					#define free_for_vecs() vector_free(keyword_data, &continue_vec);
+					bool is_from_exist = false;
+					bool is_to_exist = false;
+					bool is_step_exist = false;
+					keyword_data* check_kd = first_kd;
+					value check_pos = {0, };
+					size_t check_index = 0;
+
+					vector(keyword_data) continue_vec;
+					vector_init(keyword_data, &continue_vec);
+
+					for (size_t i = 1; i < temp_kd_vec->size; i++) {
+						keyword_data* iter_kd = vector_at(keyword_data, temp_kd_vec, i);
+						switch (iter_kd->kwrd) {
+							case KWRD_FROM:
+								if (is_from_exist) { free_for_vecs(); goto FREE_ALL; }
+								is_from_exist = true;
+								check_kd = iter_kd;
+								break;
+							case KWRD_TO:
+								if (is_to_exist) { free_for_vecs(); goto FREE_ALL; }
+								is_to_exist = true;
+								check_kd = iter_kd;
+								break;
+							case KWRD_STEP:
+								if (is_step_exist) { free_for_vecs(); goto FREE_ALL; }
+								is_step_exist = true;
+								check_kd = iter_kd;
+								break;
+							case KWRD_BREAK:
+								pos.u = current_kd.pos + 9;
+								sabr_compiler_get_bytecode_operation(bc_data, iter_kd->index)->operand = pos;
+								break;
+							case KWRD_CONTINUE:
+								if (!vector_push_back(keyword_data, &continue_vec, *iter_kd)) {
+									free_for_vecs(); goto FREE_ALL;
+								}
+								break;
+							case KWRD_RETURN:
+								vector(keyword_data)* next_kd_vec;
+								if (comp->keyword_data_stack.size < 2) { free_for_vecs(); goto FREE_ALL; }
+								next_kd_vec = *vector_at(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack, comp->keyword_data_stack.size - 2);
+								if (!vector_push_back(keyword_data, next_kd_vec, *iter_kd)) {
+									free_for_vecs(); goto FAILURE_ALLOC;
+								}
+								break;
+							default:
+								free_for_vecs(); goto FREE_ALL;
+								break;
+						}
+					}
+					if (!(is_from_exist || is_to_exist || is_step_exist)) {
+						check_pos.u = check_kd->pos + 9;
+					}
+					else {
+						check_pos.u = check_kd->pos + 1;
+					}
+					check_index = check_kd->index + 1;
+					pos.u = current_kd.pos + 9;
+
+					sabr_compiler_get_bytecode_operation(bc_data, check_index)->oc = OP_FOR_CHECK;
+					sabr_compiler_get_bytecode_operation(bc_data, check_index)->operand = pos;
+
+					if (continue_vec.size > 0) {
+						for (size_t i = 1; i < continue_vec.size; i++) {
+							keyword_data* iter_kd = vector_at(keyword_data, &continue_vec, i);
+							sabr_compiler_get_bytecode_operation(bc_data, iter_kd->index)->oc = OP_FOR_NEXT;
+							sabr_compiler_get_bytecode_operation(bc_data, iter_kd->index)->operand = check_pos;
+						}
+					}
+
+					if (!sabr_compiler_write_bytecode_with_value(bc_data, OP_FOR_NEXT, check_pos)) goto FREE_ALL;
+					if (!sabr_compiler_write_bytecode(bc_data, OP_FOR_END)) goto FREE_ALL;
+
+					free_for_vecs();
+					#undef free_for_vecs
+				} break;
+				case KWRD_SWITCH: {
+					#define free_switch_vecs() \
+						vector_free(keyword_data, &case_vec); \
+						vector_free(keyword_data, &pass_vec); \
+						vector_free(keyword_data, &chain_vec);
+					
+					vector(keyword_data) case_vec;
+					vector(keyword_data) pass_vec;
+					vector(keyword_data) chain_vec;
+
+					vector_init(keyword_data, &case_vec);
+					vector_init(keyword_data, &pass_vec);
+					vector_init(keyword_data, &chain_vec);
+
+					pos.u = current_kd.pos;
+					
+					bool chain = false;
+					bool is_exist_case = false;
+					bool is_exist_pass = false;
+
+					for (size_t i = 1; i < temp_kd_vec->size; i++) {
+						keyword_data* iter_kd = vector_at(keyword_data, temp_kd_vec, i);
+						switch (iter_kd->kwrd) {
+							case KWRD_CASE:
+								if (chain) {
+									if (!vector_push_back(keyword_data, &pass_vec, *iter_kd)) {
+										free_switch_vecs(); goto FAILURE_ALLOC;
+									}
+								}
+								if (!vector_push_back(keyword_data, &case_vec, *iter_kd)) {
+									free_switch_vecs(); goto FAILURE_ALLOC;
+								}
+								chain = true;
+								is_exist_case = true;
+								break;
+							case KWRD_PASS:
+								chain = false;
+								sabr_compiler_get_bytecode_operation(bc_data, iter_kd->index)->operand = pos;
+								if (!vector_push_back(keyword_data, &pass_vec, *iter_kd)) {
+									free_switch_vecs(); goto FAILURE_ALLOC;
+								}
+								is_exist_pass = true;
+								break;
+							case KWRD_BREAK:
+							case KWRD_CONTINUE:
+							case KWRD_RETURN:
+								vector(keyword_data)* next_kd_vec;
+								if (comp->keyword_data_stack.size < 2) { free_switch_vecs(); goto FREE_ALL; }
+								next_kd_vec = *vector_at(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack, comp->keyword_data_stack.size - 2);
+								if (!vector_push_back(keyword_data, next_kd_vec, *iter_kd)) {
+									free_switch_vecs(); goto FAILURE_ALLOC;
+								}
+								break;
+							default:
+								free_switch_vecs(); goto FREE_ALL;
+								break;
+						}
+					}
+
+					if (!(
+						is_exist_pass && is_exist_case &&
+						(is_exist_pass ? (vector_at(keyword_data, temp_kd_vec, 1)->kwrd == KWRD_CASE) : 0)
+					)) {
+						free_switch_vecs(); goto FREE_ALL;
+					}
+
+					keyword_data* iter_case_kd = vector_front(keyword_data, &case_vec);
+					keyword_data* iter_pass_kd = vector_front(keyword_data, &pass_vec);
+
+					for (; iter_case_kd <= vector_back(keyword_data, &case_vec); iter_case_kd++) {
+						if (iter_pass_kd->kwrd == KWRD_PASS) {
+							if (chain_vec.size) {
+								for (size_t i = 0; i < chain_vec.size; i++) {
+									keyword_data* iter_chain_kd = vector_at(keyword_data, &chain_vec, i);
+									pos.u = iter_case_kd->pos + 11;
+
+									sabr_compiler_get_bytecode_operation(bc_data, iter_chain_kd->index + 2)->operand = pos;
+									sabr_compiler_get_bytecode_operation(bc_data, iter_chain_kd->index + 1)->oc = OP_NEQ;
+								}
+								vector_clear(keyword_data, &chain_vec);
+							}
+
+							pos.u = iter_pass_kd->pos + 9;
+
+							sabr_compiler_get_bytecode_operation(bc_data, iter_case_kd->index + 2)->operand = pos;
+							iter_pass_kd++;
+						}
+						else {
+							if (!vector_push_back(keyword_data, &chain_vec, *iter_case_kd)) {
+								free_switch_vecs(); goto FAILURE_ALLOC;
+							}
+							iter_pass_kd++;
+						}
+					}
+
+					if (!sabr_compiler_write_bytecode(bc_data, OP_SWITCH_END)) goto FREE_ALL;
+					
+					free_switch_vecs();
+					#undef free_switch_vecs
+				} break;
+				default:
+					break;
+			}
+
+		} break;
+		default:
+			break;
+	}
+
+	return true;
+
+FAILURE_ALLOC:
+	fputs(sabr_errmsg_alloc, stderr); 
+	goto FREE_ALL;
+
+FAILURE_WRONG:
+	goto FREE_ALL;
+
+FREE_ALL:
+	if (temp_kd_vec) {
+		vector_free(keyword_data, temp_kd_vec);
+		free(temp_kd_vec);
+	}
+
+	return false;
+}
+
+
+bool sabr_compiler_write_bytecode(bytecode* bc_data, opcode oc) {
+	if (!vector_push_back(bytecode_operation, &bc_data->bcop_vec, sabr_new_bytecode(oc))) {
+		fputs(sabr_errmsg_alloc, stderr);
+		return false;
+	}
+	bc_data->current_index++;
+	bc_data->current_pos++;
+	return true;
+}
+
+bool sabr_compiler_write_bytecode_with_null(bytecode* bc_data, opcode oc) {
+	if (!vector_push_back(bytecode_operation, &bc_data->bcop_vec, sabr_new_bytecode_with_null(oc))) {
+		fputs(sabr_errmsg_alloc, stderr);
+		return false;
+	}
+	bc_data->current_index++;
+	bc_data->current_pos += 9;
+	return true;
+}
+
+bool sabr_compiler_write_bytecode_with_value(bytecode* bc_data, opcode oc, value v) {
+	if (!vector_push_back(bytecode_operation, &bc_data->bcop_vec, sabr_new_bytecode_with_value(oc, v))) {
+		fputs(sabr_errmsg_alloc, stderr);
+		return false;
+	}
+	bc_data->current_index++;
+	bc_data->current_pos += 9;
+	return true;
+}
+
+bytecode_operation* sabr_compiler_get_bytecode_operation(bytecode* bc_data, size_t index) {
+	if (index >= bc_data->bcop_vec.size) return NULL;
+	return vector_at(bytecode_operation, &bc_data->bcop_vec, index);
 }

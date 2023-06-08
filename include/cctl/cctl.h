@@ -8,4 +8,6 @@
 #define cctl_ptr_def(TYPE) \
 	typedef TYPE *cctl_ptr(TYPE)
 
+#define cctl_num_args(...) (sizeof((int[]) { __VA_ARGS__ } ) / sizeof(int))
+
 #endif
