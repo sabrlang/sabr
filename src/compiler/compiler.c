@@ -1317,10 +1317,11 @@ bool sabr_compiler_compile_keyword(sabr_compiler* const comp, bytecode* bc_data,
 					if (!sabr_compiler_write_bytecode_with_value(bc_data, OP_JUMP, pos)) goto FREE_ALL;
 					break;
 				case KWRD_FOR: case KWRD_UFOR: case KWRD_FFOR: {
-					#define free_for_vecs() vector_free(keyword_data, &continue_vec);
-					bool is_from_exist = false;
-					bool is_to_exist = false;
-					bool is_step_exist = false;
+					#define free_for_vecs() \
+						vector_free(keyword_data, &continue_vec);
+					bool exists_from = false;
+					bool exists_to = false;
+					bool exists_step = false;
 					keyword_data* check_kd = first_kd;
 					value check_pos = {0, };
 					size_t check_index = 0;
@@ -1332,18 +1333,18 @@ bool sabr_compiler_compile_keyword(sabr_compiler* const comp, bytecode* bc_data,
 						keyword_data* iter_kd = vector_at(keyword_data, temp_kd_vec, i);
 						switch (iter_kd->kwrd) {
 							case KWRD_FROM:
-								if (is_from_exist) { free_for_vecs(); goto FREE_ALL; }
-								is_from_exist = true;
+								if (exists_from) { free_for_vecs(); goto FREE_ALL; }
+								exists_from = true;
 								check_kd = iter_kd;
 								break;
 							case KWRD_TO:
-								if (is_to_exist) { free_for_vecs(); goto FREE_ALL; }
-								is_to_exist = true;
+								if (exists_to) { free_for_vecs(); goto FREE_ALL; }
+								exists_to = true;
 								check_kd = iter_kd;
 								break;
 							case KWRD_STEP:
-								if (is_step_exist) { free_for_vecs(); goto FREE_ALL; }
-								is_step_exist = true;
+								if (exists_step) { free_for_vecs(); goto FREE_ALL; }
+								exists_step = true;
 								check_kd = iter_kd;
 								break;
 							case KWRD_BREAK:
@@ -1368,7 +1369,7 @@ bool sabr_compiler_compile_keyword(sabr_compiler* const comp, bytecode* bc_data,
 								break;
 						}
 					}
-					if (!(is_from_exist || is_to_exist || is_step_exist)) {
+					if (!(exists_from || exists_to || exists_step)) {
 						check_pos.u = check_kd->pos + 9;
 					}
 					else {
@@ -1411,8 +1412,8 @@ bool sabr_compiler_compile_keyword(sabr_compiler* const comp, bytecode* bc_data,
 					pos.u = current_kd.pos;
 					
 					bool chain = false;
-					bool is_exist_case = false;
-					bool is_exist_pass = false;
+					bool exists_case = false;
+					bool exists_pass = false;
 
 					for (size_t i = 1; i < temp_kd_vec->size; i++) {
 						keyword_data* iter_kd = vector_at(keyword_data, temp_kd_vec, i);
@@ -1427,7 +1428,7 @@ bool sabr_compiler_compile_keyword(sabr_compiler* const comp, bytecode* bc_data,
 									free_switch_vecs(); goto FAILURE_ALLOC;
 								}
 								chain = true;
-								is_exist_case = true;
+								exists_case = true;
 								break;
 							case KWRD_PASS:
 								chain = false;
@@ -1435,7 +1436,7 @@ bool sabr_compiler_compile_keyword(sabr_compiler* const comp, bytecode* bc_data,
 								if (!vector_push_back(keyword_data, &pass_vec, *iter_kd)) {
 									free_switch_vecs(); goto FAILURE_ALLOC;
 								}
-								is_exist_pass = true;
+								exists_pass = true;
 								break;
 							case KWRD_BREAK:
 							case KWRD_CONTINUE:
@@ -1454,8 +1455,8 @@ bool sabr_compiler_compile_keyword(sabr_compiler* const comp, bytecode* bc_data,
 					}
 
 					if (!(
-						is_exist_pass && is_exist_case &&
-						(is_exist_pass ? (vector_at(keyword_data, temp_kd_vec, 1)->kwrd == KWRD_CASE) : 0)
+						exists_pass && exists_case &&
+						(exists_pass ? (vector_at(keyword_data, temp_kd_vec, 1)->kwrd == KWRD_CASE) : 0)
 					)) {
 						free_switch_vecs(); goto FREE_ALL;
 					}
@@ -1493,6 +1494,12 @@ bool sabr_compiler_compile_keyword(sabr_compiler* const comp, bytecode* bc_data,
 					
 					free_switch_vecs();
 					#undef free_switch_vecs
+				} break;
+				case KWRD_FUNC: {
+					#define free_func_vecs() \
+						vector_free(keyword_data, &return_vec);
+					
+					bool exists_finally = false;
 				} break;
 				default:
 					break;
