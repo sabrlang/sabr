@@ -26,4 +26,6 @@
 
 #define sabr_errmsg_wrong_escape_sequence "error : Wrong escape sequence\n"
 
+#define sabr_errmsg_wrong_keyword_syntax "error : Wrong keyword syntax\n"
+
 #endif
