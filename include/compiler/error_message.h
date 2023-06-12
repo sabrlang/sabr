@@ -30,4 +30,6 @@
 
 #define sabr_errmsg_wrong_ident "error : Wrong identifier\n"
 
+#define sabr_errmsg_unused_preproc_token "error : Unused preprocessor tokens remain\n"
+
 #endif

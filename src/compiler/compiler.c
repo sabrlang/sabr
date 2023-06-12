@@ -807,6 +807,8 @@ bytecode* sabr_compiler_compile_tokens(sabr_compiler* const comp, vector(token)*
 					if (!sabr_compiler_write_bytecode_with_value(bc_data, OP_VALUE, value_a)) goto PRINT_ERR_POS;
 					break;
 				case '{':
+					fputs(sabr_errmsg_unused_preproc_token, stderr);
+					goto PRINT_ERR_POS;
 					break;
 				case '\'':
 					string_values = sabr_compiler_parse_string(comp, current_token.data);
