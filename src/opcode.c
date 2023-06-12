@@ -21,17 +21,19 @@ const char* opcode_names[] = {
 	"OP_SWITCH_CASE",
 	"OP_SWITCH_END",
 
-	"OP_FUNC",
-	"OP_MACRO",
-	"OP_RETURN_FUNC",
-	"OP_RETURN_MACRO",
+	"OP_LAMBDA",
+	"OP_RETURN",
+	"OP_LOCAL",
+	"OP_LOCAL_END",
+	"OP_DEFINE",
 
 	"OP_STRUCT",
 	"OP_MEMBER",
 	"OP_STRUCT_END",
+	"OP_STRUCT_EXEC",
 	
 	"OP_SET",
-	"OP_CALL",
+	"OP_EXEC",
 	"OP_ADDR",
 	"OP_REF",
 

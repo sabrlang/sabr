@@ -93,9 +93,10 @@ bool sabr_compiler_parse_zero_begin_num(const char* str, size_t index, bool nega
 bool sabr_compiler_parse_base_n_num(const char* str, size_t index, bool negate, int base, value* v);
 bool sabr_compiler_parse_num(const char* str, value* v);
 bool sabr_compiler_parse_identifier(sabr_compiler* const comp, const char* str, value* v);
-bool sabr_compiler_is_can_be_identifier(const char* str);
+bool sabr_compiler_is_string_can_be_identifier(const char* str);
 vector(value)* sabr_compiler_parse_string(sabr_compiler* const comp, const char* str);
 bool sabr_compiler_parse_string_escape_hex(char** ch_addr, char* num_parse_stop, char* num_parse, size_t* num_parse_count, value* v, int length);
+bool sabr_compiler_parse_struct_member(sabr_compiler* const comp, const char* str, value* struct_v, value* member_v);
 
 bool sabr_compiler_compile_keyword(sabr_compiler* const comp, bytecode* bc_data, keyword kwrd);
 

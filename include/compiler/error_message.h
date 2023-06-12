@@ -28,4 +28,6 @@
 
 #define sabr_errmsg_wrong_keyword_syntax "error : Wrong keyword syntax\n"
 
+#define sabr_errmsg_wrong_ident "error : Wrong identifier\n"
+
 #endif
