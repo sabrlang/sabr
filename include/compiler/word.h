@@ -2,6 +2,7 @@
 #define __WORD_H__
 
 #include "kwrd.h"
+#include "opcode.h"
 #include "preproc.h"
 #include "token.h"
 
@@ -27,6 +28,7 @@ union word_data_union {
 	preproc_keyword preproc_kwrd;
 	keyword kwrd;
 	size_t identifer_index;
+	opcode oc;
 };
 
 typedef struct word_struct word;

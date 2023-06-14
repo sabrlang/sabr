@@ -9,6 +9,7 @@ typedef union value_union {
 	double f;
 	uint64_t* p;
 	uint8_t bytes[8];
+	// _Decimal64 d;
 } value;
 
 #endif

@@ -73,6 +73,13 @@ const char* opcode_names[] = {
 	"OP_FLST",
 	"OP_FLEQ",
 
+	"OP_BAND",
+	"OP_BOR",
+	"OP_BXOR",
+	"OP_BNOT",
+	"OP_BLSFT",
+	"OP_BRSFT",
+
 	"OP_DROP",
 	"OP_NIP",
 	"OP_DUP",
@@ -102,10 +109,22 @@ const char* opcode_names[] = {
 	"OP_ARRAY_COMMA",
 	"OP_ARRAY_END",
 
-	"OP_STOF",
+	"OP_ITOF",
 	"OP_UTOF",
-	"OP_FTOS",
+	"OP_FTOI",
 	"OP_FTOU",
+
+	"OP_GETC",
+	"OP_GETI",
+	"OP_GETU",
+	"OP_GETF",
+	"OP_GETS",
+
+	"OP_PUTC",
+	"OP_PUTI",
+	"OP_PUTU",
+	"OP_PUTF",
+	"OP_PUTS",
 
 	"OP_SHOW"
 };

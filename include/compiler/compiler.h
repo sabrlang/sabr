@@ -31,6 +31,7 @@
 #include "compiler_cctl_define.h"
 #include "cctl_define.h"
 
+#include "built_in_operation.h"
 #include "bytecode.h"
 #include "compiler_utils.h"
 #include "error_message.h"

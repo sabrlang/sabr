@@ -32,6 +32,15 @@ bool sabr_compiler_init(sabr_compiler* const comp) {
 			return false;
 		}
 	}
+	for (size_t i = 0; i < bio_names_len; i++) {
+		word w;
+		w.type = WT_OP;
+		w.data.oc = bio_indices[i];
+		if (!trie_insert(word, &comp->dictionary, bio_names[i], w)) {
+			fputs(sabr_errmsg_alloc, stderr);
+			return false;
+		}
+	}
 	comp->identifier_count = 0;
 
 	vector_init(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack);
@@ -779,8 +788,11 @@ bytecode* sabr_compiler_compile_tokens(sabr_compiler* const comp, vector(token)*
 					value_a.u = w->data.identifer_index;
 					if (!sabr_compiler_write_bytecode_with_value(bc_data, OP_EXEC, value_a)) goto PRINT_ERR_POS;
 					break;
-				default:
+				case WT_OP:
+					if (!sabr_compiler_write_bytecode(bc_data, w->data.oc)) goto PRINT_ERR_POS;
 					break;
+				default:
+					goto PRINT_ERR_POS;
 			}
 		}
 		else {
@@ -1188,7 +1200,7 @@ bool sabr_compiler_compile_keyword(sabr_compiler* const comp, bytecode* bc_data,
 			break;
 		case KWRD_FOR:
 		case KWRD_UFOR:
-		case KWRD_FFOR:
+		case KWRD_FFOR: {
 			value for_type;
 			temp_kd_vec = (vector(keyword_data)*) malloc(sizeof(vector(keyword_data)));
 			if (!temp_kd_vec) goto FAILURE_ALLOC;
@@ -1207,7 +1219,7 @@ bool sabr_compiler_compile_keyword(sabr_compiler* const comp, bytecode* bc_data,
 
 			if (!sabr_compiler_write_bytecode_with_value(bc_data, OP_FOR, for_type)) goto FREE_ALL;
 			if (!sabr_compiler_write_bytecode(bc_data, OP_NONE)) goto FREE_ALL;
-			break;
+		} break;
 		case KWRD_FROM:
 			if (!comp->keyword_data_stack.size) goto FAILURE_WRONG;
 			temp_kd_vec = *vector_back(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack);
@@ -1316,12 +1328,12 @@ bool sabr_compiler_compile_keyword(sabr_compiler* const comp, bytecode* bc_data,
 								if (inner_kd) goto FAILURE_WRONG;
 								inner_kd = iter_kd;
 								break;
-							case KWRD_COMMA: case KWRD_BREAK: case KWRD_CONTINUE: case KWRD_RETURN:
+							case KWRD_COMMA: case KWRD_BREAK: case KWRD_CONTINUE: case KWRD_RETURN: {
 								vector(keyword_data)* next_kd_vec;
 								if (comp->keyword_data_stack.size < 2) goto FAILURE_WRONG;
 								next_kd_vec = *vector_at(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack, comp->keyword_data_stack.size - 2);
 								if (!vector_push_back(keyword_data, next_kd_vec, *iter_kd)) goto FAILURE_ALLOC;
-								break;
+							} break;
 							default: goto FAILURE_WRONG;
 						}
 					}
@@ -1364,12 +1376,12 @@ bool sabr_compiler_compile_keyword(sabr_compiler* const comp, bytecode* bc_data,
 								if (!temp_bcop) goto FREE_ALL;
 								temp_bcop->operand = pos;
 								break;
-							case KWRD_COMMA: case KWRD_RETURN:
+							case KWRD_COMMA: case KWRD_RETURN: {
 								vector(keyword_data)* next_kd_vec;
 								if (comp->keyword_data_stack.size < 2) goto FAILURE_WRONG;
 								next_kd_vec = *vector_at(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack, comp->keyword_data_stack.size - 2);
 								if (!vector_push_back(keyword_data, next_kd_vec, *iter_kd)) goto FAILURE_ALLOC;
-								break;
+							} break;
 							default: goto FAILURE_WRONG;
 						}
 					}
@@ -1420,14 +1432,14 @@ bool sabr_compiler_compile_keyword(sabr_compiler* const comp, bytecode* bc_data,
 									free_for_vecs(); goto FAILURE_ALLOC;
 								}
 								break;
-							case KWRD_COMMA: case KWRD_RETURN:
+							case KWRD_COMMA: case KWRD_RETURN: {
 								vector(keyword_data)* next_kd_vec;
 								if (comp->keyword_data_stack.size < 2) { free_for_vecs(); goto FAILURE_WRONG; }
 								next_kd_vec = *vector_at(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack, comp->keyword_data_stack.size - 2);
 								if (!vector_push_back(keyword_data, next_kd_vec, *iter_kd)) {
 									free_for_vecs(); goto FAILURE_ALLOC;
 								}
-								break;
+							} break;
 							default: free_for_vecs(); goto FAILURE_WRONG;
 						}
 					}
@@ -1509,14 +1521,14 @@ bool sabr_compiler_compile_keyword(sabr_compiler* const comp, bytecode* bc_data,
 								}
 								exists_pass = true;
 								break;
-							case KWRD_COMMA: case KWRD_BREAK: case KWRD_CONTINUE: case KWRD_RETURN:
+							case KWRD_COMMA: case KWRD_BREAK: case KWRD_CONTINUE: case KWRD_RETURN: {
 								vector(keyword_data)* next_kd_vec;
 								if (comp->keyword_data_stack.size < 2) { free_switch_vecs(); goto FAILURE_WRONG; }
 								next_kd_vec = *vector_at(cctl_ptr(vector(keyword_data)), &comp->keyword_data_stack, comp->keyword_data_stack.size - 2);
 								if (!vector_push_back(keyword_data, next_kd_vec, *iter_kd)) {
 									free_switch_vecs(); goto FAILURE_ALLOC;
 								}
-								break;
+							} break;
 							default: free_switch_vecs(); goto FAILURE_WRONG;
 						}
 					}
