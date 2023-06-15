@@ -247,14 +247,15 @@ FREE_ALL:
 vector(token)* sabr_compiler_preprocess_textcode(sabr_compiler* const comp, size_t textcode_index) {
 	bool result = false;
 	
-	vector(token)* tokens = NULL;
+	vector(token)* input_tokens = NULL;
+	vector(token)* output_tokens = NULL;
 	trie(word)* preproc_local_dictionary = NULL;
 	const char* code = *vector_at(cctl_ptr(char), &comp->textcode_vector, textcode_index);
 	pos init_pos = { .line = 1, .column = 1 };
 
-	tokens = sabr_compiler_tokenize_string(comp, code, textcode_index, init_pos, false);
+	input_tokens = sabr_compiler_tokenize_string(comp, code, textcode_index, init_pos, false);
 
-	if (!tokens) {
+	if (!input_tokens) {
 		fputs(sabr_errmsg_tokenize, stderr);
 		goto FREE_ALL;
 	}
@@ -275,8 +276,8 @@ vector(token)* sabr_compiler_preprocess_textcode(sabr_compiler* const comp, size
 		goto FREE_ALL;
 	}
 
-	tokens = sabr_compiler_preprocess_tokens(comp, tokens, NULL);
-	if (!tokens) {
+	output_tokens = sabr_compiler_preprocess_tokens(comp, input_tokens, NULL);
+	if (!output_tokens) {
 		fputs(sabr_errmsg_preprocess, stderr);
 		goto FREE_ALL;
 	}
@@ -284,8 +285,17 @@ vector(token)* sabr_compiler_preprocess_textcode(sabr_compiler* const comp, size
 	result = true;
 FREE_ALL:
 	if (!result) {
-		free(tokens);
-		tokens = NULL;
+		if (output_tokens) {
+			sabr_free_token_vector(output_tokens);
+			free(output_tokens);
+			output_tokens = NULL;
+		}
+	}
+
+	if (input_tokens) {
+		sabr_free_token_vector(input_tokens);
+		free(input_tokens);
+		input_tokens = NULL;
 	}
 
 	sabr_free_word_trie(preproc_local_dictionary);
@@ -293,7 +303,7 @@ FREE_ALL:
 	vector_pop_back(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack);
 	vector_pop_back(preproc_stop_flag, &comp->preproc_stop_stack);
 
-	return tokens;
+	return output_tokens;
 }
 
 vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector(token)* input_tokens, vector(token)* output_tokens) {
@@ -392,15 +402,9 @@ vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector
 		}
 	}
 
-	sabr_free_token_vector(input_tokens);
-	free(input_tokens);
-
 	return output_tokens;
 
 FREE_ALL:
-	sabr_free_token_vector(input_tokens);
-	free(input_tokens);
-
 	sabr_free_token_vector(output_tokens);
 	free(output_tokens);
 
