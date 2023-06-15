@@ -29,7 +29,6 @@ void sabr_free_token_vector(vector(token)* tokens) {
 			free(t.data);
 		}
 		vector_free(token, tokens);
-		free(tokens);
 	}
 }
 

@@ -93,12 +93,14 @@ bool sabr_compiler_compile_file(sabr_compiler* const comp, const char* filename)
 	preprocessed_tokens = sabr_compiler_preprocess_textcode(comp, textcode_index);
 	if (!preprocessed_tokens) {
 		sabr_free_token_vector(preprocessed_tokens);
+		free(preprocessed_tokens);
 		return false;
 	}
 	
 	compiled_bytecode = sabr_compiler_compile_tokens(comp, preprocessed_tokens);
 	if (!compiled_bytecode) {
 		sabr_free_token_vector(preprocessed_tokens);
+		free(preprocessed_tokens);
 		return false;
 	}
 
@@ -115,6 +117,7 @@ bool sabr_compiler_compile_file(sabr_compiler* const comp, const char* filename)
 	}
 
 	sabr_free_token_vector(preprocessed_tokens);
+	free(preprocessed_tokens);
 
 	return true;
 }
@@ -278,14 +281,6 @@ vector(token)* sabr_compiler_preprocess_textcode(sabr_compiler* const comp, size
 		goto FREE_ALL;
 	}
 
-	// printf("Preprocess : %s\n", *vector_at(cctl_ptr(char), &comp->filename_vector, textcode_index));
-
-	// for (size_t i = 0; i < tokens->size; i++) {
-	// 	token t = *vector_at(token, tokens, i);
-	// 	printf("token : %s\n", t.data);
-	// }
-	// printf("\n");
-
 	result = true;
 FREE_ALL:
 	if (!result) {
@@ -398,11 +393,17 @@ vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector
 	}
 
 	sabr_free_token_vector(input_tokens);
+	free(input_tokens);
+
 	return output_tokens;
 
 FREE_ALL:
 	sabr_free_token_vector(input_tokens);
+	free(input_tokens);
+
 	sabr_free_token_vector(output_tokens);
+	free(output_tokens);
+
 	free(new_t_data);
 	return NULL;
 }
@@ -457,8 +458,13 @@ FREE_ALL:
 	if (!result) {
 		free(input_string);
 		free(temp_input_string);
+
 		sabr_free_token_vector(input_tokens);
+		free(input_tokens);
+
 		sabr_free_token_vector(output_tokens);
+		free(output_tokens);
+
 		input_tokens = NULL;
 		output_tokens = NULL;
 	}
@@ -727,8 +733,11 @@ vector(token)* sabr_compiler_tokenize_string(sabr_compiler* const comp, const ch
 	}
 
 	return tokens;
+
 FREE_ALL:
 	sabr_free_token_vector(tokens);
+	free(tokens);
+
 	return NULL;
 
 WRONG_TOKEN:
