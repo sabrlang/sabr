@@ -52,3 +52,8 @@ void sabr_free_word_trie(trie(word)* dictionary) {
 		free(dictionary->children[i]);
 	}
 }
+
+void sabr_free_bytecode(bytecode* bc) {
+	if (!bc) return;
+	vector_free(bytecode_operation, &bc->bcop_vec);
+}

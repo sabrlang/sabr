@@ -81,45 +81,26 @@ bool sabr_compiler_del(sabr_compiler* const comp) {
 	return true;
 }
 
-bool sabr_compiler_compile_file(sabr_compiler* const comp, const char* filename) {
+bytecode* sabr_compiler_compile_file(sabr_compiler* const comp, const char* filename) {
 	size_t textcode_index;
-	vector(token)* preprocessed_tokens;
-	bytecode* compiled_bytecode;
+	vector(token)* preprocessed_tokens = NULL;
+	bytecode* compiled_bytecode = NULL;
 
 	if (!sabr_compiler_load_file(comp, filename, &textcode_index)) {
-		return false;
+		return NULL;
 	}
 
 	preprocessed_tokens = sabr_compiler_preprocess_textcode(comp, textcode_index);
-	if (!preprocessed_tokens) {
-		sabr_free_token_vector(preprocessed_tokens);
-		free(preprocessed_tokens);
-		return false;
-	}
+	if (!preprocessed_tokens) return NULL;
 	
 	compiled_bytecode = sabr_compiler_compile_tokens(comp, preprocessed_tokens);
 	if (!compiled_bytecode) {
 		sabr_free_token_vector(preprocessed_tokens);
 		free(preprocessed_tokens);
-		return false;
+		return NULL;
 	}
 
-	size_t j = 0;
-	for (size_t i = 0; i < compiled_bytecode->bcop_vec.size; i++) {
-		bytecode_operation bc = *vector_at(bytecode_operation, &compiled_bytecode->bcop_vec, i);
-		printf("%5zu\t%5zu\t\t%-10.20s", i, j, opcode_names[bc.oc]);
-		if (bc.has_operand) {
-			printf("\t\t%zu", bc.operand.u);
-			j += 8;
-		}
-		j++;
-		putchar('\n');
-	}
-
-	sabr_free_token_vector(preprocessed_tokens);
-	free(preprocessed_tokens);
-
-	return true;
+	return compiled_bytecode;
 }
 bool sabr_compiler_load_file(sabr_compiler* const comp, const char* filename, size_t* index) {
 	FILE* file;
@@ -242,6 +223,72 @@ FREE_ALL:
 	free(textcode);
 	free(filename_full_new);
 	return false;
+}
+
+bool sabr_compiler_save_bytecode(sabr_compiler* const comp, bytecode* const bc, const char* filename) {
+	FILE* file;
+	char filename_full[PATH_MAX] = {0, };
+
+#if defined(_WIN32)
+	wchar_t filename_windows[PATH_MAX] = {0, };
+	wchar_t filename_full_windows[PATH_MAX] = {0, };
+
+	const char* u8_cvt_iter = filename;
+	wchar_t* store_iter = filename_windows;
+	const char* end = filename + strlen(filename);
+
+	while (true) {
+		char16_t out;
+		size_t rc = mbrtoc16(&out, u8_cvt_iter, end - u8_cvt_iter + 1, &(comp->convert_state));
+		if (!rc) break;
+		if (rc == (size_t) -3) store_iter++;
+		if (rc > (size_t) -3) {
+			fputs(sabr_errmsg_fullpath, stderr);
+			return false;
+		}
+
+		u8_cvt_iter += rc;
+		*store_iter = out;
+		store_iter++;
+	}
+
+	if (!_wfullpath(filename_full_windows, filename_windows, PATH_MAX)) {
+		fputs(sabr_errmsg_fullpath, stderr);
+		return false;
+	}
+	if (!_fullpath(filename_full, filename, PATH_MAX)) {
+		fputs(sabr_errmsg_fullpath, stderr);
+		return false;
+	}
+
+	file = _wfopen(filename_full_windows, L"wb");
+
+#else
+	if (!(realpath(filename, filename_full))) {
+		fputs(sabr_errmsg_fullpath, stderr);
+		goto FREE_ALL;
+	}
+
+	file = fopen(filename_full, "wb");
+#endif
+
+	if (!file) {
+		fputs(sabr_errmsg_open, stderr);
+		return false;
+	}
+
+	for (size_t i = 0; i < bc->bcop_vec.size; i++) {
+		bytecode_operation bcop = *vector_at(bytecode_operation, &bc->bcop_vec, i);
+		fputc(bcop.oc, file);
+		if (bcop.has_operand) {
+			for (size_t j = 0; j < 8; j++) {
+				fputc((bcop.operand.bytes[j]), file);
+			}
+		}
+	}
+
+	fclose(file);
+	return true;
 }
 
 vector(token)* sabr_compiler_preprocess_textcode(sabr_compiler* const comp, size_t textcode_index) {

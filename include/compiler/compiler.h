@@ -79,8 +79,10 @@ struct sabr_compiler_struct {
 bool sabr_compiler_init(sabr_compiler* const comp);
 bool sabr_compiler_del(sabr_compiler* const comp);
 
-bool sabr_compiler_compile_file(sabr_compiler* const comp, const char* filename);
+bytecode* sabr_compiler_compile_file(sabr_compiler* const comp, const char* filename);
 bool sabr_compiler_load_file(sabr_compiler* const comp, const char* filename, size_t* index);
+
+bool sabr_compiler_save_bytecode(sabr_compiler* const comp, bytecode* const bc, const char* filename);
 
 vector(token)* sabr_compiler_preprocess_textcode(sabr_compiler* const comp, size_t textcode_index);
 vector(token)* sabr_compiler_preprocess_tokens(sabr_compiler* const comp, vector(token)* input_tokens, vector(token)* output_tokens);

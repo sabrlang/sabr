@@ -3,6 +3,7 @@
 
 #include <stdarg.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #include "cctl_define.h"
 
@@ -13,5 +14,7 @@ typedef struct bytecode_struct {
 	size_t current_index;
 	size_t current_pos;
 } bytecode;
+
+void print_bytecode(bytecode* bc);
 
 #endif
