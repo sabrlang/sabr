@@ -13,8 +13,8 @@ typedef struct bytecode_operation_struct {
 	bool has_operand;
 } bytecode_operation;
 
-bytecode_operation sabr_new_bytecode(opcode oc);
-bytecode_operation sabr_new_bytecode_with_value(opcode oc, value v);
-bytecode_operation sabr_new_bytecode_with_null(opcode co);
+bytecode_operation sabr_new_bcop(opcode oc);
+bytecode_operation sabr_new_bcop_with_value(opcode oc, value v);
+bytecode_operation sabr_new_bcop_with_null(opcode co);
 
 #endif
