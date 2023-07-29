@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <uchar.h>
+
 #include "compiler_cctl_define.h"
 
 #include "token.h"
@@ -20,5 +22,12 @@ void sabr_free_token_vector(vector(token)* tokens);
 void sabr_free_word_trie(trie(word)* dictionary);
 
 void sabr_free_bytecode(bytecode* bc);
+
+#if defined (_WIN32)
+    bool sabr_convert_string_mbr2c16(const char* src, wchar_t* dest, mbstate_t* convert_state);
+    bool sabr_get_full_path(const char* src_mbr, const char* dest_mbr, const wchar_t* dest_utf16, mbstate_t* convert_state);
+#else
+    bool sabr_get_full_path(const char* src, const char* dest);
+#endif
 
 #endif
