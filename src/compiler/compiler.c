@@ -105,40 +105,17 @@ bytecode* sabr_compiler_compile_file(sabr_compiler* const comp, const char* file
 bool sabr_compiler_load_file(sabr_compiler* const comp, const char* filename, size_t* index) {
 	FILE* file;
 	char filename_full[PATH_MAX] = {0, };
+	
 	char* filename_full_new = NULL;
 	int filename_size;
 	char* textcode = NULL;
 
 #if defined(_WIN32)
-	wchar_t filename_windows[PATH_MAX] = {0, };
 	wchar_t filename_full_windows[PATH_MAX] = {0, };
 
-	const char* u8_cvt_iter = filename;
-	wchar_t* store_iter = filename_windows;
-	const char* end = filename + strlen(filename);
-
-	while (true) {
-		char16_t out;
-		size_t rc = mbrtoc16(&out, u8_cvt_iter, end - u8_cvt_iter + 1, &(comp->convert_state));
-		if (!rc) break;
-		if (rc == (size_t) -3) store_iter++;
-		if (rc > (size_t) -3) {
-			fputs(sabr_errmsg_fullpath, stderr);
-			goto FREE_ALL;
-		}
-
-		u8_cvt_iter += rc;
-		*store_iter = out;
-		store_iter++;
-	}
-
-	if (!_wfullpath(filename_full_windows, filename_windows, PATH_MAX)) {
+	if (!sabr_get_full_path(filename, filename_full, filename_full_windows, &(comp->convert_state))) {
 		fputs(sabr_errmsg_fullpath, stderr);
-		goto FREE_ALL;
-	}
-	if (!_fullpath(filename_full, filename, PATH_MAX)) {
-		fputs(sabr_errmsg_fullpath, stderr);
-		goto FREE_ALL;
+		return false;
 	}
 
 	if (_waccess(filename_full_windows, R_OK)) {
@@ -148,7 +125,7 @@ bool sabr_compiler_load_file(sabr_compiler* const comp, const char* filename, si
 
 	file = _wfopen(filename_full_windows, L"rb");
 #else
-	if (!(realpath(filename, filename_full))) {
+	if (!sabr_get_full_path(filename, filename_full)) {
 		fputs(sabr_errmsg_fullpath, stderr);
 		goto FREE_ALL;
 	}
@@ -228,47 +205,20 @@ FREE_ALL:
 bool sabr_compiler_save_bytecode(sabr_compiler* const comp, bytecode* const bc, const char* filename) {
 	FILE* file;
 	char filename_full[PATH_MAX] = {0, };
-
+	
 #if defined(_WIN32)
-	wchar_t filename_windows[PATH_MAX] = {0, };
 	wchar_t filename_full_windows[PATH_MAX] = {0, };
 
-	const char* u8_cvt_iter = filename;
-	wchar_t* store_iter = filename_windows;
-	const char* end = filename + strlen(filename);
-
-	while (true) {
-		char16_t out;
-		size_t rc = mbrtoc16(&out, u8_cvt_iter, end - u8_cvt_iter + 1, &(comp->convert_state));
-		if (!rc) break;
-		if (rc == (size_t) -3) store_iter++;
-		if (rc > (size_t) -3) {
-			fputs(sabr_errmsg_fullpath, stderr);
-			return false;
-		}
-
-		u8_cvt_iter += rc;
-		*store_iter = out;
-		store_iter++;
-	}
-
-	if (!_wfullpath(filename_full_windows, filename_windows, PATH_MAX)) {
+	if (!sabr_get_full_path(filename, filename_full, filename_full_windows, &(comp->convert_state))) {
 		fputs(sabr_errmsg_fullpath, stderr);
 		return false;
 	}
-	if (!_fullpath(filename_full, filename, PATH_MAX)) {
-		fputs(sabr_errmsg_fullpath, stderr);
-		return false;
-	}
-
 	file = _wfopen(filename_full_windows, L"wb");
-
 #else
-	if (!(realpath(filename, filename_full))) {
+	if (!sabr_get_full_path(filename, filename_full)) {
 		fputs(sabr_errmsg_fullpath, stderr);
-		goto FREE_ALL;
+		return false;
 	}
-
 	file = fopen(filename_full, "wb");
 #endif
 
