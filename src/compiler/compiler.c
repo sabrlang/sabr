@@ -105,7 +105,7 @@ bytecode* sabr_compiler_compile_file(sabr_compiler* const comp, const char* file
 bool sabr_compiler_load_file(sabr_compiler* const comp, const char* filename, size_t* index) {
 	FILE* file;
 	char filename_full[PATH_MAX] = {0, };
-	
+
 	char* filename_full_new = NULL;
 	int filename_size;
 	char* textcode = NULL;
@@ -120,19 +120,19 @@ bool sabr_compiler_load_file(sabr_compiler* const comp, const char* filename, si
 
 	if (_waccess(filename_full_windows, R_OK)) {
 		fputs(sabr_errmsg_open, stderr);
-		goto FREE_ALL;
+		return false;
 	}
 
 	file = _wfopen(filename_full_windows, L"rb");
 #else
 	if (!sabr_get_full_path(filename, filename_full)) {
 		fputs(sabr_errmsg_fullpath, stderr);
-		goto FREE_ALL;
+		return false;
 	}
 
 	if (access(filename_full, R_OK)) {
 		fputs(sabr_errmsg_open, stderr);
-		goto FREE_ALL;
+		return false;
 	}
 
 	file = fopen(filename_full, "rb");
@@ -140,7 +140,7 @@ bool sabr_compiler_load_file(sabr_compiler* const comp, const char* filename, si
 
 	if (!file) {
 		fputs(sabr_errmsg_open, stderr);
-		goto FREE_ALL;
+		return false;
 	}
 
 	fseek(file, 0, SEEK_END);
