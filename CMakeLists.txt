@@ -31,7 +31,7 @@ endif()
 set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
 set(CMAKE_C_FLAGS_RELEASE "-O2")
 
-set(CMAKE_C_STANDARD 23)
+# set(CMAKE_C_STANDARD 23)
 
 include_directories(
 	${PROJECT_SOURCE_DIR}/include

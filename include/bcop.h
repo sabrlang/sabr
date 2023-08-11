@@ -2,7 +2,7 @@
 #define __BCOP_H__
 
 #include <stdarg.h>
-// #include <stdbool.h>
+#include <stdbool.h>
 
 #include "opcode.h"
 #include "value.h"

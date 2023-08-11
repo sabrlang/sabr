@@ -1,7 +1,7 @@
 #ifndef __COMPILER_CCTL_DEFINE_H__
 #define __COMPILER_CCTL_DEFINE_H__
 
-// #include <stdbool.h>
+#include <stdbool.h>
 #include <stdint.h>
 
 #include "cctl/vector.h"
