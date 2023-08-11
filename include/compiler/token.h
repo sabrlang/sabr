@@ -1,7 +1,7 @@
 #ifndef __TOKEN_H__
 #define __TOKEN_H__
 
-#include <stdbool.h>
+// #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 

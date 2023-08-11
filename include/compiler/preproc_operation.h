@@ -10,16 +10,37 @@ const bool sabr_compiler_preproc_isdef_base(sabr_compiler* comp, word w, token t
 const bool sabr_compiler_preproc_undef_base(sabr_compiler* comp, word w, token t, vector(token)* output_tokens, bool is_local);
 const bool sabr_compiler_preproc_getdef_base(sabr_compiler* comp, word w, token t, vector(token)* output_tokens, bool is_local);
 
-const bool sabr_compiler_preproc_func(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
-const bool sabr_compiler_preproc_macro(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
-const bool sabr_compiler_preproc_isdef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
-const bool sabr_compiler_preproc_undef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
-const bool sabr_compiler_preproc_getdef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
-const bool sabr_compiler_preproc_lfunc(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
-const bool sabr_compiler_preproc_lmacro(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
-const bool sabr_compiler_preproc_lisdef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
-const bool sabr_compiler_preproc_lundef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
-const bool sabr_compiler_preproc_lgetdef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
+inline const bool sabr_compiler_preproc_func(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+    return sabr_compiler_preproc_def_base(comp, w, t, output_tokens, false, true);
+}
+inline const bool sabr_compiler_preproc_macro(sabr_compiler* comp, word w, token t, vector(token)* output_tokens){
+	return sabr_compiler_preproc_def_base(comp, w, t, output_tokens, false, false);
+}
+inline const bool sabr_compiler_preproc_isdef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+	return sabr_compiler_preproc_isdef_base(comp, w, t, output_tokens, false);
+}
+inline const bool sabr_compiler_preproc_undef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+	return sabr_compiler_preproc_undef_base(comp, w, t, output_tokens, false);
+}
+inline const bool sabr_compiler_preproc_getdef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+	return sabr_compiler_preproc_getdef_base(comp, w, t, output_tokens, false);
+}
+inline const bool sabr_compiler_preproc_lfunc(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+	return sabr_compiler_preproc_def_base(comp, w, t, output_tokens, true, true);
+}
+inline const bool sabr_compiler_preproc_lmacro(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+	return sabr_compiler_preproc_def_base(comp, w, t, output_tokens, true, false);
+}
+inline const bool sabr_compiler_preproc_lisdef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+	return sabr_compiler_preproc_isdef_base(comp, w, t, output_tokens, true);
+}
+inline const bool sabr_compiler_preproc_lundef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+	return sabr_compiler_preproc_undef_base(comp, w, t, output_tokens, true);
+}
+inline const bool sabr_compiler_preproc_lgetdef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+	return sabr_compiler_preproc_getdef_base(comp, w, t, output_tokens, true);
+}
+
 const bool sabr_compiler_preproc_import(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
 const bool sabr_compiler_preproc_eval(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
 const bool sabr_compiler_preproc_if(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);

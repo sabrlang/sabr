@@ -2,7 +2,7 @@
 #define __BYTECODE_H__
 
 #include <stdarg.h>
-#include <stdbool.h>
+// #include <stdbool.h>
 #include <stdio.h>
 
 #include "cctl_define.h"

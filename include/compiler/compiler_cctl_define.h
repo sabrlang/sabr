@@ -1,7 +1,7 @@
 #ifndef __COMPILER_CCTL_DEFINE_H__
 #define __COMPILER_CCTL_DEFINE_H__
 
-#include <stdbool.h>
+// #include <stdbool.h>
 #include <stdint.h>
 
 #include "cctl/vector.h"
@@ -11,7 +11,6 @@
 #include "token.h"
 #include "value.h"
 #include "word.h"
-
 
 trie_fd(size_t);
 trie_imp_h(size_t);
