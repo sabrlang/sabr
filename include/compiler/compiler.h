@@ -39,6 +39,7 @@
 #include "opcode.h"
 #include "preproc.h"
 #include "token.h"
+#include "utils.h"
 #include "word.h"
 
 typedef enum string_parse_mode_enum {

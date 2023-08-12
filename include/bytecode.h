@@ -17,4 +17,6 @@ typedef struct bytecode_struct {
 
 void print_bytecode(bytecode* bc);
 
+void sabr_free_bytecode(bytecode* bc);
+
 #endif

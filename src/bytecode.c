@@ -13,3 +13,8 @@ void print_bytecode(bytecode* bc) {
 		putchar('\n');
 	}
 }
+
+void sabr_free_bytecode(bytecode* bc) {
+	if (!bc) return;
+	vector_free(bytecode_operation, &bc->bcop_vec);
+}
