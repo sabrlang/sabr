@@ -43,16 +43,16 @@
 #include "word.h"
 
 typedef enum sabr_string_parse_mode_enum {
-	STR_PARSE_NONE,
-	STR_PARSE_SINGLE,
-	STR_PARSE_DOUBLE,
-	STR_PARSE_PREPROC
+	SABR_STR_PARSE_NONE,
+	SABR_STR_PARSE_SINGLE,
+	SABR_STR_PARSE_DOUBLE,
+	SABR_STR_PARSE_PREPROC
 } sabr_string_parse_mode_t;
 
 typedef enum sabr_comment_parse_mode_enum {
-	CMNT_PARSE_NONE,
-	CMNT_PARSE_LINE,
-	CMNT_PARSE_STACK
+	SABR_CMNT_PARSE_NONE,
+	SABR_CMNT_PARSE_LINE,
+	SABR_CMNT_PARSE_STACK
 } sabr_comment_parse_mode_t;
 
 typedef struct sabr_compiler_struct sabr_compiler_t;

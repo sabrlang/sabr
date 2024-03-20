@@ -7,7 +7,7 @@ sabr_for_data_t sabr_interpreter_for_data_new(void) {
 	data.start.i = 0;
 	data.end.i = 0;
 	data.step.i = 1;
-	data.foty = FOTY_I;
+	data.foty = SABR_FOTY_I;
 	data.is_infinite = true;
 	return data;
 }

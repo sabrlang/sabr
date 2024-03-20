@@ -32,7 +32,7 @@ const bool sabr_compiler_preproc_def_base(sabr_compiler_t* comp, sabr_word_t w, 
 	def_data.is_func = is_func;
 
 	sabr_word_t macro_word;
-	macro_word.type = WT_PREPROC_IDFR;
+	macro_word.type = SABR_WT_PREPROC_IDFR;
 	macro_word.data.preproc_def_data = def_data;
 
 	trie(sabr_word_t)* dictionary = (
@@ -87,7 +87,7 @@ const bool sabr_compiler_preproc_isdef_base(sabr_compiler_t* comp, sabr_word_t w
 		: &comp->preproc_dictionary
 	);
 	sabr_word_t* identifier_word = trie_find(sabr_word_t, dictionary, identifier_token.data + 1);
-	int flag = identifier_word ? ((identifier_word->type == WT_PREPROC_IDFR) ? 1 : 0) : 0;
+	int flag = identifier_word ? ((identifier_word->type == SABR_WT_PREPROC_IDFR) ? 1 : 0) : 0;
 
 	result_token = t;
 	if (asprintf(&(result_token.data), "%d", flag) == -1) {
@@ -442,7 +442,7 @@ const bool sabr_compiler_preproc_while(sabr_compiler_t* comp, sabr_word_t w, sab
 
 	is_code_token_brace = code_token.data[0] == '{';
 
-	if (!vector_push_back(sabr_preproc_stop_flag_t, &comp->preproc_stop_stack, PPS_NONE)) {
+	if (!vector_push_back(sabr_preproc_stop_flag_t, &comp->preproc_stop_stack, SABR_PPS_NONE)) {
 		fputs(sabr_errmsg_alloc, stderr);
 		goto FREE_ALL;
 	}
@@ -464,7 +464,7 @@ const bool sabr_compiler_preproc_while(sabr_compiler_t* comp, sabr_word_t w, sab
 
 		if (is_code_token_brace) {
 			current_preproc_stop = vector_back(sabr_preproc_stop_flag_t, &comp->preproc_stop_stack);
-			*current_preproc_stop = PPS_LOOP;
+			*current_preproc_stop = SABR_PPS_LOOP;
 			output_tokens = sabr_compiler_preprocess_eval_token(comp, code_token, false, output_tokens);
 			if (!output_tokens) goto FREE_ALL;
 		}
@@ -481,13 +481,13 @@ const bool sabr_compiler_preproc_while(sabr_compiler_t* comp, sabr_word_t w, sab
 
 		if (current_preproc_stop) {
 			switch (*current_preproc_stop) {
-				case PPS_BREAK:
+				case SABR_PPS_BREAK:
 					loop_break = true;
 					break;
 				default:
 					break;
 			}
-			*current_preproc_stop = PPS_NONE;
+			*current_preproc_stop = SABR_PPS_NONE;
 			if (loop_break) break;
 		}
 
@@ -519,21 +519,21 @@ FREE_ALL:
 
 const bool sabr_compiler_preproc_break(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
 	sabr_preproc_stop_flag_t* current_preproc_stop = vector_back(sabr_preproc_stop_flag_t, &comp->preproc_stop_stack);
-	if (*current_preproc_stop != PPS_LOOP) {
+	if (*current_preproc_stop != SABR_PPS_LOOP) {
 		fputs(sabr_errmsg_wrong_break_continue, stderr);
 		return false;
 	}
-	*current_preproc_stop = PPS_BREAK;
+	*current_preproc_stop = SABR_PPS_BREAK;
 	return true;
 }
 
 const bool sabr_compiler_preproc_continue(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
 	sabr_preproc_stop_flag_t* current_preproc_stop = vector_back(sabr_preproc_stop_flag_t, &comp->preproc_stop_stack);
-	if (*current_preproc_stop != PPS_LOOP) {
+	if (*current_preproc_stop != SABR_PPS_LOOP) {
 		fputs(sabr_errmsg_wrong_break_continue, stderr);
 		return false;
 	}
-	*current_preproc_stop = PPS_CONTINUE;
+	*current_preproc_stop = SABR_PPS_CONTINUE;
 	return true;
 }
 
@@ -544,8 +544,8 @@ const bool sabr_compiler_preproc_concat(sabr_compiler_t* comp, sabr_word_t w, sa
 	char* text_str_a = NULL;
 	char* text_str_b = NULL;
 	char* text_str_temp = NULL;
-	sabr_string_parse_mode_t token_a_str_parse = STR_PARSE_NONE;
-	sabr_string_parse_mode_t token_b_str_parse = STR_PARSE_NONE;
+	sabr_string_parse_mode_t token_a_str_parse = SABR_STR_PARSE_NONE;
+	sabr_string_parse_mode_t token_b_str_parse = SABR_STR_PARSE_NONE;
 
 	bool result = false;
 
@@ -567,15 +567,15 @@ const bool sabr_compiler_preproc_concat(sabr_compiler_t* comp, sabr_word_t w, sa
 	char string_end[2] = {0, };
 
 	switch (text_token_a.data[0]) {
-		case '{': token_a_str_parse = STR_PARSE_PREPROC; break;
-		case '\'': token_a_str_parse = STR_PARSE_SINGLE; break;
-		case '\"': token_a_str_parse = STR_PARSE_DOUBLE; break;
+		case '{': token_a_str_parse = SABR_STR_PARSE_PREPROC; break;
+		case '\'': token_a_str_parse = SABR_STR_PARSE_SINGLE; break;
+		case '\"': token_a_str_parse = SABR_STR_PARSE_DOUBLE; break;
 		default: break;
 	}
 	switch (text_token_b.data[0]) {
-		case '{': token_b_str_parse = STR_PARSE_PREPROC; break;
-		case '\'': token_b_str_parse = STR_PARSE_SINGLE; break;
-		case '\"': token_b_str_parse = STR_PARSE_DOUBLE; break;
+		case '{': token_b_str_parse = SABR_STR_PARSE_PREPROC; break;
+		case '\'': token_b_str_parse = SABR_STR_PARSE_SINGLE; break;
+		case '\"': token_b_str_parse = SABR_STR_PARSE_DOUBLE; break;
 		default: break;
 	}
 
@@ -585,9 +585,9 @@ const bool sabr_compiler_preproc_concat(sabr_compiler_t* comp, sabr_word_t w, sa
 			? sabr_new_string_slice(text_token_b.data, 1, strlen(text_token_b.data) - 1)
 			: sabr_new_string_copy(text_token_b.data);
 		switch (token_a_str_parse) {
-			case STR_PARSE_PREPROC: string_begin[0] = '{'; string_end[0] = '}'; break;
-			case STR_PARSE_SINGLE: string_begin[0] = '\''; string_end[0] = '\''; break;
-			case STR_PARSE_DOUBLE: string_begin[0] = '\"'; string_end[0] = '\"'; break;
+			case SABR_STR_PARSE_PREPROC: string_begin[0] = '{'; string_end[0] = '}'; break;
+			case SABR_STR_PARSE_SINGLE: string_begin[0] = '\''; string_end[0] = '\''; break;
+			case SABR_STR_PARSE_DOUBLE: string_begin[0] = '\"'; string_end[0] = '\"'; break;
 			default: break;
 		}
 	}
@@ -597,9 +597,9 @@ const bool sabr_compiler_preproc_concat(sabr_compiler_t* comp, sabr_word_t w, sa
 			? sabr_new_string_slice(text_token_b.data, 1, strlen(text_token_b.data) - 1)
 			: sabr_new_string_copy(text_token_b.data);
 		switch (token_b_str_parse) {
-			case STR_PARSE_PREPROC: string_begin[0] = '{'; string_end[0] = '}'; break;
-			case STR_PARSE_SINGLE: string_begin[0] = '\''; string_end[0] = '\''; break;
-			case STR_PARSE_DOUBLE: string_begin[0] = '\"'; string_end[0] = '\"'; break;
+			case SABR_STR_PARSE_PREPROC: string_begin[0] = '{'; string_end[0] = '}'; break;
+			case SABR_STR_PARSE_SINGLE: string_begin[0] = '\''; string_end[0] = '\''; break;
+			case SABR_STR_PARSE_DOUBLE: string_begin[0] = '\"'; string_end[0] = '\"'; break;
 			default: break;
 		}
 	}

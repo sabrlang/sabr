@@ -7,9 +7,9 @@
 
 typedef enum sabr_for_type_enum sabr_for_type_t;
 enum sabr_for_type_enum {
-    FOTY_I,
-    FOTY_U,
-    FOTY_F
+    SABR_FOTY_I,
+    SABR_FOTY_U,
+    SABR_FOTY_F
 };
 
 typedef struct for_data_struct sabr_for_data_t;
@@ -32,10 +32,10 @@ struct sabr_cs_data_struct {
 
 typedef enum sabr_def_type_enum sabr_def_type_t;
 enum sabr_def_type_enum {
-    DEF_NONE,
-    DEF_CALLABLE,
-    DEF_VARIABLE,
-    DEF_STRUCT
+    SABR_DEF_NONE,
+    SABR_DEF_CALLABLE,
+    SABR_DEF_VARIABLE,
+    SABR_DEF_STRUCT
 };
 
 typedef struct def_data_struct sabr_def_data_t;

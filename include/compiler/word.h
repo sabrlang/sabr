@@ -8,12 +8,12 @@
 
 typedef enum sabr_word_type_enum sabr_word_type_t;
 enum sabr_word_type_enum {
-	WT_NONE,
-	WT_PREPROC_KWRD,
-	WT_PREPROC_IDFR,
-	WT_KWRD,
-	WT_OP,
-	WT_IDFR
+	SABR_WT_NONE,
+	SABR_WT_PREPROC_KWRD,
+	SABR_WT_PREPROC_IDFR,
+	SABR_WT_KWRD,
+	SABR_WT_OP,
+	SABR_WT_IDFR
 };
 
 typedef struct sabr_preproc_def_data_struct sabr_preproc_def_data_t;

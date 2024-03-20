@@ -38,7 +38,7 @@ void sabr_free_word_trie(trie(sabr_word_t)* dictionary) {
 	if (dictionary->existence) {
 		sabr_word_t w = dictionary->data;
 		switch (w.type) {
-			case WT_PREPROC_IDFR: {
+			case SABR_WT_PREPROC_IDFR: {
 				sabr_token_t t = w.data.preproc_def_data.def_code;
 				free(t.data);
 			} break;

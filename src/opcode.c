@@ -133,13 +133,13 @@ size_t sabr_opcode_names_len = sizeof(sabr_opcode_names) / sizeof(char*);
 
 bool sabr_opcode_has_operand(sabr_opcode_t oc) {
 	switch (oc) {
-		case OP_VALUE:
-		case OP_IF:
-		case OP_JUMP:
-		case OP_FOR:
-		case OP_FOR_CHECK:
-		case OP_FOR_NEXT:
-		case OP_LAMBDA:
+		case SABR_OP_VALUE:
+		case SABR_OP_IF:
+		case SABR_OP_JUMP:
+		case SABR_OP_FOR:
+		case SABR_OP_FOR_CHECK:
+		case SABR_OP_FOR_NEXT:
+		case SABR_OP_LAMBDA:
 			return true;
 		default:
 			return false;
