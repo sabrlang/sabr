@@ -9,7 +9,6 @@ bytecode_operation sabr_new_bcop(opcode oc) {
 bytecode_operation sabr_new_bcop_with_value(opcode oc, value v) {
 	bytecode_operation bc = {0, };
 	bc.oc = oc;
-	bc.has_operand = true;
 	bc.operand = v;
 	return bc;
 }

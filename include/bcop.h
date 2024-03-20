@@ -10,7 +10,6 @@
 typedef struct bytecode_operation_struct {
 	opcode oc;
 	value operand;
-	bool has_operand;
 } bytecode_operation;
 
 bytecode_operation sabr_new_bcop(opcode oc);

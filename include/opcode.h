@@ -1,6 +1,7 @@
 #ifndef __OPCODE_H__
 #define __OPCODE_H__
 
+#include "stdbool.h"
 #include "stddef.h"
 #include "stdint.h"
 
@@ -136,5 +137,7 @@ typedef enum opcode_enum {
 
 extern size_t opcode_names_len;
 extern const char* opcode_names[];
+
+bool sabr_opcode_has_operand(opcode oc);
 
 #endif

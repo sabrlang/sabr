@@ -35,9 +35,6 @@ vector_imp_h(size_t);
 vector_fd(preproc_stop_flag);
 vector_imp_h(preproc_stop_flag);
 
-vector_fd(value);
-vector_imp_h(value);
-
 vector_fd(keyword_data);
 vector_imp_h(keyword_data);
 

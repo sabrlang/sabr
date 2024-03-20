@@ -7,6 +7,8 @@
 
 #include "cctl_define.h"
 
+#include "error_message.h"
+
 #include "bcop.h"
 
 typedef struct bytecode_struct {
@@ -15,8 +17,12 @@ typedef struct bytecode_struct {
 	size_t current_pos;
 } bytecode;
 
-void print_bytecode(bytecode* bc);
+void sabr_bytecode_print(bytecode* bc);
+void sabr_bytecode_init(bytecode* bc);
+void sabr_bytecode_free(bytecode* bc);
 
-void sabr_free_bytecode(bytecode* bc);
+bool sabr_bytecode_write_bcop(bytecode* bc_data, opcode oc);
+bool sabr_bytecode_write_bcop_with_null(bytecode* bc_data, opcode oc);
+bool sabr_bytecode_write_bcop_with_value(bytecode* bc_data, opcode oc, value v);
 
 #endif

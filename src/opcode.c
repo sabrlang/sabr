@@ -130,3 +130,18 @@ const char* opcode_names[] = {
 };
 
 size_t opcode_names_len = sizeof(opcode_names) / sizeof(char*);
+
+bool sabr_opcode_has_operand(opcode oc) {
+	switch (oc) {
+		case OP_VALUE:
+		case OP_IF:
+		case OP_JUMP:
+		case OP_FOR:
+		case OP_FOR_CHECK:
+		case OP_FOR_NEXT:
+		case OP_LAMBDA:
+			return true;
+		default:
+			return false;
+	}
+}

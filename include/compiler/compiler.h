@@ -104,10 +104,6 @@ bool sabr_compiler_parse_struct_member(sabr_compiler* const comp, const char* st
 
 bool sabr_compiler_compile_keyword(sabr_compiler* const comp, bytecode* bc_data, keyword kwrd);
 
-bool sabr_compiler_write_bcop(bytecode* bc_data, opcode oc);
-bool sabr_compiler_write_bcop_with_null(bytecode* bc_data, opcode oc);
-bool sabr_compiler_write_bcop_with_value(bytecode* bc_data, opcode oc, value v);
-
 bytecode_operation* sabr_compiler_get_bcop(bytecode* bc_data, size_t index);
 
 #endif
