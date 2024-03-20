@@ -110,6 +110,8 @@ sabr_bytecode_t* sabr_interpreter_load_bytecode(sabr_interpreter_t* inter, const
 		else sabr_bytecode_write_bcop(bc, bcop.oc);
 	}
 
+	free(code);
+
 	return bc;
 }
 

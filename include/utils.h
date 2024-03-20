@@ -1,5 +1,5 @@
 #ifndef __UTILS_H__
-#define __UITLS_H__
+#define __UTILS_H__
 
 #include <stdbool.h>
 #include <stdlib.h>

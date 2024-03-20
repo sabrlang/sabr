@@ -100,6 +100,8 @@ sabr_bytecode_t* sabr_compiler_compile_file(sabr_compiler_t* const comp, const c
 		return NULL;
 	}
 
+	sabr_free_token_vector(preprocessed_tokens);
+	free(preprocessed_tokens);
 	return compiled_bytecode;
 }
 bool sabr_compiler_load_file(sabr_compiler_t* const comp, const char* filename, size_t* index) {
@@ -215,11 +217,7 @@ bool sabr_compiler_save_bytecode(sabr_compiler_t* const comp, sabr_bytecode_t* c
 	}
 	file = _wfopen(filename_full_windows, L"wb");
 #else
-	if (!sabr_get_full_path(filename, filename_full)) {
-		fputs(sabr_errmsg_fullpath, stderr);
-		return false;
-	}
-	file = fopen(filename_full, "wb");
+	file = fopen(filename, "wb");
 #endif
 
 	if (!file) {
@@ -1721,6 +1719,7 @@ bool sabr_compiler_compile_keyword(sabr_compiler_t* const comp, sabr_bytecode_t*
 				default: goto FAILURE_WRONG;
 			}
 			vector_free(sabr_keyword_data_t, temp_kd_vec);
+			free(temp_kd_vec);
 			if (!vector_pop_back(cctl_ptr(vector(sabr_keyword_data_t)), &comp->keyword_data_stack)) goto FREE_ALL;
 		} break;
 		case SABR_KWRD_BRACKET_BEGIN:
@@ -1763,6 +1762,7 @@ bool sabr_compiler_compile_keyword(sabr_compiler_t* const comp, sabr_bytecode_t*
 		default:
 			break;
 	}
+
 	return true;
 
 FAILURE_ALLOC:

@@ -12,6 +12,7 @@
 	#include <io.h>
 	#include <windows.h>
 #else
+	#include <unistd.h>
 	#include <sys/types.h>
 #endif
 
