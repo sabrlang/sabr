@@ -4,7 +4,7 @@
 #include "stdint.h"
 #include "stddef.h"
 
-typedef enum preproc_keyword_enum {
+typedef enum sabr_preproc_keyword_enum {
 	PREPROC_FUNC,
 	PREPROC_MACRO,
 	PREPROC_ISDEF,
@@ -80,16 +80,16 @@ typedef enum preproc_keyword_enum {
 	PREPROC_ECHO,
 	PREPROC_EMIT,
 	PREPROC_SHOW
-} preproc_keyword;
+} sabr_preproc_keyword_t;
 
-typedef enum preproc_stop_flag_enum {
+typedef enum sabr_preproc_stop_flag_enum {
 	PPS_NONE,
 	PPS_BREAK,
 	PPS_CONTINUE,
 	PPS_LOOP
-} preproc_stop_flag;
+} sabr_preproc_stop_flag_t;
 
-extern const char* preproc_keyword_names[];
-extern size_t preproc_keyword_names_len;
+extern const char* sabr_preproc_keyword_names[];
+extern size_t sabr_preproc_keyword_names_len;
 
 #endif

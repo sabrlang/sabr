@@ -1,6 +1,6 @@
 #include "built_in_operation.h"
 
-const char* bio_names[] = {
+const char* sabr_bio_names[] = {
 	"exit",
 	"exec",
 	"define",
@@ -97,7 +97,7 @@ const char* bio_names[] = {
 	"show"
 };
 
-const opcode bio_indices[] = {
+const sabr_opcode_t sabr_bio_indices[] = {
 	OP_EXIT,
 	OP_EXEC,
 	OP_DEFINE,
@@ -194,4 +194,4 @@ const opcode bio_indices[] = {
 	OP_SHOW
 };
 
-size_t bio_names_len = sizeof(bio_names) / sizeof(char*);
+size_t sabr_bio_names_len = sizeof(sabr_bio_names) / sizeof(char*);

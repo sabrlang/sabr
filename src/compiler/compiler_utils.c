@@ -22,24 +22,24 @@ char* sabr_new_string_append(const char* dest, const char* origin) {
 	return new_string;
 }
 
-void sabr_free_token_vector(vector(token)* tokens) {
+void sabr_free_token_vector(vector(sabr_token_t)* tokens) {
 	if (tokens) {
 		for (size_t i = 0; i < tokens->size; i++) {
-			token t = *vector_at(token, tokens, i);
+			sabr_token_t t = *vector_at(sabr_token_t, tokens, i);
 			free(t.data);
 		}
-		vector_free(token, tokens);
+		vector_free(sabr_token_t, tokens);
 	}
 }
 
-void sabr_free_word_trie(trie(word)* dictionary) {
+void sabr_free_word_trie(trie(sabr_word_t)* dictionary) {
 	if (!dictionary) return;
 
 	if (dictionary->existence) {
-		word w = dictionary->data;
+		sabr_word_t w = dictionary->data;
 		switch (w.type) {
 			case WT_PREPROC_IDFR: {
-				token t = w.data.def_data.def_code;
+				sabr_token_t t = w.data.preproc_def_data.def_code;
 				free(t.data);
 			} break;
 			default:

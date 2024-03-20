@@ -1,6 +1,6 @@
 #include "kwrd.h"
 
-const char* keyword_names[] = {
+const char* sabr_keyword_names[] = {
 	"end",
 	"if",
 	"else",
@@ -28,4 +28,4 @@ const char* keyword_names[] = {
 	"]"
 };
 
-size_t keyword_names_len = sizeof(keyword_names) / sizeof(char*);
+size_t sabr_keyword_names_len = sizeof(sabr_keyword_names) / sizeof(char*);

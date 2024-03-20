@@ -6,8 +6,8 @@
 
 #include "opcode.h"
 
-extern size_t bio_names_len;
-extern const char* bio_names[];
-extern const opcode bio_indices[];
+extern size_t sabr_bio_names_len;
+extern const char* sabr_bio_names[];
+extern const sabr_opcode_t sabr_bio_indices[];
 
 #endif

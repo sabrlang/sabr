@@ -26,48 +26,51 @@
 #include "interpreter_cctl_define.h"
 #include "interpreter_data.h"
 
-typedef struct sabr_memory_pool_struct sabr_memory_pool;
+typedef struct sabr_memory_pool_struct sabr_memory_pool_t;
 struct sabr_memory_pool_struct {
-    value* data;
+    sabr_value_t* data;
 	size_t size;
 	size_t index;
 };
 
-typedef struct sabr_interpreter_struct sabr_interpreter;
+typedef struct sabr_interpreter_struct sabr_interpreter_t;
 struct sabr_interpreter_struct {
-	bytecode* bc;
+	sabr_bytecode_t* bc;
 
 	mbstate_t convert_state;
 
-	deque(value) data_stack;
-	deque(value) switch_stack;
+	deque(sabr_value_t) data_stack;
+	deque(sabr_value_t) switch_stack;
 
-	deque(for_data) for_data_stack;
-	deque(cs_data) call_stack;
+	deque(sabr_for_data_t) for_data_stack;
+	deque(sabr_cs_data_t) call_stack;
 
-	sabr_memory_pool memory_pool;
-	sabr_memory_pool global_memory_pool;
+	sabr_memory_pool_t memory_pool;
+	sabr_memory_pool_t global_memory_pool;
 	deque(size_t) local_memory_size_stack;
 
-	rbt(def_data) global_words;
-	deque(cctl_ptr(rbt(def_data))) local_words_stack;
+	rbt(sabr_def_data_t) global_words;
+	deque(cctl_ptr(rbt(sabr_def_data_t))) local_words_stack;
 
-	vector(cctl_ptr(vector(value))) struct_vector;
+	vector(cctl_ptr(vector(sabr_value_t))) struct_vector;
 };
 
-bool sabr_interpreter_init(sabr_interpreter* inter);
-bool sabr_interpreter_del(sabr_interpreter* inter);
-bool sabr_interpreter_memory_pool_init(sabr_interpreter* inter, size_t size, size_t global_size);
+bool sabr_interpreter_init(sabr_interpreter_t* inter);
+bool sabr_interpreter_del(sabr_interpreter_t* inter);
+bool sabr_interpreter_memory_pool_init(sabr_interpreter_t* inter, size_t size, size_t global_size);
 
-bytecode* sabr_interpreter_load_bytecode(sabr_interpreter* inter, const char* filename);
-bool sabr_interpreter_run_bytecode(sabr_interpreter* inter, bytecode* bc);
+sabr_bytecode_t* sabr_interpreter_load_bytecode(sabr_interpreter_t* inter, const char* filename);
+bool sabr_interpreter_run_bytecode(sabr_interpreter_t* inter, sabr_bytecode_t* bc);
 
-bool sabr_memory_pool_init(sabr_memory_pool* pool, size_t size);
-void sabr_memory_pool_del(sabr_memory_pool* pool);
-bool sabr_memory_pool_alloc(sabr_memory_pool* pool, size_t size);
-bool sabr_memory_pool_free(sabr_memory_pool* pool, size_t size);
-inline value* sabr_memory_pool_top(sabr_memory_pool* pool) {
+bool sabr_memory_pool_init(sabr_memory_pool_t* pool, size_t size);
+void sabr_memory_pool_del(sabr_memory_pool_t* pool);
+bool sabr_memory_pool_alloc(sabr_memory_pool_t* pool, size_t size);
+bool sabr_memory_pool_free(sabr_memory_pool_t* pool, size_t size);
+inline sabr_value_t* sabr_memory_pool_top(sabr_memory_pool_t* pool) {
 	return pool->data + pool->index;
 }
+
+bool sabr_interpreter_pop(sabr_interpreter_t* inter, sabr_value_t* v);
+bool sabr_interpreter_push(sabr_interpreter_t* inter, sabr_value_t v);
 
 #endif

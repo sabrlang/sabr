@@ -5,19 +5,19 @@
 #include <stddef.h>
 #include <stdint.h>
 
-typedef struct pos_struct {
+typedef struct sabr_pos_struct {
 	size_t line;
 	size_t column;
-} pos;
+} sabr_pos_t;
 
-typedef struct token_struct {
+typedef struct sabr_token_struct {
 	char* data;
-	pos begin_pos;
-	pos end_pos;
+	sabr_pos_t begin_pos;
+	sabr_pos_t end_pos;
 	size_t begin_index;
 	size_t end_index;
 	size_t textcode_index;
 	bool is_generated;
-} token;
+} sabr_token_t;
 
 #endif

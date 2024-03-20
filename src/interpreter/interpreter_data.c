@@ -1,7 +1,7 @@
 #include "interpreter_data.h"
 
-for_data sabr_interpreter_for_data_new(void) {
-	for_data data;
+sabr_for_data_t sabr_interpreter_for_data_new(void) {
+	sabr_for_data_t data;
 	data.variable_kwrd.u = 0;
 	data.variable_addr = NULL;
 	data.start.i = 0;

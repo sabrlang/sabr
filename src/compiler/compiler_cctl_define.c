@@ -2,10 +2,10 @@
 
 trie_imp_c(size_t);
 vector_imp_c(cctl_ptr(char));
-vector_imp_c(token);
-trie_imp_c(word);
-vector_imp_c(cctl_ptr(trie(word)));
+vector_imp_c(sabr_token_t);
+trie_imp_c(sabr_word_t);
+vector_imp_c(cctl_ptr(trie(sabr_word_t)));
 vector_imp_c(size_t);
-vector_imp_c(preproc_stop_flag);
-vector_imp_c(keyword_data);
-vector_imp_c(cctl_ptr(vector(keyword_data)));
+vector_imp_c(sabr_preproc_stop_flag_t);
+vector_imp_c(sabr_keyword_data_t);
+vector_imp_c(cctl_ptr(vector(sabr_keyword_data_t)));

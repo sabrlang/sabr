@@ -4,7 +4,7 @@
 #include "stddef.h"
 #include "stdint.h"
 
-typedef enum keyword_enum {
+typedef enum sabr_keyword_enum {
 	KWRD_END,
 	KWRD_IF,
 	KWRD_ELSE,
@@ -30,15 +30,15 @@ typedef enum keyword_enum {
 	KWRD_BRACKET_BEGIN,
 	KWRD_COMMA,
 	KWRD_BRACKET_END
-} keyword;
+} sabr_keyword_t;
 
-extern size_t keyword_names_len;
-extern const char* keyword_names[];
+extern size_t sabr_keyword_names_len;
+extern const char* sabr_keyword_names[];
 
-typedef struct keyword_data_struct {
+typedef struct sabr_keyword_data_struct {
 	size_t index;
 	size_t pos;
-	keyword kwrd;
-} keyword_data;
+	sabr_keyword_t kwrd;
+} sabr_keyword_data_t;
 
 #endif

@@ -1,8 +1,8 @@
 #include "preproc_operation.h"
 
-const bool sabr_compiler_preproc_def_base(sabr_compiler* comp, word w, token t, vector(token)* output_tokens, bool is_local, bool is_func) {
-	token code_token = {0, };
-	token identifier_token = {0, };
+const bool sabr_compiler_preproc_def_base(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens, bool is_local, bool is_func) {
+	sabr_token_t code_token = {0, };
+	sabr_token_t identifier_token = {0, };
 
 	bool result = false;
 
@@ -10,13 +10,13 @@ const bool sabr_compiler_preproc_def_base(sabr_compiler* comp, word w, token t, 
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
-	code_token = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	code_token = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
-	identifier_token = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	identifier_token = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -24,30 +24,30 @@ const bool sabr_compiler_preproc_def_base(sabr_compiler* comp, word w, token t, 
 		fputs(sabr_errmsg_invalid_ident_fmt, stderr); goto FREE_ALL;
 	}
 
-	token macro_code_token = code_token;
+	sabr_token_t macro_code_token = code_token;
 	macro_code_token.data = sabr_new_string_copy(code_token.data);
 
-	preproc_def_data def_data;
+	sabr_preproc_def_data_t def_data;
 	def_data.def_code = macro_code_token;
 	def_data.is_func = is_func;
 
-	word macro_word;
+	sabr_word_t macro_word;
 	macro_word.type = WT_PREPROC_IDFR;
-	macro_word.data.def_data = def_data;
+	macro_word.data.preproc_def_data = def_data;
 
-	trie(word)* dictionary = (
+	trie(sabr_word_t)* dictionary = (
 		is_local
-		? *vector_back(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack)
+		? *vector_back(cctl_ptr(trie(sabr_word_t)), &comp->preproc_local_dictionary_stack)
 		: &comp->preproc_dictionary
 	);
-	word* identifier_word = trie_find(word, dictionary, identifier_token.data + 1);
+	sabr_word_t* identifier_word = trie_find(sabr_word_t, dictionary, identifier_token.data + 1);
 	if (identifier_word) {
-		token prev_macro_code_token = identifier_word->data.def_data.def_code;
+		sabr_token_t prev_macro_code_token = identifier_word->data.preproc_def_data.def_code;
 		free(prev_macro_code_token.data);
-		identifier_word->data.def_data = def_data;
+		identifier_word->data.preproc_def_data = def_data;
 	}
 	else {
-		if (!trie_insert(word, dictionary, identifier_token.data + 1, macro_word)) {
+		if (!trie_insert(sabr_word_t, dictionary, identifier_token.data + 1, macro_word)) {
 			fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 		}
 	}
@@ -62,9 +62,9 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_isdef_base(sabr_compiler* comp, word w, token t, vector(token)* output_tokens, bool is_local) {
-	token identifier_token = {0, };
-	token result_token = {0, };
+const bool sabr_compiler_preproc_isdef_base(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens, bool is_local) {
+	sabr_token_t identifier_token = {0, };
+	sabr_token_t result_token = {0, };
 
 	bool result = false;
 
@@ -72,8 +72,8 @@ const bool sabr_compiler_preproc_isdef_base(sabr_compiler* comp, word w, token t
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
-	identifier_token = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	identifier_token = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -81,12 +81,12 @@ const bool sabr_compiler_preproc_isdef_base(sabr_compiler* comp, word w, token t
 		fputs(sabr_errmsg_invalid_ident_fmt, stderr); goto FREE_ALL;
 	}
 	
-	trie(word)* dictionary = (
+	trie(sabr_word_t)* dictionary = (
 		is_local
-		? *vector_back(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack)
+		? *vector_back(cctl_ptr(trie(sabr_word_t)), &comp->preproc_local_dictionary_stack)
 		: &comp->preproc_dictionary
 	);
-	word* identifier_word = trie_find(word, dictionary, identifier_token.data + 1);
+	sabr_word_t* identifier_word = trie_find(sabr_word_t, dictionary, identifier_token.data + 1);
 	int flag = identifier_word ? ((identifier_word->type == WT_PREPROC_IDFR) ? 1 : 0) : 0;
 
 	result_token = t;
@@ -95,7 +95,7 @@ const bool sabr_compiler_preproc_isdef_base(sabr_compiler* comp, word w, token t
 	}
 	result_token.is_generated = true;
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -108,8 +108,8 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_undef_base(sabr_compiler* comp, word w, token t, vector(token)* output_tokens, bool is_local) {
-	token identifier_token = {0, };
+const bool sabr_compiler_preproc_undef_base(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens, bool is_local) {
+	sabr_token_t identifier_token = {0, };
 
 	bool result = false;
 
@@ -117,8 +117,8 @@ const bool sabr_compiler_preproc_undef_base(sabr_compiler* comp, word w, token t
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
-	identifier_token = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	identifier_token = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -126,12 +126,12 @@ const bool sabr_compiler_preproc_undef_base(sabr_compiler* comp, word w, token t
 		fputs(sabr_errmsg_invalid_ident_fmt, stderr); goto FREE_ALL;
 	}
 
-	trie(word)* dictionary = (
+	trie(sabr_word_t)* dictionary = (
 		is_local
-		? *vector_back(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack)
+		? *vector_back(cctl_ptr(trie(sabr_word_t)), &comp->preproc_local_dictionary_stack)
 		: &comp->preproc_dictionary
 	);
-	trie_remove(word, dictionary, identifier_token.data + 1);
+	trie_remove(sabr_word_t, dictionary, identifier_token.data + 1);
 
 	result = true;
 FREE_ALL:
@@ -139,9 +139,9 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_getdef_base(sabr_compiler* comp, word w, token t, vector(token)* output_tokens, bool is_local) {
-	token identifier_token = {0, };
-	token result_token = {0, };
+const bool sabr_compiler_preproc_getdef_base(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens, bool is_local) {
+	sabr_token_t identifier_token = {0, };
+	sabr_token_t result_token = {0, };
 
 	bool result = false;
 
@@ -149,8 +149,8 @@ const bool sabr_compiler_preproc_getdef_base(sabr_compiler* comp, word w, token 
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
-	identifier_token = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	identifier_token = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -161,14 +161,14 @@ const bool sabr_compiler_preproc_getdef_base(sabr_compiler* comp, word w, token 
 	result_token = t;
 	result_token.is_generated = false;
 
-	trie(word)* dictionary = (
+	trie(sabr_word_t)* dictionary = (
 		is_local
-		? *vector_back(cctl_ptr(trie(word)), &comp->preproc_local_dictionary_stack)
+		? *vector_back(cctl_ptr(trie(sabr_word_t)), &comp->preproc_local_dictionary_stack)
 		: &comp->preproc_dictionary
 	);
-	word* identifier_word = trie_find(word, dictionary, identifier_token.data + 1);
+	sabr_word_t* identifier_word = trie_find(sabr_word_t, dictionary, identifier_token.data + 1);
 	if (identifier_word) {
-		token macro_code = identifier_word->data.def_data.def_code;
+		sabr_token_t macro_code = identifier_word->data.preproc_def_data.def_code;
 		result_token.data = sabr_new_string_copy(macro_code.data);
 	}
 	else {
@@ -178,7 +178,7 @@ const bool sabr_compiler_preproc_getdef_base(sabr_compiler* comp, word w, token 
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -191,26 +191,26 @@ FREE_ALL:
 	return result;
 }
 
-extern const bool sabr_compiler_preproc_func(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
-extern const bool sabr_compiler_preproc_macro(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
-extern const bool sabr_compiler_preproc_isdef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
-extern const bool sabr_compiler_preproc_undef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
-extern const bool sabr_compiler_preproc_getdef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
-extern const bool sabr_compiler_preproc_lfunc(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
-extern const bool sabr_compiler_preproc_lmacro(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
-extern const bool sabr_compiler_preproc_lisdef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
-extern const bool sabr_compiler_preproc_lundef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
-extern const bool sabr_compiler_preproc_lgetdef(sabr_compiler* comp, word w, token t, vector(token)* output_tokens);
+extern const bool sabr_compiler_preproc_func(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens);
+extern const bool sabr_compiler_preproc_macro(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens);
+extern const bool sabr_compiler_preproc_isdef(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens);
+extern const bool sabr_compiler_preproc_undef(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens);
+extern const bool sabr_compiler_preproc_getdef(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens);
+extern const bool sabr_compiler_preproc_lfunc(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens);
+extern const bool sabr_compiler_preproc_lmacro(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens);
+extern const bool sabr_compiler_preproc_lisdef(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens);
+extern const bool sabr_compiler_preproc_lundef(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens);
+extern const bool sabr_compiler_preproc_lgetdef(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens);
 
-const bool sabr_compiler_preproc_import(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token filename_token = {0, };
+const bool sabr_compiler_preproc_import(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t filename_token = {0, };
 	char filename_full[PATH_MAX] = {0, };
 	size_t textcode_index;
 	char* filename_str = NULL;
 	char* current_filename_str = NULL;
 
 	bool local_file = false;
-	vector(token)* preprocessed_tokens = NULL;
+	vector(sabr_token_t)* preprocessed_tokens = NULL;
 
 	bool result = false;
 
@@ -218,8 +218,8 @@ const bool sabr_compiler_preproc_import(sabr_compiler* comp, word w, token t, ve
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	filename_token = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	filename_token = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -288,7 +288,7 @@ const bool sabr_compiler_preproc_import(sabr_compiler* comp, word w, token t, ve
 		if (!preprocessed_tokens) goto FREE_ALL;
 
 		for (size_t i = 0; i < preprocessed_tokens->size; i++) {
-			if (!vector_push_back(token, output_tokens, *vector_at(token, preprocessed_tokens, i))) {
+			if (!vector_push_back(sabr_token_t, output_tokens, *vector_at(sabr_token_t, preprocessed_tokens, i))) {
 				fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 			}
 		}
@@ -300,15 +300,15 @@ FREE_ALL:
 		sabr_free_token_vector(preprocessed_tokens);
 		preprocessed_tokens = NULL;
 	}
-	vector_free(token, preprocessed_tokens);
+	vector_free(sabr_token_t, preprocessed_tokens);
 	free(preprocessed_tokens);
 	free(filename_token.data);
 	return result;
 }
 
-const bool sabr_compiler_preproc_eval(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token code_token = {0, };
-	token result_token = {0, };
+const bool sabr_compiler_preproc_eval(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t code_token = {0, };
+	sabr_token_t result_token = {0, };
 
 	bool result = false;
 
@@ -316,8 +316,8 @@ const bool sabr_compiler_preproc_eval(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	code_token = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	code_token = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -331,7 +331,7 @@ const bool sabr_compiler_preproc_eval(sabr_compiler* comp, word w, token t, vect
 		if (!result_token.data) {
 			fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 		}
-		if (!vector_push_back(token, output_tokens, result_token)) {
+		if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 			fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 		}
 	}
@@ -345,13 +345,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_if(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token code_token = {0, };
-	token code_token_a = {0, };
-	token code_token_b = {0, };
-	token flag_token = {0, };
-	value flag_value;
-	token result_token = {0, };
+const bool sabr_compiler_preproc_if(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t code_token = {0, };
+	sabr_token_t code_token_a = {0, };
+	sabr_token_t code_token_b = {0, };
+	sabr_token_t flag_token = {0, };
+	sabr_value_t flag_value;
+	sabr_token_t result_token = {0, };
 
 	bool result = false;
 
@@ -359,18 +359,18 @@ const bool sabr_compiler_preproc_if(sabr_compiler* comp, word w, token t, vector
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	code_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	code_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	code_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	code_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	flag_token = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	flag_token = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -388,7 +388,7 @@ const bool sabr_compiler_preproc_if(sabr_compiler* comp, word w, token t, vector
 		if (!result_token.data) {
 			fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 		}
-		if (!vector_push_back(token, output_tokens, result_token)) {
+		if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 			fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 		}
 	}
@@ -404,17 +404,17 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_while(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token code_token = {0, };
-	token flag_code_token = {0, };
-	token flag_token = {0, };
-	value flag_value;
-	token result_token = {0, };
+const bool sabr_compiler_preproc_while(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t code_token = {0, };
+	sabr_token_t flag_code_token = {0, };
+	sabr_token_t flag_token = {0, };
+	sabr_value_t flag_value;
+	sabr_token_t result_token = {0, };
 
 	bool is_flag_code_token_brace = false;
 	bool is_code_token_brace = false;
 
-	preproc_stop_flag* current_preproc_stop = NULL;
+	sabr_preproc_stop_flag_t* current_preproc_stop = NULL;
 
 	bool result = false;
 	bool loop_break = false;
@@ -423,13 +423,13 @@ const bool sabr_compiler_preproc_while(sabr_compiler* comp, word w, token t, vec
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	code_token = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	code_token = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	flag_code_token = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	flag_code_token = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -442,7 +442,7 @@ const bool sabr_compiler_preproc_while(sabr_compiler* comp, word w, token t, vec
 
 	is_code_token_brace = code_token.data[0] == '{';
 
-	if (!vector_push_back(preproc_stop_flag, &comp->preproc_stop_stack, PPS_NONE)) {
+	if (!vector_push_back(sabr_preproc_stop_flag_t, &comp->preproc_stop_stack, PPS_NONE)) {
 		fputs(sabr_errmsg_alloc, stderr);
 		goto FREE_ALL;
 	}
@@ -451,8 +451,8 @@ const bool sabr_compiler_preproc_while(sabr_compiler* comp, word w, token t, vec
 		if (is_flag_code_token_brace) {
 			output_tokens = sabr_compiler_preprocess_eval_token(comp, flag_code_token, false, output_tokens);
 			if (!output_tokens) goto FREE_ALL;
-			flag_token = *vector_back(token, output_tokens);
-			if (!vector_pop_back(token, output_tokens)) {
+			flag_token = *vector_back(sabr_token_t, output_tokens);
+			if (!vector_pop_back(sabr_token_t, output_tokens)) {
 				fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 			}
 			if (!sabr_compiler_preprocess_parse_value(comp, flag_token, &flag_value)) goto FREE_ALL;
@@ -463,7 +463,7 @@ const bool sabr_compiler_preproc_while(sabr_compiler* comp, word w, token t, vec
 		if (!flag_value.u) break;
 
 		if (is_code_token_brace) {
-			current_preproc_stop = vector_back(preproc_stop_flag, &comp->preproc_stop_stack);
+			current_preproc_stop = vector_back(sabr_preproc_stop_flag_t, &comp->preproc_stop_stack);
 			*current_preproc_stop = PPS_LOOP;
 			output_tokens = sabr_compiler_preprocess_eval_token(comp, code_token, false, output_tokens);
 			if (!output_tokens) goto FREE_ALL;
@@ -474,7 +474,7 @@ const bool sabr_compiler_preproc_while(sabr_compiler* comp, word w, token t, vec
 			if (!result_token.data) {
 				fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 			}
-			if (!vector_push_back(token, output_tokens, result_token)) {
+			if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 				fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 			}
 		}
@@ -493,13 +493,13 @@ const bool sabr_compiler_preproc_while(sabr_compiler* comp, word w, token t, vec
 
 		if (is_flag_code_token_brace) {
 			free(flag_token.data);
-			if (!memset(&flag_token, 0, sizeof(token))) {
+			if (!memset(&flag_token, 0, sizeof(sabr_token_t))) {
 				fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 			}
 		}
 		if (is_code_token_brace) {
 			free(result_token.data);
-			if (!memset(&result_token, 0, sizeof(token))) {
+			if (!memset(&result_token, 0, sizeof(sabr_token_t))) {
 				fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 			}
 		}
@@ -513,12 +513,12 @@ FREE_ALL:
 	free(code_token.data);
 	free(flag_code_token.data);
 	free(flag_token.data);
-	vector_pop_back(preproc_stop_flag, &comp->preproc_stop_stack);
+	vector_pop_back(sabr_preproc_stop_flag_t, &comp->preproc_stop_stack);
 	return result;
 }
 
-const bool sabr_compiler_preproc_break(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	preproc_stop_flag* current_preproc_stop = vector_back(preproc_stop_flag, &comp->preproc_stop_stack);
+const bool sabr_compiler_preproc_break(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_preproc_stop_flag_t* current_preproc_stop = vector_back(sabr_preproc_stop_flag_t, &comp->preproc_stop_stack);
 	if (*current_preproc_stop != PPS_LOOP) {
 		fputs(sabr_errmsg_wrong_break_continue, stderr);
 		return false;
@@ -527,8 +527,8 @@ const bool sabr_compiler_preproc_break(sabr_compiler* comp, word w, token t, vec
 	return true;
 }
 
-const bool sabr_compiler_preproc_continue(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	preproc_stop_flag* current_preproc_stop = vector_back(preproc_stop_flag, &comp->preproc_stop_stack);
+const bool sabr_compiler_preproc_continue(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_preproc_stop_flag_t* current_preproc_stop = vector_back(sabr_preproc_stop_flag_t, &comp->preproc_stop_stack);
 	if (*current_preproc_stop != PPS_LOOP) {
 		fputs(sabr_errmsg_wrong_break_continue, stderr);
 		return false;
@@ -537,15 +537,15 @@ const bool sabr_compiler_preproc_continue(sabr_compiler* comp, word w, token t, 
 	return true;
 }
 
-const bool sabr_compiler_preproc_concat(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token text_token_a = {0, };
-	token text_token_b = {0, };
-	token result_token = {0, };
+const bool sabr_compiler_preproc_concat(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t text_token_a = {0, };
+	sabr_token_t text_token_b = {0, };
+	sabr_token_t result_token = {0, };
 	char* text_str_a = NULL;
 	char* text_str_b = NULL;
 	char* text_str_temp = NULL;
-	string_parse_mode token_a_str_parse = STR_PARSE_NONE;
-	string_parse_mode token_b_str_parse = STR_PARSE_NONE;
+	sabr_string_parse_mode_t token_a_str_parse = STR_PARSE_NONE;
+	sabr_string_parse_mode_t token_b_str_parse = STR_PARSE_NONE;
 
 	bool result = false;
 
@@ -553,13 +553,13 @@ const bool sabr_compiler_preproc_concat(sabr_compiler* comp, word w, token t, ve
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	text_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	text_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	text_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	text_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -621,7 +621,7 @@ const bool sabr_compiler_preproc_concat(sabr_compiler* comp, word w, token t, ve
 	result_token.data = text_str_temp;
 	result_token.is_generated = true;
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -637,13 +637,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_substr(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token text_token = {0, };
-	token begin_token = {0, };
-	token end_token = {0, };
-	token result_token = {0, };
-	value begin_value;
-	value end_value;
+const bool sabr_compiler_preproc_substr(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t text_token = {0, };
+	sabr_token_t begin_token = {0, };
+	sabr_token_t end_token = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t begin_value;
+	sabr_value_t end_value;
 	bool is_string;
 	char* sliced_result_str = NULL;
 	char* final_result_str = NULL;
@@ -657,18 +657,18 @@ const bool sabr_compiler_preproc_substr(sabr_compiler* comp, word w, token t, ve
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	end_token = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	end_token = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	begin_token = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	begin_token = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	text_token = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	text_token = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -736,7 +736,7 @@ const bool sabr_compiler_preproc_substr(sabr_compiler* comp, word w, token t, ve
 	result_token.data = final_result_str;
 	result_token.is_generated = true;
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -755,9 +755,9 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_trim(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token text_token = {0, };
-	token result_token = {0, };
+const bool sabr_compiler_preproc_trim(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t text_token = {0, };
+	sabr_token_t result_token = {0, };
 	char* sliced_result_str = NULL;
 	char* final_result_str = NULL;
 	bool is_string = false;
@@ -768,8 +768,8 @@ const bool sabr_compiler_preproc_trim(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	text_token = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	text_token = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -821,7 +821,7 @@ const bool sabr_compiler_preproc_trim(sabr_compiler* comp, word w, token t, vect
 	result_token.data = final_result_str;
 	result_token.is_generated = true;
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -832,10 +832,10 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_compare(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token text_token_a = {0, };
-	token text_token_b = {0, };
-	token result_token = {0, };
+const bool sabr_compiler_preproc_compare(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t text_token_a = {0, };
+	sabr_token_t text_token_b = {0, };
+	sabr_token_t result_token = {0, };
 	char* result_str = NULL;
 
 	bool result = false;
@@ -844,13 +844,13 @@ const bool sabr_compiler_preproc_compare(sabr_compiler* comp, word w, token t, v
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	text_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	text_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	text_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	text_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -862,7 +862,7 @@ const bool sabr_compiler_preproc_compare(sabr_compiler* comp, word w, token t, v
 	result_token.data = result_str;
 	result_token.is_generated = true;
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -876,9 +876,9 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_len(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token text_token = {0, };
-	token result_token = {0, };
+const bool sabr_compiler_preproc_len(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t text_token = {0, };
+	sabr_token_t result_token = {0, };
 	char* result_str = NULL;
 	bool is_string;
 
@@ -888,8 +888,8 @@ const bool sabr_compiler_preproc_len(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	text_token = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	text_token = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	switch (text_token.data[0]) {
@@ -918,7 +918,7 @@ const bool sabr_compiler_preproc_len(sabr_compiler* comp, word w, token t, vecto
 	result_token.data = result_str;
 	result_token.is_generated = true;
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -931,8 +931,8 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_drop(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
+const bool sabr_compiler_preproc_drop(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
 
 	bool result = false;
 
@@ -940,8 +940,8 @@ const bool sabr_compiler_preproc_drop(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -951,9 +951,9 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_nip(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
+const bool sabr_compiler_preproc_nip(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
 
 	bool result = false;
 
@@ -961,17 +961,17 @@ const bool sabr_compiler_preproc_nip(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_b)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_b)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -984,9 +984,9 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_dup(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_a2 = {0, };
+const bool sabr_compiler_preproc_dup(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_a2 = {0, };
 
 	bool result = false;
 
@@ -994,8 +994,8 @@ const bool sabr_compiler_preproc_dup(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -1005,11 +1005,11 @@ const bool sabr_compiler_preproc_dup(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_a)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_a)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_a2)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_a2)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -1022,10 +1022,10 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_over(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_a2 = {0, };
-	token value_token_b = {0, };
+const bool sabr_compiler_preproc_over(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_a2 = {0, };
+	sabr_token_t value_token_b = {0, };
 
 	bool result = false;
 
@@ -1033,13 +1033,13 @@ const bool sabr_compiler_preproc_over(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -1049,15 +1049,15 @@ const bool sabr_compiler_preproc_over(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_a)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_a)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_b)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_b)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_a2)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_a2)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -1071,10 +1071,10 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_tuck(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token value_token_b2 = {0, };
+const bool sabr_compiler_preproc_tuck(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t value_token_b2 = {0, };
 
 	bool result = false;
 
@@ -1082,13 +1082,13 @@ const bool sabr_compiler_preproc_tuck(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -1098,15 +1098,15 @@ const bool sabr_compiler_preproc_tuck(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_b)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_b)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_a)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_a)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_b2)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_b2)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -1120,9 +1120,9 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_swap(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
+const bool sabr_compiler_preproc_swap(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
 
 	bool result = false;
 
@@ -1130,21 +1130,21 @@ const bool sabr_compiler_preproc_swap(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_b)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_b)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_a)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_a)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -1157,10 +1157,10 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_rot(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token value_token_c = {0, };
+const bool sabr_compiler_preproc_rot(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t value_token_c = {0, };
 
 	bool result = false;
 
@@ -1168,30 +1168,30 @@ const bool sabr_compiler_preproc_rot(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_c = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_c = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_b)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_b)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_c)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_c)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_a)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_a)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -1205,9 +1205,9 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_2drop(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
+const bool sabr_compiler_preproc_2drop(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
 
 	bool result = false;
 
@@ -1215,13 +1215,13 @@ const bool sabr_compiler_preproc_2drop(sabr_compiler* comp, word w, token t, vec
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -1232,11 +1232,11 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_2nip(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token value_token_c = {0, };
-	token value_token_d = {0, };
+const bool sabr_compiler_preproc_2nip(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t value_token_c = {0, };
+	sabr_token_t value_token_d = {0, };
 
 	bool result = false;
 
@@ -1244,31 +1244,31 @@ const bool sabr_compiler_preproc_2nip(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_d = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_d = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_c = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_c = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_c)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_c)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_d)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_d)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -1284,11 +1284,11 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_2dup(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_a2 = {0, };
-	token value_token_b = {0, };
-	token value_token_b2 = {0, };
+const bool sabr_compiler_preproc_2dup(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_a2 = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t value_token_b2 = {0, };
 
 	bool result = false;
 
@@ -1296,13 +1296,13 @@ const bool sabr_compiler_preproc_2dup(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -1318,19 +1318,19 @@ const bool sabr_compiler_preproc_2dup(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_a)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_a)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_b)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_b)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_a2)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_a2)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_b2)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_b2)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -1346,13 +1346,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_2over(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_a2 = {0, };
-	token value_token_b = {0, };
-	token value_token_b2 = {0, };
-	token value_token_c = {0, };
-	token value_token_d = {0, };
+const bool sabr_compiler_preproc_2over(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_a2 = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t value_token_b2 = {0, };
+	sabr_token_t value_token_c = {0, };
+	sabr_token_t value_token_d = {0, };
 
 	bool result = false;
 
@@ -1360,23 +1360,23 @@ const bool sabr_compiler_preproc_2over(sabr_compiler* comp, word w, token t, vec
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_d = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_d = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_c = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_c = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -1392,27 +1392,27 @@ const bool sabr_compiler_preproc_2over(sabr_compiler* comp, word w, token t, vec
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_a)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_a)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_b)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_b)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_c)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_c)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_d)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_d)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_a2)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_a2)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_b2)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_b2)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -1429,13 +1429,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_2tuck(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token value_token_c = {0, };
-	token value_token_c2 = {0, };
-	token value_token_d = {0, };
-	token value_token_d2 = {0, };
+const bool sabr_compiler_preproc_2tuck(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t value_token_c = {0, };
+	sabr_token_t value_token_c2 = {0, };
+	sabr_token_t value_token_d = {0, };
+	sabr_token_t value_token_d2 = {0, };
 
 	bool result = false;
 
@@ -1443,23 +1443,23 @@ const bool sabr_compiler_preproc_2tuck(sabr_compiler* comp, word w, token t, vec
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_d = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_d = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_c = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_c = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -1475,27 +1475,27 @@ const bool sabr_compiler_preproc_2tuck(sabr_compiler* comp, word w, token t, vec
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_c)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_c)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_d)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_d)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_a)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_a)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_b)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_b)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_c2)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_c2)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_d2)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_d2)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -1512,11 +1512,11 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_2swap(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token value_token_c = {0, };
-	token value_token_d = {0, };
+const bool sabr_compiler_preproc_2swap(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t value_token_c = {0, };
+	sabr_token_t value_token_d = {0, };
 
 	bool result = false;
 
@@ -1524,39 +1524,39 @@ const bool sabr_compiler_preproc_2swap(sabr_compiler* comp, word w, token t, vec
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_d = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_d = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_c = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_c = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_c)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_c)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_d)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_d)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_a)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_a)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_b)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_b)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -1571,13 +1571,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_2rot(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token value_token_c = {0, };
-	token value_token_d = {0, };
-	token value_token_e = {0, };
-	token value_token_f = {0, };
+const bool sabr_compiler_preproc_2rot(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t value_token_c = {0, };
+	sabr_token_t value_token_d = {0, };
+	sabr_token_t value_token_e = {0, };
+	sabr_token_t value_token_f = {0, };
 
 	bool result = false;
 
@@ -1585,57 +1585,57 @@ const bool sabr_compiler_preproc_2rot(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_f = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_f = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_e = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_e = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_d = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_d = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_c = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_c = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_c)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_c)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_d)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_d)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_e)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_e)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_f)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_f)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_a)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_a)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, value_token_b)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, value_token_b)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -1652,13 +1652,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_add(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_add(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -1666,13 +1666,13 @@ const bool sabr_compiler_preproc_add(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -1689,7 +1689,7 @@ const bool sabr_compiler_preproc_add(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -1703,13 +1703,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_sub(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_sub(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -1717,13 +1717,13 @@ const bool sabr_compiler_preproc_sub(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -1740,7 +1740,7 @@ const bool sabr_compiler_preproc_sub(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -1754,13 +1754,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_mul(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_mul(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -1768,13 +1768,13 @@ const bool sabr_compiler_preproc_mul(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -1791,7 +1791,7 @@ const bool sabr_compiler_preproc_mul(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -1805,13 +1805,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_div(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_div(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -1819,13 +1819,13 @@ const bool sabr_compiler_preproc_div(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -1846,7 +1846,7 @@ const bool sabr_compiler_preproc_div(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -1860,13 +1860,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_mod(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_mod(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -1874,13 +1874,13 @@ const bool sabr_compiler_preproc_mod(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -1901,7 +1901,7 @@ const bool sabr_compiler_preproc_mod(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -1915,13 +1915,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_udiv(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_udiv(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -1929,13 +1929,13 @@ const bool sabr_compiler_preproc_udiv(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -1956,7 +1956,7 @@ const bool sabr_compiler_preproc_udiv(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -1970,13 +1970,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_umod(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_umod(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -1984,13 +1984,13 @@ const bool sabr_compiler_preproc_umod(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -2011,7 +2011,7 @@ const bool sabr_compiler_preproc_umod(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -2025,13 +2025,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_equ(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_equ(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -2039,13 +2039,13 @@ const bool sabr_compiler_preproc_equ(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -2062,7 +2062,7 @@ const bool sabr_compiler_preproc_equ(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -2076,13 +2076,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_neq(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_neq(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -2090,13 +2090,13 @@ const bool sabr_compiler_preproc_neq(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -2113,7 +2113,7 @@ const bool sabr_compiler_preproc_neq(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -2127,13 +2127,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_grt(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_grt(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -2141,13 +2141,13 @@ const bool sabr_compiler_preproc_grt(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -2164,7 +2164,7 @@ const bool sabr_compiler_preproc_grt(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -2178,13 +2178,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_geq(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_geq(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -2192,13 +2192,13 @@ const bool sabr_compiler_preproc_geq(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -2215,7 +2215,7 @@ const bool sabr_compiler_preproc_geq(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -2229,13 +2229,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_lst(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_lst(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -2243,13 +2243,13 @@ const bool sabr_compiler_preproc_lst(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -2266,7 +2266,7 @@ const bool sabr_compiler_preproc_lst(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -2280,13 +2280,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_leq(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_leq(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -2294,13 +2294,13 @@ const bool sabr_compiler_preproc_leq(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -2317,7 +2317,7 @@ const bool sabr_compiler_preproc_leq(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -2331,13 +2331,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_ugrt(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_ugrt(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -2345,13 +2345,13 @@ const bool sabr_compiler_preproc_ugrt(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -2368,7 +2368,7 @@ const bool sabr_compiler_preproc_ugrt(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -2382,13 +2382,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_ugeq(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_ugeq(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -2396,13 +2396,13 @@ const bool sabr_compiler_preproc_ugeq(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -2419,7 +2419,7 @@ const bool sabr_compiler_preproc_ugeq(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -2433,13 +2433,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_ulst(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_ulst(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -2447,13 +2447,13 @@ const bool sabr_compiler_preproc_ulst(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -2470,7 +2470,7 @@ const bool sabr_compiler_preproc_ulst(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -2484,13 +2484,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_uleq(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_uleq(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -2498,13 +2498,13 @@ const bool sabr_compiler_preproc_uleq(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -2521,7 +2521,7 @@ const bool sabr_compiler_preproc_uleq(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -2535,13 +2535,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_fadd(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_fadd(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -2549,13 +2549,13 @@ const bool sabr_compiler_preproc_fadd(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -2572,7 +2572,7 @@ const bool sabr_compiler_preproc_fadd(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -2586,13 +2586,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_fsub(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_fsub(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -2600,13 +2600,13 @@ const bool sabr_compiler_preproc_fsub(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -2623,7 +2623,7 @@ const bool sabr_compiler_preproc_fsub(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -2637,13 +2637,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_fmul(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_fmul(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -2651,13 +2651,13 @@ const bool sabr_compiler_preproc_fmul(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -2674,7 +2674,7 @@ const bool sabr_compiler_preproc_fmul(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -2688,13 +2688,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_fdiv(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_fdiv(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -2702,13 +2702,13 @@ const bool sabr_compiler_preproc_fdiv(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -2725,7 +2725,7 @@ const bool sabr_compiler_preproc_fdiv(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -2739,13 +2739,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_fmod(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_fmod(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -2753,13 +2753,13 @@ const bool sabr_compiler_preproc_fmod(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -2776,7 +2776,7 @@ const bool sabr_compiler_preproc_fmod(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -2790,13 +2790,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_fgrt(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_fgrt(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -2804,13 +2804,13 @@ const bool sabr_compiler_preproc_fgrt(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -2827,7 +2827,7 @@ const bool sabr_compiler_preproc_fgrt(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -2841,13 +2841,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_fgeq(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_fgeq(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -2855,13 +2855,13 @@ const bool sabr_compiler_preproc_fgeq(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -2878,7 +2878,7 @@ const bool sabr_compiler_preproc_fgeq(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -2892,13 +2892,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_flst(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_flst(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -2906,13 +2906,13 @@ const bool sabr_compiler_preproc_flst(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -2929,7 +2929,7 @@ const bool sabr_compiler_preproc_flst(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -2943,13 +2943,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_fleq(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_fleq(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -2957,13 +2957,13 @@ const bool sabr_compiler_preproc_fleq(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -2980,7 +2980,7 @@ const bool sabr_compiler_preproc_fleq(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -2994,13 +2994,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_and(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_and(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -3008,13 +3008,13 @@ const bool sabr_compiler_preproc_and(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -3031,7 +3031,7 @@ const bool sabr_compiler_preproc_and(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -3045,13 +3045,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_or(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_or(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -3059,13 +3059,13 @@ const bool sabr_compiler_preproc_or(sabr_compiler* comp, word w, token t, vector
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -3082,7 +3082,7 @@ const bool sabr_compiler_preproc_or(sabr_compiler* comp, word w, token t, vector
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -3096,13 +3096,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_xor(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_xor(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -3110,13 +3110,13 @@ const bool sabr_compiler_preproc_xor(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -3133,7 +3133,7 @@ const bool sabr_compiler_preproc_xor(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -3147,11 +3147,11 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_not(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token result_token = {0, };
-	value value_a;
-	value result_value;
+const bool sabr_compiler_preproc_not(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -3159,8 +3159,8 @@ const bool sabr_compiler_preproc_not(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -3175,7 +3175,7 @@ const bool sabr_compiler_preproc_not(sabr_compiler* comp, word w, token t, vecto
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -3188,13 +3188,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_lsft(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_lsft(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -3202,13 +3202,13 @@ const bool sabr_compiler_preproc_lsft(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -3225,7 +3225,7 @@ const bool sabr_compiler_preproc_lsft(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -3239,13 +3239,13 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_rsft(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token value_token_b = {0, };
-	token result_token = {0, };
-	value value_a;
-	value value_b;
-	value result_value;
+const bool sabr_compiler_preproc_rsft(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t value_token_b = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t value_b;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -3253,13 +3253,13 @@ const bool sabr_compiler_preproc_rsft(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_b = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_b = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -3276,7 +3276,7 @@ const bool sabr_compiler_preproc_rsft(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -3290,11 +3290,11 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_ftoi(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token result_token = {0, };
-	value value_a;
-	value result_value;
+const bool sabr_compiler_preproc_ftoi(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -3302,8 +3302,8 @@ const bool sabr_compiler_preproc_ftoi(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -3318,7 +3318,7 @@ const bool sabr_compiler_preproc_ftoi(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -3331,11 +3331,11 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_itof(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token result_token = {0, };
-	value value_a;
-	value result_value;
+const bool sabr_compiler_preproc_itof(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -3343,8 +3343,8 @@ const bool sabr_compiler_preproc_itof(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -3359,7 +3359,7 @@ const bool sabr_compiler_preproc_itof(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -3372,11 +3372,11 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_fmti(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token result_token = {0, };
-	value value_a;
-	value result_value;
+const bool sabr_compiler_preproc_fmti(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -3384,8 +3384,8 @@ const bool sabr_compiler_preproc_fmti(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -3400,7 +3400,7 @@ const bool sabr_compiler_preproc_fmti(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -3413,11 +3413,11 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_fmtu(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token result_token = {0, };
-	value value_a;
-	value result_value;
+const bool sabr_compiler_preproc_fmtu(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -3425,8 +3425,8 @@ const bool sabr_compiler_preproc_fmtu(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -3441,7 +3441,7 @@ const bool sabr_compiler_preproc_fmtu(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -3454,11 +3454,11 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_fmtf(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	token result_token = {0, };
-	value value_a;
-	value result_value;
+const bool sabr_compiler_preproc_fmtf(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_token_t result_token = {0, };
+	sabr_value_t value_a;
+	sabr_value_t result_value;
 
 	bool result = false;
 
@@ -3466,8 +3466,8 @@ const bool sabr_compiler_preproc_fmtf(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -3482,7 +3482,7 @@ const bool sabr_compiler_preproc_fmtf(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
-	if (!vector_push_back(token, output_tokens, result_token)) {
+	if (!vector_push_back(sabr_token_t, output_tokens, result_token)) {
 		fputs(sabr_errmsg_alloc, stderr); goto FREE_ALL;
 	}
 
@@ -3495,8 +3495,8 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_echo(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
+const bool sabr_compiler_preproc_echo(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
 
 	bool result = false;
 
@@ -3504,8 +3504,8 @@ const bool sabr_compiler_preproc_echo(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -3517,9 +3517,9 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_emit(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
-	token value_token_a = {0, };
-	value value_a;
+const bool sabr_compiler_preproc_emit(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
+	sabr_token_t value_token_a = {0, };
+	sabr_value_t value_a;
 
 	bool result = false;
 
@@ -3527,8 +3527,8 @@ const bool sabr_compiler_preproc_emit(sabr_compiler* comp, word w, token t, vect
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 	
-	value_token_a = *vector_back(token, output_tokens);
-	if (!vector_pop_back(token, output_tokens)) {
+	value_token_a = *vector_back(sabr_token_t, output_tokens);
+	if (!vector_pop_back(sabr_token_t, output_tokens)) {
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
@@ -3553,10 +3553,10 @@ FREE_ALL:
 	return result;
 }
 
-const bool sabr_compiler_preproc_show(sabr_compiler* comp, word w, token t, vector(token)* output_tokens) {
+const bool sabr_compiler_preproc_show(sabr_compiler_t* comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) {
 	printf("%zu - [ ", output_tokens->size);
 	for (size_t i = 0; i < output_tokens->size; i++) {
-		token t = *vector_at(token, output_tokens, i);
+		sabr_token_t t = *vector_at(sabr_token_t, output_tokens, i);
 		printf("%s ", t.data);
 	}
 	fputs("]\n", stdout);
@@ -3565,7 +3565,7 @@ const bool sabr_compiler_preproc_show(sabr_compiler* comp, word w, token t, vect
 }
 
 
-const bool (*preproc_keyword_functions[])(sabr_compiler* const comp, word w, token t, vector(token)* output_tokens) = {
+const bool (*preproc_keyword_functions[])(sabr_compiler_t* const comp, sabr_word_t w, sabr_token_t t, vector(sabr_token_t)* output_tokens) = {
 	sabr_compiler_preproc_func,
 	sabr_compiler_preproc_macro,
 	sabr_compiler_preproc_isdef,

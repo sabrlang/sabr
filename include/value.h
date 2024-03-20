@@ -3,13 +3,13 @@
 
 #include <stdint.h>
 
-typedef union value_union {
+typedef union sabr_value_union {
 	int64_t i;
 	uint64_t u;
 	double f;
 	uint64_t* p;
 	uint8_t bytes[8];
 	// _Decimal64 d;
-} value;
+} sabr_value_t;
 
 #endif

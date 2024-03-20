@@ -16,8 +16,8 @@ char* sabr_new_string_slice(const char* source, size_t begin_index, size_t end_i
 char* sabr_new_string_copy(const char* source);
 char* sabr_new_string_append(const char* dest, const char* origin);
 
-void sabr_free_token_vector(vector(token)* tokens);
+void sabr_free_token_vector(vector(sabr_token_t)* tokens);
 
-void sabr_free_word_trie(trie(word)* dictionary);
+void sabr_free_word_trie(trie(sabr_word_t)* dictionary);
 
 #endif

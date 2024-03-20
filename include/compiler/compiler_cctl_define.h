@@ -19,27 +19,27 @@ cctl_ptr_def(char);
 vector_fd(cctl_ptr(char));
 vector_imp_h(cctl_ptr(char));
 
-vector_fd(token);
-vector_imp_h(token);
+vector_fd(sabr_token_t);
+vector_imp_h(sabr_token_t);
 
-trie_fd(word);
-trie_imp_h(word);
+trie_fd(sabr_word_t);
+trie_imp_h(sabr_word_t);
 
-cctl_ptr_def(trie(word));
-vector_fd(cctl_ptr(trie(word)));
-vector_imp_h(cctl_ptr(trie(word)));
+cctl_ptr_def(trie(sabr_word_t));
+vector_fd(cctl_ptr(trie(sabr_word_t)));
+vector_imp_h(cctl_ptr(trie(sabr_word_t)));
 
 vector_fd(size_t);
 vector_imp_h(size_t);
 
-vector_fd(preproc_stop_flag);
-vector_imp_h(preproc_stop_flag);
+vector_fd(sabr_preproc_stop_flag_t);
+vector_imp_h(sabr_preproc_stop_flag_t);
 
-vector_fd(keyword_data);
-vector_imp_h(keyword_data);
+vector_fd(sabr_keyword_data_t);
+vector_imp_h(sabr_keyword_data_t);
 
-cctl_ptr_def(vector(keyword_data));
-vector_fd(cctl_ptr(vector(keyword_data)));
-vector_imp_h(cctl_ptr(vector(keyword_data)));
+cctl_ptr_def(vector(sabr_keyword_data_t));
+vector_fd(cctl_ptr(vector(sabr_keyword_data_t)));
+vector_imp_h(cctl_ptr(vector(sabr_keyword_data_t)));
 
 #endif

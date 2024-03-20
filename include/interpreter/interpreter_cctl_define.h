@@ -9,26 +9,26 @@
 
 #include "interpreter_data.h"
 
-rbt_fd(def_data);
-cctl_ptr_def(rbt(def_data));
-deque_fd(cctl_ptr(rbt(def_data)));
+rbt_fd(sabr_def_data_t);
+cctl_ptr_def(rbt(sabr_def_data_t));
+deque_fd(cctl_ptr(rbt(sabr_def_data_t)));
 
-deque_fd(value);
+deque_fd(sabr_value_t);
 deque_fd(size_t);
-deque_fd(for_data);
-deque_fd(cs_data);
+deque_fd(sabr_for_data_t);
+deque_fd(sabr_cs_data_t);
 
-vector_fd(value);
-cctl_ptr_def(vector(value));
-vector_fd(cctl_ptr(vector(value)));
+vector_fd(sabr_value_t);
+cctl_ptr_def(vector(sabr_value_t));
+vector_fd(cctl_ptr(vector(sabr_value_t)));
 
-rbt_imp_h(def_data);
-deque_imp_h(cctl_ptr(rbt(def_data)));
-deque_imp_h(value);
+rbt_imp_h(sabr_def_data_t);
+deque_imp_h(cctl_ptr(rbt(sabr_def_data_t)));
+deque_imp_h(sabr_value_t);
 deque_imp_h(size_t);
-deque_imp_h(for_data);
-deque_imp_h(cs_data);
+deque_imp_h(sabr_for_data_t);
+deque_imp_h(sabr_cs_data_t);
 
-vector_imp_h(cctl_ptr(vector(value)));
+vector_imp_h(cctl_ptr(vector(sabr_value_t)));
 
 #endif

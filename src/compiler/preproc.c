@@ -1,6 +1,6 @@
 #include "preproc.h"
 
-const char* preproc_keyword_names[] = {
+const char* sabr_preproc_keyword_names[] = {
 	"#func",
 	"#macro",
 	"#isdef",
@@ -78,4 +78,4 @@ const char* preproc_keyword_names[] = {
 	"#show"
 };
 
-size_t preproc_keyword_names_len = sizeof(preproc_keyword_names) / sizeof(char*);
+size_t sabr_preproc_keyword_names_len = sizeof(sabr_preproc_keyword_names) / sizeof(char*);

@@ -6,8 +6,8 @@
 #include "preproc.h"
 #include "token.h"
 
-typedef enum word_type_enum word_type;
-enum word_type_enum {
+typedef enum sabr_word_type_enum sabr_word_type_t;
+enum sabr_word_type_enum {
 	WT_NONE,
 	WT_PREPROC_KWRD,
 	WT_PREPROC_IDFR,
@@ -16,25 +16,25 @@ enum word_type_enum {
 	WT_IDFR
 };
 
-typedef struct preproc_def_data_struct preproc_def_data;
-struct preproc_def_data_struct {
-	token def_code;
+typedef struct sabr_preproc_def_data_struct sabr_preproc_def_data_t;
+struct sabr_preproc_def_data_struct {
+	sabr_token_t def_code;
 	bool is_func;
 };
 
-typedef union word_data_union word_data;
-union word_data_union {
-	preproc_def_data def_data;
-	preproc_keyword preproc_kwrd;
-	keyword kwrd;
+typedef union sabr_word_data_union sabr_word_data_t;
+union sabr_word_data_union {
+	sabr_preproc_def_data_t preproc_def_data;
+	sabr_preproc_keyword_t preproc_kwrd;
+	sabr_keyword_t kwrd;
 	size_t identifer_index;
-	opcode oc;
+	sabr_opcode_t oc;
 };
 
-typedef struct word_struct word;
-struct word_struct {
-	word_type type;
-	word_data data;
+typedef struct sabr_word_struct sabr_word_t;
+struct sabr_word_struct {
+	sabr_word_type_t type;
+	sabr_word_data_t data;
 };
 
 #endif

@@ -5,7 +5,7 @@
 #include "stddef.h"
 #include "stdint.h"
 
-typedef enum opcode_enum {
+typedef enum sabr_opcode_enum {
 	OP_NONE,
 	OP_EXIT,
 
@@ -132,12 +132,12 @@ typedef enum opcode_enum {
 	OP_PUTS,
 
 	OP_SHOW
-} opcode;
+} sabr_opcode_t;
 
 
-extern size_t opcode_names_len;
-extern const char* opcode_names[];
+extern size_t sabr_opcode_names_len;
+extern const char* sabr_opcode_names[];
 
-bool sabr_opcode_has_operand(opcode oc);
+bool sabr_opcode_has_operand(sabr_opcode_t oc);
 
 #endif

@@ -1,6 +1,6 @@
 #include "opcode.h"
 
-const char* opcode_names[] = {
+const char* sabr_opcode_names[] = {
 	"OP_NONE",
 	"OP_EXIT",
 
@@ -129,9 +129,9 @@ const char* opcode_names[] = {
 	"OP_SHOW"
 };
 
-size_t opcode_names_len = sizeof(opcode_names) / sizeof(char*);
+size_t sabr_opcode_names_len = sizeof(sabr_opcode_names) / sizeof(char*);
 
-bool sabr_opcode_has_operand(opcode oc) {
+bool sabr_opcode_has_operand(sabr_opcode_t oc) {
 	switch (oc) {
 		case OP_VALUE:
 		case OP_IF:

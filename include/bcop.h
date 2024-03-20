@@ -7,13 +7,13 @@
 #include "opcode.h"
 #include "value.h"
 
-typedef struct bytecode_operation_struct {
-	opcode oc;
-	value operand;
-} bytecode_operation;
+typedef struct sabr_bcop_struct {
+	sabr_opcode_t oc;
+	sabr_value_t operand;
+} sabr_bcop_t;
 
-bytecode_operation sabr_new_bcop(opcode oc);
-bytecode_operation sabr_new_bcop_with_value(opcode oc, value v);
-bytecode_operation sabr_new_bcop_with_null(opcode co);
+sabr_bcop_t sabr_new_bcop(sabr_opcode_t oc);
+sabr_bcop_t sabr_new_bcop_with_value(sabr_opcode_t oc, sabr_value_t v);
+sabr_bcop_t sabr_new_bcop_with_null(sabr_opcode_t co);
 
 #endif
