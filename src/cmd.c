@@ -29,15 +29,15 @@ void sabr_cmd_get_opt(sabr_cmd_t* cmd, int argc, char** argv) {
 		switch (opt) {
 			case 0:
 				if (!strcmp(cmd->long_opts[index].name, "compile")) {
-					strcpy_s(cmd->src_filename, PATH_MAX, optarg);
+					strncpy(cmd->src_filename, optarg, PATH_MAX);
 					cmd->compile = true;
 				}
 				else if (!strcmp(cmd->long_opts[index].name, "execute")) {
-					strcpy_s(cmd->bc_filename, PATH_MAX, optarg);
+					strncpy(cmd->bc_filename, optarg, PATH_MAX);
 					cmd->execute = true;
 				}
 				else if (!strcmp(cmd->long_opts[index].name, "out")) {
-					strcpy_s(cmd->out_filename, PATH_MAX, optarg);
+					strncpy(cmd->out_filename, optarg, PATH_MAX);
 					cmd->out = true;
 				}
 				else if (!strcmp(cmd->long_opts[index].name, "run"))
@@ -50,15 +50,15 @@ void sabr_cmd_get_opt(sabr_cmd_t* cmd, int argc, char** argv) {
 					cmd->help = true;
 				break;
 			case 'c':
-				strcpy_s(cmd->src_filename, PATH_MAX, optarg);
+				strncpy(cmd->src_filename, optarg, PATH_MAX);
 				cmd->compile = true;
 				break;
 			case 'e':
-				strcpy_s(cmd->bc_filename, PATH_MAX, optarg);
+				strncpy(cmd->bc_filename, optarg, PATH_MAX);
 				cmd->execute = true;
 				break;
 			case 'o':
-				strcpy_s(cmd->out_filename, PATH_MAX, optarg);
+				strncpy(cmd->out_filename, optarg, PATH_MAX);
 				cmd->out = true;
 				break;
 			case 'r': cmd->run = true; break;
@@ -79,7 +79,7 @@ int sabr_cmd_run(sabr_cmd_t* cmd, sabr_compiler_t* comp, sabr_interpreter_t* int
 		if (!sabr_compiler_init(comp)) return 1;
 
 		if (!cmd->out)
-			strcpy_s(cmd->out_filename, PATH_MAX, cmd->preprocess ? "out.sabrc": "out.sabre");
+			strncpy(cmd->out_filename, cmd->preprocess ? "out.sabrc": "out.sabre", PATH_MAX);
 		if (cmd->preprocess) {
 			vector(sabr_token_t)* tokens = sabr_compiler_preprocess_file(comp, cmd->src_filename);
 			if (!tokens) return 1;
