@@ -6,6 +6,8 @@
 
 #include "value.h"
 
+#include "cctl/rbt.h"
+
 typedef enum sabr_for_type_enum sabr_for_type_t;
 enum sabr_for_type_enum {
     SABR_FOTY_I,
@@ -27,22 +29,28 @@ struct for_data_struct {
 typedef struct sabr_cs_data_struct sabr_cs_data_t;
 struct sabr_cs_data_struct {
     size_t pos;
-    size_t switch_stack_size;
-    size_t for_data_stack_size;
 };
 
 typedef enum sabr_def_type_enum sabr_def_type_t;
 enum sabr_def_type_enum {
-    SABR_DEF_NONE,
-    SABR_DEF_CALLABLE,
-    SABR_DEF_VARIABLE,
-    SABR_DEF_STRUCT
+    SABR_DETY_NONE,
+    SABR_DETY_CALLABLE,
+    SABR_DETY_VARIABLE,
+    SABR_DETY_STRUCT
 };
 
 typedef struct def_data_struct sabr_def_data_t;
 struct def_data_struct {
     size_t data;
     sabr_def_type_t dety;
+};
+
+typedef struct sabr_local_data_struct sabr_local_data_t;
+struct sabr_local_data_struct {
+    size_t switch_stack_size;
+    size_t for_data_stack_size;
+    size_t local_memory_size;
+    void* local_words;
 };
 
 sabr_for_data_t sabr_interpreter_for_data_new(void);

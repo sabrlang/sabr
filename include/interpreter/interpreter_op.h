@@ -20,7 +20,8 @@ typedef enum sabr_interpreter_op_errcode_enum {
 	SABR_OPERR_STDIN,
 	SABR_OPERR_STDOUT,
 	SABR_OPERR_UNICODE,
-	SABR_OPERR_MEMORY
+	SABR_OPERR_MEMORY,
+	SABR_OPERR_WHAT
 } sabr_interpreter_op_errcode_t;
 
 extern size_t interpreter_op_functions_len;

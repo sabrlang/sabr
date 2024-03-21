@@ -2,20 +2,18 @@
 #include "interpreter_op.h"
 
 extern inline sabr_value_t* sabr_memory_pool_top(sabr_memory_pool_t* pool);
+extern inline sabr_local_data_t* sabr_interpreter_get_local_data(sabr_interpreter_t* inter);
 
 bool sabr_interpreter_init(sabr_interpreter_t* inter) {
     deque_init(sabr_value_t, &inter->data_stack);
     deque_init(sabr_value_t, &inter->switch_stack);
-
     deque_init(sabr_for_data_t, &inter->for_data_stack);
+	deque_init(sabr_local_data_t, &inter->local_data_stack);
     deque_init(sabr_cs_data_t, &inter->call_stack);
 
     rbt_init(sabr_def_data_t, &inter->global_words);
-    deque_init(cctl_ptr(rbt(sabr_def_data_t)), &inter->local_words_stack);
 
     vector_init(cctl_ptr(vector(sabr_value_t)), &inter->struct_vector);
-
-    deque_init(size_t, &inter->local_memory_size_stack);
 
     return true;
 }
@@ -23,20 +21,18 @@ bool sabr_interpreter_init(sabr_interpreter_t* inter) {
 bool sabr_interpreter_del(sabr_interpreter_t* inter) {
     deque_free(sabr_value_t, &inter->data_stack);
     deque_free(sabr_value_t, &inter->switch_stack);
-
     deque_free(sabr_for_data_t, &inter->for_data_stack);
+	for (size_t i = 0; i < inter->local_data_stack.size; i++)
+		rbt_free(sabr_def_data_t, deque_at(sabr_local_data_t, &inter->local_data_stack, i)->local_words);
+	deque_free(sabr_local_data_t, &inter->local_data_stack);
     deque_free(sabr_cs_data_t, &inter->call_stack);
 
     rbt_free(sabr_def_data_t, &inter->global_words);
-    for (size_t i = 0; i < inter->local_words_stack.size; i++)
-        rbt_free(sabr_def_data_t, *deque_at(cctl_ptr(rbt(sabr_def_data_t)), &inter->local_words_stack, i));
-    deque_free(cctl_ptr(rbt(sabr_def_data_t)), &inter->local_words_stack);
 
     for (size_t i = 0; i < inter->struct_vector.size; i++)
         vector_free(sabr_value_t, *vector_at(cctl_ptr(vector(sabr_value_t)), &inter->struct_vector, i));
     vector_free(cctl_ptr(vector(sabr_value_t)), &inter->struct_vector);
 
-    deque_free(size_t, &inter->local_memory_size_stack);
 	sabr_memory_pool_del(&inter->memory_pool);
 	sabr_memory_pool_del(&inter->global_memory_pool);
 
@@ -119,6 +115,10 @@ bool sabr_interpreter_run_bytecode(sabr_interpreter_t* inter, sabr_bytecode_t* b
 	for (size_t index = 0; index < bc->bcop_vec.size; index++) {
 		sabr_bcop_t bcop = *vector_at(sabr_bcop_t, &bc->bcop_vec, index);
 		uint32_t result = interpreter_op_functions[bcop.oc - 1](inter, bcop, &index);
+		if (result) {
+			fprintf(stderr, "result: %u, index: %zu\n", result, index);
+			return false;
+		};
 	}
 	return true;
 }
@@ -170,4 +170,43 @@ bool sabr_interpreter_push(sabr_interpreter_t* inter, sabr_value_t v) {
 		return false;
 	}
 	return true;
+}
+
+uint32_t sabr_interpreter_exec_identifier(sabr_interpreter_t* inter, sabr_value_t identifier, size_t* index) {
+	sabr_def_data_t* def_data = NULL;
+	rbt(sabr_def_data_t)* local_words = NULL;
+	def_data = rbt_find(sabr_def_data_t, &inter->global_words, identifier.u);
+	if (!def_data) {
+		if (inter->local_data_stack.size > 0) {
+			local_words = sabr_interpreter_get_local_data(inter)->local_words;
+			def_data = rbt_find(sabr_def_data_t, local_words, identifier.u);
+		}
+	}
+	if (!def_data) return SABR_OPERR_UNDEFINED;
+
+	sabr_cs_data_t csd;
+
+	switch (def_data->dety) {
+		case SABR_DETY_NONE: break;
+		case SABR_DETY_CALLABLE: {
+			csd.pos = *index + 1;
+			if (!deque_push_back(sabr_cs_data_t, &inter->call_stack, csd)) return SABR_OPERR_WHAT;
+			*index = def_data->data - 1;
+		} break;
+		case SABR_DETY_VARIABLE: {
+			sabr_value_t v;
+			sabr_value_t* p = (sabr_value_t*) def_data->data;
+			v.u = p->u;
+			if (!sabr_interpreter_push(inter, v)) return SABR_OPERR_STACK;
+		} break;
+		case SABR_DETY_STRUCT: {
+			sabr_value_t v;
+	// 		value v;
+	// 		vector(uint64_t)* temp_struct = *vector_at(cctl_ptr(vector(uint64_t)), &inter->struct_vector, node->data);
+	// 		if (!temp_struct) return OPERR_STRUCT;
+	// 		v.u = temp_struct->size * sizeof(value);
+	// 		if (!interpreter_push(inter, v)) return OPERR_STACK;
+		} break;
+	}
+	return SABR_OPERR_NONE;
 }

@@ -140,6 +140,7 @@ bool sabr_opcode_has_operand(sabr_opcode_t oc) {
 		case SABR_OP_FOR_CHECK:
 		case SABR_OP_FOR_NEXT:
 		case SABR_OP_LAMBDA:
+		case SABR_OP_EXEC:
 			return true;
 		default:
 			return false;

@@ -23,8 +23,9 @@ int main() {
 	bc = sabr_interpreter_load_bytecode(&inter, "test.sabre");
 	if (!bc) return 1;
 
-	sabr_interpreter_run_bytecode(&inter, bc);
 	sabr_bytecode_print(bc);
+	puts("");
+	sabr_interpreter_run_bytecode(&inter, bc);
 	
 	sabr_bytecode_free(bc);
 	free(bc);

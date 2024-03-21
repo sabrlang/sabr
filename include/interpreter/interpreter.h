@@ -41,17 +41,17 @@ struct sabr_interpreter_struct {
 	mbstate_t convert_state;
 
 	deque(sabr_value_t) data_stack;
-	deque(sabr_value_t) switch_stack;
 
+	deque(sabr_value_t) switch_stack;
 	deque(sabr_for_data_t) for_data_stack;
+	deque(sabr_local_data_t) local_data_stack;
+
 	deque(sabr_cs_data_t) call_stack;
 
 	sabr_memory_pool_t memory_pool;
 	sabr_memory_pool_t global_memory_pool;
-	deque(size_t) local_memory_size_stack;
 
 	rbt(sabr_def_data_t) global_words;
-	deque(cctl_ptr(rbt(sabr_def_data_t))) local_words_stack;
 
 	vector(cctl_ptr(vector(sabr_value_t))) struct_vector;
 };
@@ -73,5 +73,10 @@ inline sabr_value_t* sabr_memory_pool_top(sabr_memory_pool_t* pool) {
 
 bool sabr_interpreter_pop(sabr_interpreter_t* inter, sabr_value_t* v);
 bool sabr_interpreter_push(sabr_interpreter_t* inter, sabr_value_t v);
+
+uint32_t sabr_interpreter_exec_identifier(sabr_interpreter_t* inter, sabr_value_t identifier, size_t* index);
+inline sabr_local_data_t* sabr_interpreter_get_local_data(sabr_interpreter_t* inter) {
+	return deque_back(sabr_def_data_t, &inter->local_data_stack);
+}
 
 #endif
