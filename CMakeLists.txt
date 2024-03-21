@@ -5,7 +5,7 @@ cmake_minimum_required(
 project(
 	csabr
 	LANGUAGES C
-	VERSION 0.5
+	VERSION 0.1
 )
 
 add_compile_options(
@@ -31,7 +31,7 @@ endif()
 set(CMAKE_C_FLAGS_DEBUG "-O0 -g")
 set(CMAKE_C_FLAGS_RELEASE "-O2")
 
-# set(CMAKE_C_STANDARD 23)
+set(CMAKE_C_STANDARD 17)
 
 include_directories(
 	${PROJECT_SOURCE_DIR}/include
@@ -91,3 +91,5 @@ message("CMAKE_GENERATOR: " ${CMAKE_GENERATOR})
 message("CMAKE_BINARY_DIR: " ${CMAKE_BINARY_DIR})
 
 message("PROJECT_VERSION: " ${PROJECT_VERSION})
+
+configure_file(${PROJECT_SOURCE_DIR}/cmake_config.in ${PROJECT_SOURCE_DIR}/include/cmake_config.h)

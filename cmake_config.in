@@ -1,0 +1,2 @@
+#define VERSION_MAJOR @csabr_VERSION_MAJOR@
+#define VERSION_MINOR @csabr_VERSION_MINOR@

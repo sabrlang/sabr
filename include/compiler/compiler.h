@@ -81,6 +81,8 @@ bool sabr_compiler_init(sabr_compiler_t* const comp);
 bool sabr_compiler_del(sabr_compiler_t* const comp);
 
 sabr_bytecode_t* sabr_compiler_compile_file(sabr_compiler_t* const comp, const char* filename);
+vector(sabr_token_t)* sabr_compiler_preprocess_file(sabr_compiler_t* const comp, const char* filename);
+
 bool sabr_compiler_load_file(sabr_compiler_t* const comp, const char* filename, size_t* index);
 
 bool sabr_compiler_save_bytecode(sabr_compiler_t* const comp, sabr_bytecode_t* const bc, const char* filename);

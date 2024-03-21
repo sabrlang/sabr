@@ -104,6 +104,21 @@ sabr_bytecode_t* sabr_compiler_compile_file(sabr_compiler_t* const comp, const c
 	free(preprocessed_tokens);
 	return compiled_bytecode;
 }
+
+vector(sabr_token_t)* sabr_compiler_preprocess_file(sabr_compiler_t* const comp, const char* filename) {
+	size_t textcode_index;
+	vector(sabr_token_t)* preprocessed_tokens = NULL;
+
+	if (!sabr_compiler_load_file(comp, filename, &textcode_index)) {
+		return NULL;
+	}
+
+	preprocessed_tokens = sabr_compiler_preprocess_textcode(comp, textcode_index);
+	if (!preprocessed_tokens) return NULL;
+
+	return preprocessed_tokens;
+}
+
 bool sabr_compiler_load_file(sabr_compiler_t* const comp, const char* filename, size_t* index) {
 	FILE* file;
 	char filename_full[PATH_MAX] = {0, };
