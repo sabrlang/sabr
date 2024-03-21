@@ -20,10 +20,12 @@ if(ASAN)
 	if(UNIX)
 		add_compile_options(
 			-fsanitize=address
+			-fsanitize=leak
 			-fno-omit-frame-pointer
 		)
 		add_link_options(
 			-fsanitize=address
+			-fsanitize=leak
 		)
 	endif()
 endif()
