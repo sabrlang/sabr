@@ -54,6 +54,7 @@ struct sabr_interpreter_struct {
 	rbt(sabr_def_data_t) global_words;
 
 	vector(cctl_ptr(vector(sabr_value_t))) struct_vector;
+	vector(cctl_ptr(vector(sabr_value_t))) array_vector;
 };
 
 bool sabr_interpreter_init(sabr_interpreter_t* inter);

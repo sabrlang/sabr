@@ -863,10 +863,9 @@ sabr_bytecode_t* sabr_compiler_compile_tokens(sabr_compiler_t* const comp, vecto
 					for (size_t j = 0; j < string_values->size; j++) {
 						value_a = *vector_at(sabr_value_t, string_values, j);
 						if (!sabr_bytecode_write_bcop_with_value(bc_data, SABR_OP_VALUE, value_a)) goto PRINT_ERR_POS;
-						if (j != string_values->size - 1) {
-							if (!sabr_bytecode_write_bcop(bc_data, SABR_OP_ARRAY_COMMA)) goto PRINT_ERR_POS;
-						}
+						if (!sabr_bytecode_write_bcop(bc_data, SABR_OP_ARRAY_COMMA)) goto PRINT_ERR_POS;
 					}
+					if (!sabr_bytecode_write_bcop_with_value(bc_data, SABR_OP_VALUE, sabr_value_zero())) goto PRINT_ERR_POS;
 					
 					if (!sabr_bytecode_write_bcop(bc_data, SABR_OP_ARRAY_END)) goto PRINT_ERR_POS;
 

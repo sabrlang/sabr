@@ -12,4 +12,6 @@ typedef union sabr_value_union {
 	// _Decimal64 d;
 } sabr_value_t;
 
+sabr_value_t sabr_value_zero();
+
 #endif

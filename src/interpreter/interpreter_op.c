@@ -718,22 +718,80 @@ const uint32_t sabr_interpreter_op(op_allot)(sabr_interpreter_t* inter, sabr_bco
 }
 
 const uint32_t sabr_interpreter_op(op_fetch)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_value_t v;
+	if (!sabr_interpreter_pop(inter, &v)) return SABR_OPERR_STACK;
+	v.u = *v.p;
+	if (!sabr_interpreter_push(inter, v)) return SABR_OPERR_STACK;
+
 	return SABR_OPERR_NONE;
 }
 
 const uint32_t sabr_interpreter_op(op_store)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_value_t a, b;
+	if (!sabr_interpreter_pop(inter, &b)) return SABR_OPERR_STACK;
+	if (!sabr_interpreter_pop(inter, &a)) return SABR_OPERR_STACK;
+	*b.p = a.u;
+
 	return SABR_OPERR_NONE;
 }
 
 const uint32_t sabr_interpreter_op(op_array)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	vector(sabr_value_t)* current_array = (vector(sabr_value_t)*) malloc(sizeof(vector(sabr_value_t)));
+	if (!current_array) return SABR_OPERR_MEMORY;
+
+	vector_init(sabr_value_t, current_array);
+	
+	if (!vector_push_back(cctl_ptr(vector(sabr_value_t)), &inter->array_vector, current_array))
+		return SABR_OPERR_MEMORY;
+
 	return SABR_OPERR_NONE;
 }
 
 const uint32_t sabr_interpreter_op(op_array_comma)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_value_t v;
+	vector(sabr_value_t)* current_array = NULL;
+	if (inter->array_vector.size == 0) return SABR_OPERR_WHAT;
+	current_array = *vector_back(cctl_ptr(vector(sabr_value_t)), &inter->array_vector);
+
+	if (!sabr_interpreter_pop(inter, &v)) return SABR_OPERR_STACK;
+	if (!vector_push_back(sabr_value_t, current_array, v)) return SABR_OPERR_MEMORY;
+
 	return SABR_OPERR_NONE;
 }
 
 const uint32_t sabr_interpreter_op(op_array_end)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_value_t v;
+
+	vector(sabr_value_t)* current_array = NULL;
+	if (inter->array_vector.size == 0) return SABR_OPERR_WHAT;
+	current_array = *vector_back(cctl_ptr(vector(sabr_value_t)), &inter->array_vector);
+
+	if (!sabr_interpreter_pop(inter, &v)) return SABR_OPERR_STACK;
+	if (!vector_push_back(sabr_value_t, current_array, v)) return SABR_OPERR_MEMORY;
+
+	sabr_value_t* p;
+	size_t alloted_size = current_array->size;
+
+	if (inter->local_data_stack.size > 0) {
+		p = sabr_memory_pool_top(&inter->memory_pool);
+		size_t* local_memory_size = &(sabr_interpreter_get_local_data(inter)->local_memory_size);
+		*local_memory_size += alloted_size;
+		if (!sabr_memory_pool_alloc(&inter->memory_pool, alloted_size)) return SABR_OPERR_MEMORY;
+	}
+	else {
+		p = sabr_memory_pool_top(&inter->global_memory_pool);
+		if (!sabr_memory_pool_alloc(&inter->global_memory_pool, alloted_size)) return SABR_OPERR_MEMORY;
+	}
+
+	for (size_t i = 0; i < current_array->size; i++)
+		p[i] = *vector_at(sabr_value_t, current_array, i);
+
+	vector_free(sabr_value_t, current_array);
+	if (!vector_pop_back(cctl_ptr(vector(sabr_value_t)), &inter->array_vector)) return SABR_OPERR_MEMORY;
+
+	v.p = (uint64_t*) p;
+	if (!sabr_interpreter_push(inter, v)) return SABR_OPERR_STACK;
+
 	return SABR_OPERR_NONE;
 }
 
