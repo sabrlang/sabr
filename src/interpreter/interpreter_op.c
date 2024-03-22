@@ -739,14 +739,35 @@ const uint32_t sabr_interpreter_op(op_getc)(sabr_interpreter_t* inter, sabr_bcop
 }
 
 const uint32_t sabr_interpreter_op(op_geti)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_value_t v;
+#if defined(_WIN32)
+	if (wscanf(L"%" SCNd64, &(v.i)) != 1) return SABR_OPERR_STDIN;
+#else
+	if (scanf("%" SCNd64, &(v.i)) != 1) return SABR_OPERR_STDIN;
+#endif
+	if (!sabr_interpreter_push(inter, v)) return SABR_OPERR_STACK;
 	return SABR_OPERR_NONE;
 }
 
 const uint32_t sabr_interpreter_op(op_getu)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_value_t v;
+#if defined(_WIN32)
+	if (wscanf(L"%" SCNu64, &(v.u)) != 1) return SABR_OPERR_STDIN;
+#else
+	if (scanf("%" SCNu64, &(v.u)) != 1) return SABR_OPERR_STDIN;
+#endif
+	if (!sabr_interpreter_push(inter, v)) return SABR_OPERR_STACK;
 	return SABR_OPERR_NONE;
 }
 
 const uint32_t sabr_interpreter_op(op_getf)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_value_t v;
+#if defined(_WIN32)
+	if (wscanf(L"%lf", &(v.f)) != 1) return SABR_OPERR_STDIN;
+#else
+	if (scanf("%lf" SCNu64, &(v.f)) != 1) return SABR_OPERR_STDIN;
+#endif
+	if (!sabr_interpreter_push(inter, v)) return SABR_OPERR_STACK;
 	return SABR_OPERR_NONE;
 }
 
@@ -759,14 +780,23 @@ const uint32_t sabr_interpreter_op(op_putc)(sabr_interpreter_t* inter, sabr_bcop
 }
 
 const uint32_t sabr_interpreter_op(op_puti)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_value_t v;
+	if (!sabr_interpreter_pop(inter, &v)) return SABR_OPERR_STACK;
+	printf("%" PRId64 " ", v.i);
 	return SABR_OPERR_NONE;
 }
 
 const uint32_t sabr_interpreter_op(op_putu)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_value_t v;
+	if (!sabr_interpreter_pop(inter, &v)) return SABR_OPERR_STACK;
+	printf("%" PRIu64 " ", v.u);
 	return SABR_OPERR_NONE;
 }
 
 const uint32_t sabr_interpreter_op(op_putf)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_value_t v;
+	if (!sabr_interpreter_pop(inter, &v)) return SABR_OPERR_STACK;
+	printf("%lf ", v.f);
 	return SABR_OPERR_NONE;
 }
 
