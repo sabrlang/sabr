@@ -18,14 +18,15 @@ typedef struct sabr_cmd_struct {
 	bool execute;
 	bool out;
 	bool run;
+	bool bytecode;
 	bool preprocess;
 	bool version;
 	bool help;
 	char src_filename[PATH_MAX];
 	char out_filename[PATH_MAX];
 	char bc_filename[PATH_MAX];
-	option_t long_opts[7];
-	char opts[11];
+	option_t long_opts[8];
+	char opts[12];
 } sabr_cmd_t;
 
 extern sabr_cmd_t cmd;

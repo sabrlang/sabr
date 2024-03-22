@@ -3,18 +3,19 @@
 #include "compiler.h"
 
 sabr_cmd_t cmd = {
-	false, false, false, false, false, false, false,
+	false, false, false, false, false, false, false, false,
 	"", "", "",
 	{
 		{ "compile", required_argument, NULL, 0 },
 		{ "execute", required_argument, NULL, 0 },
 		{ "out", required_argument, NULL, 0 },
 		{ "run", no_argument, NULL, 0 },
+		{ "bytecode", no_argument, NULL, 0 },
 		{ "preprocess", no_argument, NULL, 0 },
 		{ "version", no_argument, NULL, 0 },
 		{ "help", no_argument, NULL, 0 }
 	},
-	"c:e:o:rpvh"
+	"c:e:o:rbpvh"
 };
 
 void sabr_cmd_get_opt(sabr_cmd_t* cmd, int argc, char** argv) {
@@ -42,6 +43,8 @@ void sabr_cmd_get_opt(sabr_cmd_t* cmd, int argc, char** argv) {
 				}
 				else if (!strcmp(cmd->long_opts[index].name, "run"))
 					cmd->run = true;
+				else if (!strcmp(cmd->long_opts[index].name, "bytecode"))
+					cmd->bytecode = true;
 				else if (!strcmp(cmd->long_opts[index].name, "preprocess"))
 					cmd->preprocess = true;
 				else if (!strcmp(cmd->long_opts[index].name, "version"))
@@ -62,6 +65,7 @@ void sabr_cmd_get_opt(sabr_cmd_t* cmd, int argc, char** argv) {
 				cmd->out = true;
 				break;
 			case 'r': cmd->run = true; break;
+			case 'b': cmd->bytecode = true; break;
 			case 'p': cmd->preprocess = true; break;
 			case 'v': cmd->version = true; break;
 			case 'h': cmd->help = true; break;
@@ -87,6 +91,7 @@ int sabr_cmd_run(sabr_cmd_t* cmd, sabr_compiler_t* comp, sabr_interpreter_t* int
 		else {
 			bc = sabr_compiler_compile_file(comp, cmd->src_filename);
 			if (!bc) return 1;
+			if (cmd->bytecode) sabr_bytecode_print(bc);
 			if (!sabr_compiler_save_bytecode(comp, bc, cmd->out_filename)) return 1;
 			if (cmd->run) {
 				if (!sabr_interpreter_init(inter)) return 1;

@@ -149,7 +149,7 @@ bool sabr_memory_pool_alloc(sabr_memory_pool_t* pool, size_t size) {
 }
 
 bool sabr_memory_pool_free(sabr_memory_pool_t* pool, size_t size) {
-	if (pool->index - size < pool->index) return false;
+	if ((pool->index - size) && (pool->index - size < pool->index)) return false;
 	pool->index -= size;
 	return true;
 }
@@ -200,7 +200,7 @@ uint32_t sabr_interpreter_exec_identifier(sabr_interpreter_t* inter, sabr_value_
 			if (!sabr_interpreter_push(inter, v)) return SABR_OPERR_STACK;
 		} break;
 		case SABR_DETY_STRUCT: {
-			sabr_value_t v;
+			// sabr_value_t v;
 	// 		value v;
 	// 		vector(uint64_t)* temp_struct = *vector_at(cctl_ptr(vector(uint64_t)), &inter->struct_vector, node->data);
 	// 		if (!temp_struct) return OPERR_STRUCT;
@@ -209,4 +209,99 @@ uint32_t sabr_interpreter_exec_identifier(sabr_interpreter_t* inter, sabr_value_
 		} break;
 	}
 	return SABR_OPERR_NONE;
+}
+
+uint32_t sabr_interpreter_set_variable(sabr_interpreter_t* inter, sabr_value_t identifier, sabr_value_t v) {
+	rbt(sabr_def_data_t)* words = NULL;
+
+	sabr_def_data_t* def_data = NULL;
+	sabr_def_data_t new_def_data;
+
+	bool is_global = false;
+
+	def_data = rbt_find(sabr_def_data_t, &inter->global_words, identifier.u);
+	if (!def_data) {
+		if (inter->local_data_stack.size > 0) {
+			words = sabr_interpreter_get_local_data(inter)->local_words;
+			def_data = rbt_find(sabr_def_data_t, words, identifier.u);
+		}
+		else {
+			words = &inter->global_words;
+			is_global = true;
+		}
+	}
+	if (!def_data) {
+		def_data = &new_def_data;
+
+		sabr_value_t* p;
+		if (is_global) {
+			p = sabr_memory_pool_top(&inter->global_memory_pool);
+			if (!sabr_memory_pool_alloc(&inter->global_memory_pool, 1)) return SABR_OPERR_MEMORY;
+		}
+		else {
+			p = sabr_memory_pool_top(&inter->memory_pool);
+			if (!sabr_memory_pool_alloc(&inter->memory_pool, 1)) return SABR_OPERR_MEMORY;
+			size_t* local_memory_size = &(sabr_interpreter_get_local_data(inter)->local_memory_size);
+			(*local_memory_size)++;
+		}
+		new_def_data.data = (size_t) p;
+		new_def_data.dety = SABR_DETY_VARIABLE;
+
+		if (!rbt_insert(sabr_def_data_t, words, identifier.u, new_def_data)) return SABR_OPERR_MEMORY;
+	}
+
+	if (def_data->dety == SABR_DETY_VARIABLE) {
+		sabr_value_t* p = (sabr_value_t*) def_data->data;
+		p->u = v.u;
+	}
+	else return SABR_OPERR_INVALID_IDENT;
+
+	return SABR_OPERR_NONE;
+}
+
+uint32_t sabr_interpreter_ref_variable(sabr_interpreter_t* inter, sabr_value_t identifier, sabr_value_t* addr) {
+	rbt(sabr_def_data_t)* words = NULL;
+
+	sabr_def_data_t* def_data = NULL;
+	sabr_def_data_t new_def_data;
+
+	def_data = rbt_find(sabr_def_data_t, &inter->global_words, identifier.u);
+	if (!def_data) {
+		if (inter->local_data_stack.size > 0) {
+			words = sabr_interpreter_get_local_data(inter)->local_words;
+			def_data = rbt_find(sabr_def_data_t, words, identifier.u);
+		}
+		else {
+			words = &inter->global_words;
+		}
+	}
+	if (!def_data) {
+		def_data = &new_def_data;
+		new_def_data.dety = SABR_DETY_VARIABLE;
+		new_def_data.data = (size_t) addr;
+
+		if (!rbt_insert(sabr_def_data_t, words, identifier.u, new_def_data)) return SABR_OPERR_MEMORY;
+	}
+	else return SABR_OPERR_REDEFINE;
+
+	return SABR_OPERR_NONE;
+}
+
+sabr_value_t* interpreter_get_variable_addr(sabr_interpreter_t* inter, sabr_value_t identifier) {
+	rbt(sabr_def_data_t)* words = NULL;
+
+	sabr_def_data_t* def_data = NULL;
+	def_data = rbt_find(sabr_def_data_t, &inter->global_words, identifier.u);
+	if (!def_data) {
+		if (inter->local_data_stack.size > 0) {
+			words = sabr_interpreter_get_local_data(inter)->local_words;
+			def_data = rbt_find(sabr_def_data_t, words, identifier.u);
+		}
+		else {
+			words = &inter->global_words;
+		}
+	}
+	if (!def_data) return NULL;
+	if (def_data->dety != SABR_DETY_VARIABLE) return NULL;
+	return (sabr_value_t*) def_data->data;
 }

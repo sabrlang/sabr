@@ -85,6 +85,7 @@ const uint32_t sabr_interpreter_op(op_local)(sabr_interpreter_t* inter, sabr_bco
 	rbt(sabr_def_data_t)* local_words = NULL;
 	local_words = (rbt(sabr_def_data_t)*) malloc(sizeof(rbt(sabr_def_data_t)));
 	if (!local_words) return SABR_OPERR_WHAT;
+	if (!rbt_init(sabr_def_data_t, local_words)) return SABR_OPERR_WHAT;
 
 	sabr_local_data_t local_data;
 	local_data.for_data_stack_size = inter->for_data_stack.size;
@@ -101,7 +102,6 @@ const uint32_t sabr_interpreter_op(op_local_end)(sabr_interpreter_t* inter, sabr
 	sabr_local_data_t* local_data;
 	local_data = sabr_interpreter_get_local_data(inter);
 	if (!local_data) return SABR_OPERR_WHAT;
-
 	count = inter->for_data_stack.size - local_data->for_data_stack_size;
 	for (size_t i = 0; i < count; i++)
 		if (!deque_pop_back(sabr_for_data_t, &inter->for_data_stack)) return SABR_OPERR_WHAT;
@@ -112,9 +112,6 @@ const uint32_t sabr_interpreter_op(op_local_end)(sabr_interpreter_t* inter, sabr
 
 	rbt(sabr_def_data_t)* local_words = (rbt(sabr_def_data_t)*) local_data->local_words;
 	rbt_free(sabr_def_data_t, local_words);
-
-	size_t local_memory_size = local_data->local_memory_size;
-	if (!sabr_memory_pool_free(&inter->memory_pool, local_memory_size)) return SABR_OPERR_WHAT;
 
 	if (!deque_pop_back(sabr_local_data_t, &inter->local_data_stack)) return SABR_OPERR_WHAT;
 
@@ -157,7 +154,13 @@ const uint32_t sabr_interpreter_op(op_struct_exec)(sabr_interpreter_t* inter, sa
 }
 
 const uint32_t sabr_interpreter_op(op_set)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
-	return SABR_OPERR_NONE;
+	sabr_value_t identifier;
+	sabr_value_t v;
+
+	if (!sabr_interpreter_pop(inter, &identifier)) return SABR_OPERR_STACK;
+	if (!sabr_interpreter_pop(inter, &v)) return SABR_OPERR_STACK;
+
+	return sabr_interpreter_set_variable(inter, identifier, v);
 }
 
 const uint32_t sabr_interpreter_op(op_exec)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
@@ -165,11 +168,23 @@ const uint32_t sabr_interpreter_op(op_exec)(sabr_interpreter_t* inter, sabr_bcop
 }
 
 const uint32_t sabr_interpreter_op(op_addr)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_value_t identifier;
+	sabr_value_t addr;
+
+	if (!sabr_interpreter_pop(inter, &identifier)) return SABR_OPERR_STACK;
+	addr.p = (uint64_t*) interpreter_get_variable_addr(inter, identifier);
+	if (!sabr_interpreter_push(inter, addr)) return SABR_OPERR_STACK;
 	return SABR_OPERR_NONE;
 }
 
 const uint32_t sabr_interpreter_op(op_ref)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
-	return SABR_OPERR_NONE;
+	sabr_value_t identifier;
+	sabr_value_t addr;
+
+	if (!sabr_interpreter_pop(inter, &identifier)) return SABR_OPERR_STACK;
+	if (!sabr_interpreter_pop(inter, &addr)) return SABR_OPERR_STACK;
+
+	return sabr_interpreter_ref_variable(inter, identifier, (sabr_value_t*) addr.p);
 }
 
 const uint32_t sabr_interpreter_op(op_add)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
@@ -679,6 +694,26 @@ const uint32_t sabr_interpreter_op(op_free)(sabr_interpreter_t* inter, sabr_bcop
 }
 
 const uint32_t sabr_interpreter_op(op_allot)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_value_t v;
+	if (!sabr_interpreter_pop(inter, &v)) return SABR_OPERR_STACK;
+
+	sabr_value_t* p;
+	size_t alloted_size = v.u / sizeof(sabr_value_t);
+
+	if (inter->local_data_stack.size > 0) {
+		p = sabr_memory_pool_top(&inter->memory_pool);
+		size_t* local_memory_size = &(sabr_interpreter_get_local_data(inter)->local_memory_size);
+		*local_memory_size += alloted_size;
+		if (!sabr_memory_pool_alloc(&inter->memory_pool, alloted_size)) return SABR_OPERR_MEMORY;
+	}
+	else {
+		p = sabr_memory_pool_top(&inter->global_memory_pool);
+		if (!sabr_memory_pool_alloc(&inter->global_memory_pool, alloted_size)) return SABR_OPERR_MEMORY;
+	}
+
+	v.p = (uint64_t*) p;
+
+	if (!sabr_interpreter_push(inter, v)) return SABR_OPERR_STACK;
 	return SABR_OPERR_NONE;
 }
 
