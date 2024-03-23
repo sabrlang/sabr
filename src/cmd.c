@@ -80,7 +80,15 @@ int sabr_cmd_run(sabr_cmd_t* cmd, sabr_compiler_t* comp, sabr_interpreter_t* int
 	if (cmd->version) cmd_print_version(cmd);
 	if (cmd->help) cmd_print_help(cmd);
 	if (cmd->compile) {
+		sabr_bytecode_t* std_lib_bc = NULL;
+		sabr_bytecode_t* src_bc = NULL;
+
 		if (!sabr_compiler_init(comp)) return 1;
+
+		char std_lib_path[PATH_MAX];
+		if (!sabr_get_std_lib_path("std", std_lib_path, true, &comp->convert_state)) return 1;
+		std_lib_bc = sabr_compiler_compile_file(comp, std_lib_path);
+		if (!std_lib_bc) return 1;
 
 		if (!cmd->out)
 			strncpy(cmd->out_filename, cmd->preprocess ? "out.sabrc": "out.sabre", PATH_MAX);
@@ -89,8 +97,11 @@ int sabr_cmd_run(sabr_cmd_t* cmd, sabr_compiler_t* comp, sabr_interpreter_t* int
 			if (!tokens) return 1;
 		}
 		else {
-			bc = sabr_compiler_compile_file(comp, cmd->src_filename);
-			if (!bc) return 1;
+			src_bc = sabr_compiler_compile_file(comp, cmd->src_filename);
+			if (!src_bc) return 1;
+
+			bc = sabr_bytecode_concat(std_lib_bc, src_bc);
+
 			if (cmd->bytecode) sabr_bytecode_print(bc);
 			if (!sabr_compiler_save_bytecode(comp, bc, cmd->out_filename)) return 1;
 			if (cmd->run) {
@@ -101,6 +112,11 @@ int sabr_cmd_run(sabr_cmd_t* cmd, sabr_compiler_t* comp, sabr_interpreter_t* int
 			}
 		}
 		if (!sabr_compiler_del(comp)) return 1;
+
+		sabr_bytecode_free(std_lib_bc);
+		sabr_bytecode_free(src_bc);
+		free(std_lib_bc);
+		free(src_bc);
 	}
 	else if (cmd->execute) {
 		if (!sabr_interpreter_init(inter)) return 1;

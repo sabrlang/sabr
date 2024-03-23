@@ -25,6 +25,31 @@ void sabr_bytecode_free(sabr_bytecode_t* bc) {
 	vector_free(sabr_bcop_t, &bc->bcop_vec);
 }
 
+sabr_bytecode_t* sabr_bytecode_concat(sabr_bytecode_t* a, sabr_bytecode_t* b) {
+	sabr_bytecode_t* concated_bc = NULL;
+	concated_bc = (sabr_bytecode_t*) malloc(sizeof(sabr_bytecode_t));
+	if (!concated_bc) return NULL;
+	sabr_bytecode_init(concated_bc);
+
+	if (!sabr_bytecode_join(concated_bc, a)) return NULL;
+	if (!sabr_bytecode_join(concated_bc, b)) return NULL;
+
+	return concated_bc;
+}
+
+bool sabr_bytecode_join(sabr_bytecode_t* dest, sabr_bytecode_t* src) {
+	for (size_t i = 0; i < src->bcop_vec.size; i++) {
+		sabr_bcop_t bcop = *vector_at(sabr_bcop_t, &src->bcop_vec, i);
+		if (!vector_push_back(sabr_bcop_t, &dest->bcop_vec, bcop)) {
+			fputs(sabr_errmsg_alloc, stderr);
+			return false;
+		}
+		dest->current_index++;
+		dest->current_pos += sabr_opcode_has_operand(bcop.oc) ? 9 : 1;
+	}
+	return true;
+}
+
 bool sabr_bytecode_write_bcop(sabr_bytecode_t* bc_data, sabr_opcode_t oc) {
 	if (!vector_push_back(sabr_bcop_t, &bc_data->bcop_vec, sabr_new_bcop(oc))) {
 		fputs(sabr_errmsg_alloc, stderr);

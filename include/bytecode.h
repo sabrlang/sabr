@@ -20,6 +20,8 @@ typedef struct sabr_bytecode_struct {
 void sabr_bytecode_print(sabr_bytecode_t* bc);
 void sabr_bytecode_init(sabr_bytecode_t* bc);
 void sabr_bytecode_free(sabr_bytecode_t* bc);
+sabr_bytecode_t* sabr_bytecode_concat(sabr_bytecode_t* a, sabr_bytecode_t* b);
+bool sabr_bytecode_join(sabr_bytecode_t* dest, sabr_bytecode_t* src);
 
 bool sabr_bytecode_write_bcop(sabr_bytecode_t* bc_data, sabr_opcode_t oc);
 bool sabr_bytecode_write_bcop_with_null(sabr_bytecode_t* bc_data, sabr_opcode_t oc);
