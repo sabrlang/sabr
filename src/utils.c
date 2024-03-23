@@ -59,4 +59,26 @@
 		if (!realpath(src, dest)) return false;
 		return true;
 	}
+
+	bool sabr_get_executable_path(char* dest) {
+		return readlink("/proc/self/exe", dest, PATH_MAX) >= 0;
+	}
+
+	bool sabr_get_std_lib_path(const char* lib_filename, char* dest, bool with_ext) {
+		char binary_path[PATH_MAX] = {0, };
+		char temp_path_filename[PATH_MAX] = {0, };
+		char temp_path_dirname[PATH_MAX] = {0, };
+		char* pivot_dir;
+		if (!sabr_get_executable_path(binary_path)) return false;
+		strcpy(temp_path_filename, binary_path);
+		pivot_dir = dirname(temp_path_filename);
+		strcpy(temp_path_dirname, pivot_dir);
+		strcat(temp_path_dirname, "/../lib/");
+
+		strcpy(dest, temp_path_dirname);
+		strcat(dest, lib_filename);
+		if (with_ext) strcat(dest, ".sabrc");
+
+		return true;
+	}
 #endif

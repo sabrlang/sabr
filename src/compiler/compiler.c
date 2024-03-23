@@ -221,9 +221,9 @@ FREE_ALL:
 
 bool sabr_compiler_save_bytecode(sabr_compiler_t* const comp, sabr_bytecode_t* const bc, const char* filename) {
 	FILE* file;
-	char filename_full[PATH_MAX] = {0, };
 	
 #if defined(_WIN32)
+	char filename_full[PATH_MAX] = {0, };
 	wchar_t filename_full_windows[PATH_MAX] = {0, };
 
 	if (!sabr_get_full_path(filename, filename_full, filename_full_windows, &(comp->convert_state))) {
@@ -473,15 +473,14 @@ FREE_ALL:
 		free(input_string);
 		free(temp_input_string);
 
-		sabr_free_token_vector(input_tokens);
-		free(input_tokens);
-
 		sabr_free_token_vector(output_tokens);
 		free(output_tokens);
-
-		input_tokens = NULL;
 		output_tokens = NULL;
 	}
+
+	sabr_free_token_vector(input_tokens);
+	free(input_tokens);
+	input_tokens = NULL;
 
 	if (has_local) {
 		sabr_free_word_trie(preproc_local_dictionary);

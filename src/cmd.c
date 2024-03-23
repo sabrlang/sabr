@@ -86,7 +86,11 @@ int sabr_cmd_run(sabr_cmd_t* cmd, sabr_compiler_t* comp, sabr_interpreter_t* int
 		if (!sabr_compiler_init(comp)) return 1;
 
 		char std_lib_path[PATH_MAX];
+	#if defined(_WIN32)
 		if (!sabr_get_std_lib_path("std", std_lib_path, true, &comp->convert_state)) return 1;
+	#else
+		if (!sabr_get_std_lib_path("std", std_lib_path, true)) return 1;
+	#endif
 		std_lib_bc = sabr_compiler_compile_file(comp, std_lib_path);
 		if (!std_lib_bc) return 1;
 
