@@ -230,7 +230,6 @@ const bool sabr_compiler_preproc_import(sabr_compiler_t* comp, sabr_word_t w, sa
 	current_filename_str = *vector_at(cctl_ptr(char), &comp->filename_vector, t.textcode_index);
 
 	char import_filename[PATH_MAX];
-	char binary_path[PATH_MAX] = {0, };
 
 #if defined(_WIN32)
 	char drive[_MAX_DRIVE];
@@ -240,14 +239,18 @@ const bool sabr_compiler_preproc_import(sabr_compiler_t* comp, sabr_word_t w, sa
 		_splitpath(current_filename_str, drive, pivot_dir, NULL, NULL);
 	}
 	else {
-		if (!GetModuleFileName(NULL, binary_path, PATH_MAX)) {
+		// if (!GetModuleFileName(NULL, binary_path, PATH_MAX)) {
+		// 	fputs(sabr_errmsg_fullpath, stderr); goto FREE_ALL;
+		// }
+		// _splitpath(binary_path, drive, pivot_dir, NULL, NULL);
+		// strcat(pivot_dir, "../lib");
+		if (!sabr_get_std_lib_path(import_filename, import_filename, false, &comp->convert_state)) {
 			fputs(sabr_errmsg_fullpath, stderr); goto FREE_ALL;
 		}
-		_splitpath(binary_path, drive, pivot_dir, NULL, NULL);
-		strcat(pivot_dir, "../lib");
 	}
 	_makepath(import_filename, drive, pivot_dir, filename_str, ".sabrc");
 #else
+	char binary_path[PATH_MAX] = {0, };
 	char temp_path_filename[PATH_MAX] = {0, };
 	char temp_path_dirname[PATH_MAX] = {0, };
 	char* pivot_dir = NULL;
