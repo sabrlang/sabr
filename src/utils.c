@@ -37,10 +37,9 @@
 	}
 
 	bool sabr_get_executable_path(char* dest, mbstate_t* convert_state) {
-		char binary_path[PATH_MAX];
 		wchar_t binary_path_windows[PATH_MAX];
 		if (!GetModuleFileNameW(NULL, binary_path_windows, PATH_MAX)) return false;
-		if (!sabr_convert_string_c16rtomb(binary_path_windows, binary_path, convert_state)) return false;
+		if (!sabr_convert_string_c16rtomb(binary_path_windows, dest, convert_state)) return false;
 		return true;
 	}
 
@@ -50,7 +49,7 @@
 		char binary_path[PATH_MAX];
 		if (!sabr_get_executable_path(binary_path, convert_state)) return false;
 		_splitpath(binary_path, drive, pivot_dir, NULL, NULL);
-		strcat(pivot_dir, "../lib");
+		strcat(pivot_dir, "..\\lib");
 		_makepath(dest, drive, pivot_dir, lib_filename, with_ext ? ".sabrc" : NULL);
 		return true;
 	}
