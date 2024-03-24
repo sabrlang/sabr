@@ -206,8 +206,8 @@ const bool sabr_compiler_preproc_import(sabr_compiler_t* comp, sabr_word_t w, sa
 	sabr_token_t filename_token = {0, };
 	char filename_full[PATH_MAX] = {0, };
 	size_t textcode_index;
-	char* filename_str = NULL;
-	char* current_filename_str = NULL;
+	char* filename = NULL;
+	char* current_filename = NULL;
 
 	bool local_file = false;
 	vector(sabr_token_t)* preprocessed_tokens = NULL;
@@ -223,39 +223,27 @@ const bool sabr_compiler_preproc_import(sabr_compiler_t* comp, sabr_word_t w, sa
 		fputs(sabr_errmsg_stackunderflow, stderr); goto FREE_ALL;
 	}
 
-	filename_str = filename_token.data;
-	local_file = (*filename_str == ':');
-	if (local_file) filename_str++;
+	filename = filename_token.data;
+	local_file = (*filename == ':');
+	if (local_file) filename++;
 
-	current_filename_str = *vector_at(cctl_ptr(char), &comp->filename_vector, t.textcode_index);
+	current_filename = *vector_at(cctl_ptr(char), &comp->filename_vector, t.textcode_index);
 
 	char import_filename[PATH_MAX];
 
 #if defined(_WIN32)
-	char drive[_MAX_DRIVE];
-	char pivot_dir[_MAX_DIR];
 
-	if (local_file) {
-		_splitpath(current_filename_str, drive, pivot_dir, NULL, NULL);
+	if (local_file) sabr_get_local_file_path(import_filename, current_filename, filename, true, &comp->convert_state);
+	else if (!sabr_get_std_lib_path(import_filename, filename, true, &comp->convert_state)) {
+		fputs(sabr_errmsg_fullpath, stderr); goto FREE_ALL;
 	}
-	else {
-		// if (!GetModuleFileName(NULL, binary_path, PATH_MAX)) {
-		// 	fputs(sabr_errmsg_fullpath, stderr); goto FREE_ALL;
-		// }
-		// _splitpath(binary_path, drive, pivot_dir, NULL, NULL);
-		// strcat(pivot_dir, "../lib");
-		if (!sabr_get_std_lib_path(import_filename, import_filename, false, &comp->convert_state)) {
-			fputs(sabr_errmsg_fullpath, stderr); goto FREE_ALL;
-		}
-	}
-	_makepath(import_filename, drive, pivot_dir, filename_str, ".sabrc");
 #else
 	char binary_path[PATH_MAX] = {0, };
 	char temp_path_filename[PATH_MAX] = {0, };
 	char temp_path_dirname[PATH_MAX] = {0, };
 	char* pivot_dir = NULL;
 	if (local_file) {
-		strcpy(temp_path_filename, current_filename_str);
+		strcpy(temp_path_filename, current_filename);
 		pivot_dir = dirname(temp_path_filename);
 		strcpy(temp_path_dirname, pivot_dir);
 		strcat(temp_path_dirname, "/");
@@ -270,7 +258,7 @@ const bool sabr_compiler_preproc_import(sabr_compiler_t* comp, sabr_word_t w, sa
 		strcat(temp_path_dirname, "/../lib/");
 	}
 	strcpy(import_filename, temp_path_dirname);
-	strcat(import_filename, filename_str);
+	strcat(import_filename, filename);
 	strcat(import_filename, ".sabrc");
 #endif
 

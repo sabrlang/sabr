@@ -43,15 +43,22 @@
 		return true;
 	}
 
-	bool sabr_get_std_lib_path(const char* lib_filename, char* dest, bool with_ext, mbstate_t* convert_state) {
-		char drive[_MAX_DRIVE];
-		char pivot_dir[_MAX_DIR];
-		char binary_path[PATH_MAX];
+	bool sabr_get_std_lib_path(char* dest, const char* lib_filename, bool with_ext, mbstate_t* convert_state) {
+		char drive[_MAX_DRIVE] = "";
+		char pivot_dir[_MAX_DIR] = "";
+		char binary_path[PATH_MAX] = "";
 		if (!sabr_get_executable_path(binary_path, convert_state)) return false;
 		_splitpath(binary_path, drive, pivot_dir, NULL, NULL);
 		strcat(pivot_dir, "..\\lib");
 		_makepath(dest, drive, pivot_dir, lib_filename, with_ext ? ".sabrc" : NULL);
 		return true;
+	}
+
+	void sabr_get_local_file_path(char* dest, const char* current_filename, const char* filename, bool with_ext, mbstate_t* convert_state) {
+		char drive[_MAX_DRIVE] = "";
+		char pivot_dir[_MAX_DIR] = "";
+		_splitpath(current_filename, drive, pivot_dir, NULL, NULL);
+		_makepath(dest, drive, pivot_dir, filename, with_ext ? ".sabrc" : NULL);
 	}
 #else
 	bool sabr_get_full_path(const char* src, char* dest) {
