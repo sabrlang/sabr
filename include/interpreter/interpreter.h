@@ -78,7 +78,9 @@ bool sabr_interpreter_push(sabr_interpreter_t* inter, sabr_value_t v);
 uint32_t sabr_interpreter_exec_identifier(sabr_interpreter_t* inter, sabr_value_t identifier, size_t* index);
 uint32_t sabr_interpreter_set_variable(sabr_interpreter_t* inter, sabr_value_t identifier, sabr_value_t v);
 uint32_t sabr_interpreter_ref_variable(sabr_interpreter_t* inter, sabr_value_t identifier, sabr_value_t* addr);
-sabr_value_t* interpreter_get_variable_addr(sabr_interpreter_t* inter, sabr_value_t identifier);
+sabr_value_t* sabr_interpreter_get_variable_addr(sabr_interpreter_t* inter, sabr_value_t identifier);
+
+bool sabr_interpreter_putc(sabr_interpreter_t* inter, sabr_value_t character);
 
 inline sabr_local_data_t* sabr_interpreter_get_local_data(sabr_interpreter_t* inter) {
 	return deque_back(sabr_def_data_t, &inter->local_data_stack);

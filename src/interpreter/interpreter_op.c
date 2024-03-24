@@ -23,42 +23,166 @@ const uint32_t sabr_interpreter_op(op_jump)(sabr_interpreter_t* inter, sabr_bcop
 }
 
 const uint32_t sabr_interpreter_op(op_for)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_for_data_t data = sabr_interpreter_for_data_new();
+	sabr_value_t kwrd;
+	sabr_value_t foty = bcop.operand;
+
+	if (!sabr_interpreter_pop(inter, &kwrd)) return SABR_OPERR_STACK;
+
+	data.variable_kwrd = kwrd;
+	data.foty = foty.u;
+	if (data.foty == SABR_FOTY_F) {
+		data.step.f = 1.0;
+		data.end.f = INFINITY;
+	}
+
+	int32_t result = sabr_interpreter_set_variable(inter, data.variable_kwrd, data.start);
+	if (result) return result;
+
+	data.variable_addr = sabr_interpreter_get_variable_addr(inter, data.variable_kwrd);
+
+	if (!deque_push_back(sabr_for_data_t, &inter->for_data_stack, data)) return SABR_OPERR_FOR;
 	return SABR_OPERR_NONE;
 }
 
 const uint32_t sabr_interpreter_op(op_for_from)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
-	return SABR_OPERR_NONE;
+	sabr_for_data_t* data = NULL;
+	sabr_value_t v;
+	if (!sabr_interpreter_pop(inter, &v)) return SABR_OPERR_STACK;
+
+	data = deque_back(sabr_for_data_t, &inter->for_data_stack);
+	data->start.u = v.u;
+
+	return sabr_interpreter_set_variable(inter, data->variable_kwrd, data->start);
 }
 
 const uint32_t sabr_interpreter_op(op_for_to)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_for_data_t* data = NULL;
+	sabr_value_t v;
+	if (!sabr_interpreter_pop(inter, &v)) return SABR_OPERR_STACK;
+
+	data = deque_back(sabr_for_data_t, &inter->for_data_stack);
+	data->end.u = v.u;
+
+	if (data->foty == SABR_FOTY_I) {
+		if (data->start.i > data->end.i) {
+			data->step.i = -1;
+		}
+	}
+	else if (data->foty == SABR_FOTY_U) {
+		if (data->start.u > data->end.u) {
+			data->step.i = -1;
+		}
+	}
+	else if (data->foty == SABR_FOTY_F) {
+		if (data->start.f > data->end.f) {
+			data->step.f = -1.0;
+		}
+	}
+
+	data->is_infinite = false;
+
 	return SABR_OPERR_NONE;
 }
 
 const uint32_t sabr_interpreter_op(op_for_step)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_for_data_t* data = NULL;
+	sabr_value_t v;
+	if (!sabr_interpreter_pop(inter, &v)) return SABR_OPERR_STACK;
+
+	data = deque_back(sabr_for_data_t, &inter->for_data_stack);
+	data->step.u = v.u;
 	return SABR_OPERR_NONE;
 }
 
 const uint32_t sabr_interpreter_op(op_for_check)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_for_data_t* data = NULL;
+	sabr_value_t pos = bcop.operand;
+
+	data = deque_back(sabr_for_data_t, &inter->for_data_stack);
+
+	sabr_value_t* v = data->variable_addr;
+	if (!v) return SABR_OPERR_UNDEFINED;
+
+	bool result = false;
+
+	if (!data->is_infinite) {
+		switch (data->foty) {
+			case SABR_FOTY_I:
+				result = (data->step.i > 0) ? data->end.i <= v->i : data->end.i >= v->i;
+				break;
+			case SABR_FOTY_U:
+				result = (data->step.u > 0) ? data->end.u <= v->u : data->end.u >= v->u;
+				break;
+			case SABR_FOTY_F:
+				result = (data->step.f > 0.0) ? data->end.f <= v->f : data->end.f >= v->f;
+				break;
+		}
+	}
+
+	if (result) {
+		*index = pos.u - 1;
+		switch (data->foty) {
+			case SABR_FOTY_I:
+				v->i -= data->step.i;
+				break;
+			case SABR_FOTY_U:
+				v->u -= data->step.u;
+				break;
+			case SABR_FOTY_F:
+				v->f -= data->step.f;
+				break;
+		}
+	}
+
 	return SABR_OPERR_NONE;
 }
 
 const uint32_t sabr_interpreter_op(op_for_next)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_for_data_t* data = NULL;
+	sabr_value_t pos = bcop.operand;
+	*index = pos.u - 1;
+	
+	data = deque_back(sabr_for_data_t, &inter->for_data_stack);
+
+	sabr_value_t* v = data->variable_addr;
+	if (!v) return SABR_OPERR_UNDEFINED;
+
+	switch (data->foty) {
+		case SABR_FOTY_I:
+			v->i += data->step.i;
+			break;
+		case SABR_FOTY_U:
+			v->u += data->step.u;
+			break;
+		case SABR_FOTY_F:
+			v->f += data->step.f;
+			break;
+	}
 	return SABR_OPERR_NONE;
 }
 
 const uint32_t sabr_interpreter_op(op_for_end)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	if (!deque_pop_back(sabr_for_data_t, &inter->for_data_stack)) return SABR_OPERR_FOR;
 	return SABR_OPERR_NONE;
 }
 
 const uint32_t sabr_interpreter_op(op_switch)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_value_t v;
+	if (!sabr_interpreter_pop(inter, &v)) return SABR_OPERR_STACK;
+	if (!deque_push_back(sabr_value_t, &inter->switch_stack, v)) return SABR_OPERR_SWITCH;
 	return SABR_OPERR_NONE;
 }
 
 const uint32_t sabr_interpreter_op(op_switch_case)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_value_t v;
+	v = *deque_back(sabr_value_t, &inter->switch_stack);
+	if (!sabr_interpreter_push(inter, v)) return SABR_OPERR_STACK;
 	return SABR_OPERR_NONE;
 }
 
 const uint32_t sabr_interpreter_op(op_switch_end)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	if (!deque_pop_back(sabr_value_t, &inter->switch_stack)) return SABR_OPERR_SWITCH;
 	return SABR_OPERR_NONE;
 }
 
@@ -173,7 +297,7 @@ const uint32_t sabr_interpreter_op(op_addr)(sabr_interpreter_t* inter, sabr_bcop
 	sabr_value_t addr;
 
 	if (!sabr_interpreter_pop(inter, &identifier)) return SABR_OPERR_STACK;
-	addr.p = (uint64_t*) interpreter_get_variable_addr(inter, identifier);
+	addr.p = (uint64_t*) sabr_interpreter_get_variable_addr(inter, identifier);
 	if (!sabr_interpreter_push(inter, addr)) return SABR_OPERR_STACK;
 	return SABR_OPERR_NONE;
 }
@@ -870,6 +994,9 @@ const uint32_t sabr_interpreter_op(op_gets)(sabr_interpreter_t* inter, sabr_bcop
 }
 
 const uint32_t sabr_interpreter_op(op_putc)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_value_t v;
+	if (!sabr_interpreter_pop(inter, &v)) return SABR_OPERR_STACK;
+	if (!sabr_interpreter_putc(inter, v)) return SABR_OPERR_UNICODE;
 	return SABR_OPERR_NONE;
 }
 
@@ -895,6 +1022,15 @@ const uint32_t sabr_interpreter_op(op_putf)(sabr_interpreter_t* inter, sabr_bcop
 }
 
 const uint32_t sabr_interpreter_op(op_puts)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_value_t a;
+	sabr_value_t b;
+	if (!sabr_interpreter_pop(inter, &a)) return SABR_OPERR_STACK;
+
+	while (*a.p) {
+		b.u = *(a.p);
+		if (!sabr_interpreter_putc(inter, b)) return SABR_OPERR_UNICODE;
+		a.p++;
+	}
 	return SABR_OPERR_NONE;
 }
 

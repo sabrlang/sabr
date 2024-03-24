@@ -119,6 +119,7 @@ sabr_bytecode_t* sabr_interpreter_load_bytecode(sabr_interpreter_t* inter, const
 bool sabr_interpreter_run_bytecode(sabr_interpreter_t* inter, sabr_bytecode_t* bc) {
 	for (size_t index = 0; index < bc->bcop_vec.size; index++) {
 		sabr_bcop_t bcop = *vector_at(sabr_bcop_t, &bc->bcop_vec, index);
+		if (bcop.oc == SABR_OP_NONE) continue;
 		uint32_t result = interpreter_op_functions[bcop.oc - 1](inter, bcop, &index);
 		if (result) {
 			fprintf(stderr, "result: %u, index: %zu\n", result, index);
@@ -292,7 +293,7 @@ uint32_t sabr_interpreter_ref_variable(sabr_interpreter_t* inter, sabr_value_t i
 	return SABR_OPERR_NONE;
 }
 
-sabr_value_t* interpreter_get_variable_addr(sabr_interpreter_t* inter, sabr_value_t identifier) {
+sabr_value_t* sabr_interpreter_get_variable_addr(sabr_interpreter_t* inter, sabr_value_t identifier) {
 	rbt(sabr_def_data_t)* words = NULL;
 
 	sabr_def_data_t* def_data = NULL;
@@ -309,4 +310,16 @@ sabr_value_t* interpreter_get_variable_addr(sabr_interpreter_t* inter, sabr_valu
 	if (!def_data) return NULL;
 	if (def_data->dety != SABR_DETY_VARIABLE) return NULL;
 	return (sabr_value_t*) def_data->data;
+}
+
+bool sabr_interpreter_putc(sabr_interpreter_t* inter, sabr_value_t character) {
+	if (character.u < 127) putchar(character.u);
+	else {
+		char out[8];
+		size_t rc = c32rtomb(out, (char32_t) character.u, &(inter->convert_state));
+		if (rc == -1) return false;
+		out[rc] = 0;
+		fputs(out, stdout);
+	}
+	return true;
 }
