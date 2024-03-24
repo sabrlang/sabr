@@ -75,65 +75,69 @@ void sabr_cmd_get_opt(sabr_cmd_t* cmd, int argc, char** argv) {
 }
 
 int sabr_cmd_run(sabr_cmd_t* cmd, sabr_compiler_t* comp, sabr_interpreter_t* inter, int argc, char** argv) {
+	int result = 1;
 	sabr_bytecode_t* bc = NULL;
+	sabr_bytecode_t* std_lib_bc = NULL;
+	sabr_bytecode_t* src_bc = NULL;
+
 	sabr_cmd_get_opt(cmd, argc, argv);
 	if (cmd->version) cmd_print_version(cmd);
 	if (cmd->help) cmd_print_help(cmd);
 	if (cmd->compile) {
-		sabr_bytecode_t* std_lib_bc = NULL;
-		sabr_bytecode_t* src_bc = NULL;
 
-		if (!sabr_compiler_init(comp)) return 1;
+		if (!sabr_compiler_init(comp)) goto FAILURE;
 
 		char std_lib_path[PATH_MAX];
 	#if defined(_WIN32)
-		if (!sabr_get_std_lib_path(std_lib_path, "std", true, &comp->convert_state)) return 1;
+		if (!sabr_get_std_lib_path(std_lib_path, "std", true, &comp->convert_state)) goto FAILURE;
 	#else
-		if (!sabr_get_std_lib_path(std_lib_path, "std", true)) return 1;
+		if (!sabr_get_std_lib_path(std_lib_path, "std", true)) goto FAILURE;
 	#endif
 		std_lib_bc = sabr_compiler_compile_file(comp, std_lib_path);
-		if (!std_lib_bc) return 1;
+		if (!std_lib_bc) goto FAILURE;
 
 		if (!cmd->out)
 			strncpy(cmd->out_filename, cmd->preprocess ? "out.sabrc": "out.sabre", PATH_MAX);
 		if (cmd->preprocess) {
 			vector(sabr_token_t)* tokens = sabr_compiler_preprocess_file(comp, cmd->src_filename);
-			if (!tokens) return 1;
+			if (!tokens) goto FAILURE;
 		}
 		else {
 			src_bc = sabr_compiler_compile_file(comp, cmd->src_filename);
-			if (!src_bc) return 1;
+			if (!src_bc) goto FAILURE;
 
 			bc = sabr_bytecode_concat(std_lib_bc, src_bc);
 
 			if (cmd->bytecode) sabr_bytecode_print(bc);
-			if (!sabr_compiler_save_bytecode(comp, bc, cmd->out_filename)) return 1;
+			if (!sabr_compiler_save_bytecode(comp, bc, cmd->out_filename)) goto FAILURE;
 			if (cmd->run) {
-				if (!sabr_interpreter_init(inter)) return 1;
-				if (!sabr_interpreter_memory_pool_init(inter, 131072, 131072)) return 1;	
+				if (!sabr_interpreter_init(inter)) goto FAILURE;
+				if (!sabr_interpreter_memory_pool_init(inter, 131072, 131072)) goto FAILURE;
 				sabr_interpreter_run_bytecode(inter, bc);
-				if (!sabr_interpreter_del(inter)) return 1;
+				if (!sabr_interpreter_del(inter)) goto FAILURE;
 			}
 		}
-		if (!sabr_compiler_del(comp)) return 1;
+		if (!sabr_compiler_del(comp)) goto FAILURE;
 
-		sabr_bytecode_free(std_lib_bc);
-		sabr_bytecode_free(src_bc);
-		free(std_lib_bc);
-		free(src_bc);
 	}
 	else if (cmd->execute) {
-		if (!sabr_interpreter_init(inter)) return 1;
-		if (!sabr_interpreter_memory_pool_init(inter, 131072, 131072)) return 1;	
+		if (!sabr_interpreter_init(inter)) goto FAILURE;
+		if (!sabr_interpreter_memory_pool_init(inter, 131072, 131072)) goto FAILURE;
 		bc = sabr_interpreter_load_bytecode(inter, cmd->bc_filename);
-		if (!bc) return 1;
+		if (!bc) goto FAILURE;
 		sabr_interpreter_run_bytecode(inter, bc);
-		if (!sabr_interpreter_del(inter)) return 1;
+		if (!sabr_interpreter_del(inter)) goto FAILURE;
 	}
-	
+	result = 0;
+
+FAILURE:
+	sabr_bytecode_free(std_lib_bc);
+	sabr_bytecode_free(src_bc);
+	free(std_lib_bc);
+	free(src_bc);
 	sabr_bytecode_free(bc);
 	free(bc);
-	return 0;
+	return result;
 }
 
 void cmd_print_version(sabr_cmd_t* cmd) {

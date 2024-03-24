@@ -139,5 +139,6 @@ extern size_t sabr_opcode_names_len;
 extern const char* sabr_opcode_names[];
 
 bool sabr_opcode_has_operand(sabr_opcode_t oc);
+bool sabr_opcode_has_index_operand(sabr_opcode_t oc);
 
 #endif

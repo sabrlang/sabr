@@ -26,6 +26,7 @@
     bool sabr_get_full_path(const char* src, char* dest);
     bool sabr_get_executable_path(char* dest);
     bool sabr_get_std_lib_path(char* dest, const char* lib_filename, bool with_ext);
+    void sabr_get_local_file_path(char* dest, const char* current_filename, const char* filename, bool with_ext);
 #endif
 
 

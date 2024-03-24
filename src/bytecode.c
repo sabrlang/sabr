@@ -38,14 +38,19 @@ sabr_bytecode_t* sabr_bytecode_concat(sabr_bytecode_t* a, sabr_bytecode_t* b) {
 }
 
 bool sabr_bytecode_join(sabr_bytecode_t* dest, sabr_bytecode_t* src) {
+	size_t dest_index = dest->current_index;
 	for (size_t i = 0; i < src->bcop_vec.size; i++) {
 		sabr_bcop_t bcop = *vector_at(sabr_bcop_t, &src->bcop_vec, i);
+		dest->current_index++;
+		if (sabr_opcode_has_operand(bcop.oc)) {
+			dest->current_pos += 9;
+			if (sabr_opcode_has_index_operand(bcop.oc)) bcop.operand.u += dest_index;
+		}
+		else dest->current_pos ++;
 		if (!vector_push_back(sabr_bcop_t, &dest->bcop_vec, bcop)) {
 			fputs(sabr_errmsg_alloc, stderr);
 			return false;
 		}
-		dest->current_index++;
-		dest->current_pos += sabr_opcode_has_operand(bcop.oc) ? 9 : 1;
 	}
 	return true;
 }

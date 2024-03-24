@@ -112,6 +112,7 @@ const uint32_t sabr_interpreter_op(op_local_end)(sabr_interpreter_t* inter, sabr
 
 	rbt(sabr_def_data_t)* local_words = (rbt(sabr_def_data_t)*) local_data->local_words;
 	rbt_free(sabr_def_data_t, local_words);
+	free(local_words);
 
 	if (!deque_pop_back(sabr_local_data_t, &inter->local_data_stack)) return SABR_OPERR_WHAT;
 

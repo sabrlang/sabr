@@ -70,7 +70,7 @@
 		return readlink("/proc/self/exe", dest, PATH_MAX) >= 0;
 	}
 
-	bool sabr_get_std_lib_path(const char* lib_filename, char* dest, bool with_ext) {
+	bool sabr_get_std_lib_path(char* dest, const char* lib_filename, bool with_ext) {
 		char binary_path[PATH_MAX] = {0, };
 		char temp_path_filename[PATH_MAX] = {0, };
 		char temp_path_dirname[PATH_MAX] = {0, };
@@ -86,5 +86,19 @@
 		if (with_ext) strcat(dest, ".sabrc");
 
 		return true;
+	}
+
+	void sabr_get_local_file_path(char* dest, const char* current_filename, const char* filename, bool with_ext) {
+		char temp_path_filename[PATH_MAX] = {0, };
+		char temp_path_dirname[PATH_MAX] = {0, };
+		char* pivot_dir;
+		strcpy(temp_path_filename, current_filename);
+		pivot_dir = dirname(temp_path_filename);
+		strcpy(temp_path_dirname, pivot_dir);
+		strcat(temp_path_dirname, "/");
+
+		strcpy(dest, temp_path_dirname);
+		strcat(dest, filename);
+		if (with_ext) strcat(dest, ".sabrc");
 	}
 #endif

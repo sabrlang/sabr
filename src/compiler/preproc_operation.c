@@ -238,28 +238,10 @@ const bool sabr_compiler_preproc_import(sabr_compiler_t* comp, sabr_word_t w, sa
 		fputs(sabr_errmsg_fullpath, stderr); goto FREE_ALL;
 	}
 #else
-	char binary_path[PATH_MAX] = {0, };
-	char temp_path_filename[PATH_MAX] = {0, };
-	char temp_path_dirname[PATH_MAX] = {0, };
-	char* pivot_dir = NULL;
-	if (local_file) {
-		strcpy(temp_path_filename, current_filename);
-		pivot_dir = dirname(temp_path_filename);
-		strcpy(temp_path_dirname, pivot_dir);
-		strcat(temp_path_dirname, "/");
+	if (local_file) sabr_get_local_file_path(import_filename, current_filename, filename, true);
+	else if (!sabr_get_std_lib_path(import_filename, filename, true)) {
+		fputs(sabr_errmsg_fullpath, stderr); goto FREE_ALL;
 	}
-	else {
-		if (readlink("/proc/self/exe", binary_path, PATH_MAX) < 0) {
-			fputs(sabr_errmsg_fullpath, stderr); goto FREE_ALL;
-		}
-		strcpy(temp_path_filename, binary_path);
-		pivot_dir = dirname(temp_path_filename);
-		strcpy(temp_path_dirname, pivot_dir);
-		strcat(temp_path_dirname, "/../lib/");
-	}
-	strcpy(import_filename, temp_path_dirname);
-	strcat(import_filename, filename);
-	strcat(import_filename, ".sabrc");
 #endif
 
 #if defined(_WIN32)
