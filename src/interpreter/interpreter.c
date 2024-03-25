@@ -206,12 +206,11 @@ uint32_t sabr_interpreter_exec_identifier(sabr_interpreter_t* inter, sabr_value_
 			if (!sabr_interpreter_push(inter, v)) return SABR_OPERR_STACK;
 		} break;
 		case SABR_DETY_STRUCT: {
-			// sabr_value_t v;
-	// 		value v;
-	// 		vector(uint64_t)* temp_struct = *vector_at(cctl_ptr(vector(uint64_t)), &inter->struct_vector, node->data);
-	// 		if (!temp_struct) return OPERR_STRUCT;
-	// 		v.u = temp_struct->size * sizeof(value);
-	// 		if (!interpreter_push(inter, v)) return OPERR_STACK;
+			sabr_value_t v;
+			vector(sabr_value_t)* struct_data_vector = *vector_at(cctl_ptr(vector(sabr_value_t)), &inter->struct_vector, def_data->data);
+			if (!struct_data_vector) return SABR_OPERR_WHAT;
+			v.u = struct_data_vector->size * sizeof(sabr_value_t);
+			if (!sabr_interpreter_push(inter, v)) return SABR_OPERR_STACK;
 		} break;
 	}
 	return SABR_OPERR_NONE;

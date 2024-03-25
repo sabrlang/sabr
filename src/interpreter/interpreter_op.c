@@ -263,10 +263,38 @@ const uint32_t sabr_interpreter_op(op_define)(sabr_interpreter_t* inter, sabr_bc
 }
 
 const uint32_t sabr_interpreter_op(op_struct)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_value_t identifier;
+	if (!sabr_interpreter_pop(inter, &identifier)) return SABR_OPERR_STACK;
+
+	sabr_def_data_t* def_data;
+	sabr_def_data_t new_def_data = {};
+	def_data = rbt_find(sabr_def_data_t, &inter->global_words, identifier.u);
+	if (def_data) return SABR_OPERR_REDEFINE;
+
+	new_def_data.data = inter->struct_vector.size;
+	new_def_data.dety = SABR_DETY_STRUCT;
+	if (!rbt_insert(sabr_def_data_t, &inter->global_words, identifier.u, new_def_data)) return SABR_OPERR_WHAT;
+
+	vector(sabr_value_t)* struct_data_vector = (vector(sabr_value_t)*) malloc(sizeof(vector(sabr_value_t)));
+	if (!struct_data_vector) return SABR_OPERR_WHAT;
+	vector_init(sabr_value_t, struct_data_vector);
+	if (!vector_push_back(cctl_ptr(vector(sabr_value_t)), &inter->struct_vector, struct_data_vector)) return SABR_OPERR_WHAT;
+
 	return SABR_OPERR_NONE;
 }
 
 const uint32_t sabr_interpreter_op(op_member)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_value_t identifier;
+	if (!sabr_interpreter_pop(inter, &identifier)) return SABR_OPERR_STACK;
+
+	uint64_t last = inter->struct_vector.size - 1;
+	
+	vector(sabr_value_t)* struct_data_vector = *vector_at(cctl_ptr(vector(sabr_value_t)), &inter->struct_vector, last);
+	if (!struct_data_vector) return SABR_OPERR_WHAT;
+	for (size_t i = 0; i < struct_data_vector->size; i++) {
+		if (identifier.u == vector_at(sabr_value_t, struct_data_vector, i)->u) return SABR_OPERR_WHAT;
+	}
+	if (!vector_push_back(sabr_value_t, struct_data_vector, identifier)) return SABR_OPERR_WHAT;
 	return SABR_OPERR_NONE;
 }
 
@@ -275,6 +303,33 @@ const uint32_t sabr_interpreter_op(op_struct_end)(sabr_interpreter_t* inter, sab
 }
 
 const uint32_t sabr_interpreter_op(op_struct_exec)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_value_t identifier_struct;
+	sabr_value_t identifier_member;
+	sabr_value_t addr;
+	sabr_def_data_t* def_data;
+
+	if (!sabr_interpreter_pop(inter, &identifier_member)) return SABR_OPERR_STACK;
+	if (!sabr_interpreter_pop(inter, &identifier_struct)) return SABR_OPERR_STACK;
+
+	def_data = rbt_find(sabr_def_data_t, &inter->global_words, identifier_struct.u);
+	if (!def_data) return SABR_OPERR_WHAT;
+	if (def_data->dety != SABR_DETY_STRUCT) return SABR_OPERR_WHAT;
+
+	vector(sabr_value_t)* struct_data_vector = *vector_at(cctl_ptr(vector(sabr_value_t)), &inter->struct_vector, def_data->data);
+	if (!struct_data_vector) return SABR_OPERR_WHAT;
+
+	uint64_t i;
+	bool check = true;
+	for (i = 0; i < struct_data_vector->size; i++) {
+		if (identifier_member.u == vector_at(sabr_value_t, struct_data_vector, i)->u) {
+			check = false;
+			break;
+		}
+	}
+	if (check) return SABR_OPERR_WHAT;
+	if (!sabr_interpreter_pop(inter, &addr)) return SABR_OPERR_STACK;
+	addr.u += (i * 8);
+	if (!sabr_interpreter_push(inter, addr)) return SABR_OPERR_STACK;
 	return SABR_OPERR_NONE;
 }
 

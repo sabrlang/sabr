@@ -1,0 +1,91 @@
+$Vector.at {
+	Vector._data fetch at
+} #macro ( u Vector -- addr )
+
+$Vector.fetch_at {
+	Vector.at fetch
+} #macro ( u Vector -- x )
+
+$Vector.store_at {
+	Vector.at store
+} #macro ( x u Vector -- )
+
+$Vector.front {
+	Vector._data fetch
+} #macro ( Vector -- addr )
+
+$Vector.back {
+	dup Vector.size 1 - swap Vector._data fetch at
+} #macro ( Vector -- addr )
+
+$Vector.size {
+	Vector._size fetch
+} #macro ( Vector -- u )
+
+$Vector struct
+	$_data member
+	$_size member
+	$_capacity member
+end
+
+$Vector.init method ( Vector:this -- )
+	0 this Vector._data store
+	0 this Vector._size store
+	0 this Vector._capacity store
+end
+
+$Vector.free method ( Vector:this -- )
+	this Vector._data fetch free
+	this Vector.init
+end
+
+$Vector.reserve method ( u:size Vector:this -- b )
+	$size set
+	this Vector._capacity fetch size >= if
+		true return
+	end
+	1 $capacity set
+	size 0 > if
+		loop
+			capacity size <=
+		while
+			1 $capacity <<set
+		end
+	end
+	this Vector._capacity fetch size < if
+		this Vector._capacity fetch if
+			capacity cells this Vector._data fetch resize this Vector._data store
+			this Vector._data fetch 0 = if false return end
+		else
+			this Vector._data capacity cells alloc over store fetch 0 = if false return end
+		end
+		capacity this Vector._capacity store
+	end
+	true
+end
+
+$Vector.resize method ( u:size Vector:this -- b )
+	$size set
+	size this Vector.reserve if
+		size this Vector._size store
+		true
+	else false
+	end
+end
+
+$Vector.push_back method ( x:item Vector:this -- b )
+	$item set
+	this dup Vector.size 1 + swap Vector.resize if
+		item this dup Vector.size 1 - swap Vector._data fetch at store
+		true
+	else false
+	end
+end
+
+$Vector.pop_back method ( Vector:this -- b )
+	this Vector.size if
+		this Vector._size --store
+		true
+	else false
+	end
+end

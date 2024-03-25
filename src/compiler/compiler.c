@@ -1723,7 +1723,7 @@ bool sabr_compiler_compile_keyword(sabr_compiler_t* const comp, sabr_bytecode_t*
 					for (size_t i = 1; i < temp_kd_vec->size; i++) {
 						sabr_keyword_data_t* iter_kd = vector_at(sabr_keyword_data_t, temp_kd_vec, i);
 						switch (iter_kd->kwrd) {
-							case SABR_KWRD_RETURN: break;
+							case SABR_KWRD_MEMBER: break;
 							default: goto FAILURE_WRONG;
 						}
 					}
