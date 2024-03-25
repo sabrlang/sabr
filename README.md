@@ -1,4 +1,55 @@
 # Sabr Programming Language
+Sabr is simple stack-oriented programming language.
+
+# Example
+## Hello, world!
+```
+"Hello, world!" puts
+```
+
+## Arithmetic
+```
+2 3 + 5 * puti
+2.5 3.14 f* putf
+```
+
+```
+25 7.850000
+```
+
+## Simple loop
+```
+$draw func
+	$count set
+	$i for count to
+		$j for i ++ to
+			'*' putc
+		end
+		cr
+	end
+end
+
+5 draw
+10 draw
+```
+
+```
+*
+**
+***
+****
+*****
+*
+**
+***
+****
+*****
+******
+*******
+********
+*********
+**********
+```
 
 # How to run
 ## Compile to bytecode
