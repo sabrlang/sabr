@@ -30,12 +30,18 @@ bool sabr_interpreter_del(sabr_interpreter_t* inter) {
 
     rbt_free(sabr_def_data_t, &inter->global_words);
 
-    for (size_t i = 0; i < inter->struct_vector.size; i++)
-        vector_free(sabr_value_t, *vector_at(cctl_ptr(vector(sabr_value_t)), &inter->struct_vector, i));
+    for (size_t i = 0; i < inter->struct_vector.size; i++) {
+		vector(sabr_value_t)* struct_data = *vector_at(cctl_ptr(vector(sabr_value_t)), &inter->struct_vector, i);
+        vector_free(sabr_value_t, struct_data);
+		free(struct_data);
+	}
     vector_free(cctl_ptr(vector(sabr_value_t)), &inter->struct_vector);
 
-    for (size_t i = 0; i < inter->array_vector.size; i++)
-        vector_free(sabr_value_t, *vector_at(cctl_ptr(vector(sabr_value_t)), &inter->array_vector, i));
+    for (size_t i = 0; i < inter->array_vector.size; i++){
+		vector(sabr_value_t)* array_data = *vector_at(cctl_ptr(vector(sabr_value_t)), &inter->array_vector, i);
+        vector_free(sabr_value_t, array_data);
+		free(array_data);
+	}
     vector_free(cctl_ptr(vector(sabr_value_t)), &inter->array_vector);
 
 	sabr_memory_pool_del(&inter->memory_pool);
