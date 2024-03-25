@@ -1018,6 +1018,7 @@ vector(sabr_value_t)* sabr_compiler_parse_string(sabr_compiler_t* const comp, co
 
 	size_t len = strlen(str);
 	ch = sabr_new_string_slice(str, 1, len - 1);
+	char* current_char = ch;
 	if (!ch) {
 		fputs(sabr_errmsg_alloc, stderr);
 		goto FAILURE;
@@ -1028,46 +1029,46 @@ vector(sabr_value_t)* sabr_compiler_parse_string(sabr_compiler_t* const comp, co
 
 	sabr_value_t v;
 
-	while (*ch) {
-		if (((signed char) *ch) > -1) {
+	while (*current_char) {
+		if (((signed char) *current_char) > -1) {
 			char* num_parse_stop = NULL;
 			char num_parse[9] = {0, };
 			num_parse_stop = 0;
 
-			if (*ch == '\\') {
-				ch++;
-				switch (*ch) {
+			if (*current_char == '\\') {
+				current_char++;
+				switch (*current_char) {
 					case 'a': v.u = '\a'; break; case 'b': v.u = '\b'; break;
 					case 'e': v.u = '\e'; break; case 'f': v.u = '\f'; break;
 					case 'n': v.u = '\n'; break; case 'r': v.u = '\r'; break;
 					case 't': v.u = '\t'; break; case 'v': v.u = '\v'; break;
 					case '\\': v.u = '\\'; break; case '\'': v.u = '\''; break; case '\"': v.u = '\"'; break;
 					case '0' ... '7':
-						while ((*ch >= '0') && (*ch <= '7') && (num_parse_count < 3)) {
-							num_parse[num_parse_count] = *ch;
-							ch++;
+						while ((*current_char >= '0') && (*current_char <= '7') && (num_parse_count < 3)) {
+							num_parse[num_parse_count] = *current_char;
+							current_char++;
 							num_parse_count++;
 						}
-						ch--;
+						current_char--;
 						v.u = strtoull(num_parse, &num_parse_stop, 8);
 						break;
 					case 'x':
 						if (!sabr_compiler_parse_string_escape_hex(
-							&ch, num_parse_stop, num_parse, &num_parse_count, &v, 2
+							&current_char, num_parse_stop, num_parse, &num_parse_count, &v, 2
 						)) {
 							fputs(sabr_errmsg_wrong_escape_sequence, stderr); goto FAILURE;
 						}
 						break;
 					case 'u':
 						if (!sabr_compiler_parse_string_escape_hex(
-							&ch, num_parse_stop, num_parse, &num_parse_count, &v, 4
+							&current_char, num_parse_stop, num_parse, &num_parse_count, &v, 4
 						)) {
 							fputs(sabr_errmsg_wrong_escape_sequence, stderr); goto FAILURE;
 						}
 						break;
 					case 'U':
 						if (!sabr_compiler_parse_string_escape_hex(
-							&ch, num_parse_stop, num_parse, &num_parse_count, &v, 8
+							&current_char, num_parse_stop, num_parse, &num_parse_count, &v, 8
 						)) {
 							fputs(sabr_errmsg_wrong_escape_sequence, stderr); goto FAILURE;
 						}
@@ -1075,22 +1076,22 @@ vector(sabr_value_t)* sabr_compiler_parse_string(sabr_compiler_t* const comp, co
 					default: fputs(sabr_errmsg_wrong_escape_sequence, stderr); goto FAILURE;
 				}
 			}
-			else if ((*ch == '\'') || (*ch == '\"')) {
+			else if ((*current_char == '\'') || (*current_char == '\"')) {
 				goto FAILURE;
 			}
 			else {
-				v.u = *ch;
+				v.u = *current_char;
 			}
-			ch++;
+			current_char++;
 		}
 		else {
 			char32_t out;
 			size_t rc;
-			rc = mbrtoc32(&out, ch, end - ch, &(comp->convert_state));
+			rc = mbrtoc32(&out, current_char, end - current_char, &(comp->convert_state));
 			if ((rc > ((size_t) -4)) || (rc == 0)) {
 				goto FAILURE;
 			}
-			ch += rc;
+			current_char += rc;
 			v.u = out;
 		}
 		if (!vector_push_back(sabr_value_t, vec, v)) {
@@ -1099,6 +1100,7 @@ vector(sabr_value_t)* sabr_compiler_parse_string(sabr_compiler_t* const comp, co
 		}
 	}
 
+	free(ch);
 	return vec;
 FAILURE:
 	fputs(sabr_errmsg_parse_str, stderr);

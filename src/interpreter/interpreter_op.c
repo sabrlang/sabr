@@ -980,6 +980,7 @@ const uint32_t sabr_interpreter_op(op_array_end)(sabr_interpreter_t* inter, sabr
 		p[i] = *vector_at(sabr_value_t, current_array, i);
 
 	vector_free(sabr_value_t, current_array);
+	free(current_array);
 	if (!vector_pop_back(cctl_ptr(vector(sabr_value_t)), &inter->array_vector)) return SABR_OPERR_MEMORY;
 
 	v.p = (uint64_t*) p;
