@@ -807,14 +807,27 @@ const uint32_t sabr_interpreter_op(op_trot)(sabr_interpreter_t* inter, sabr_bcop
 }
 
 const uint32_t sabr_interpreter_op(op_alloc)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_value_t a;
+	if (!sabr_interpreter_pop(inter, &a)) return SABR_OPERR_STACK;
+	a.p = (uint64_t*) malloc(sizeof(sabr_value_t) * a.u);
+	if (!sabr_interpreter_push(inter, a)) return SABR_OPERR_STACK;
 	return SABR_OPERR_NONE;
 }
 
 const uint32_t sabr_interpreter_op(op_resize)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_value_t a;
+	sabr_value_t b;
+	if (!sabr_interpreter_pop(inter, &b)) return SABR_OPERR_STACK;
+	if (!sabr_interpreter_pop(inter, &a)) return SABR_OPERR_STACK;
+	b.p = (uint64_t*) realloc(b.p, sizeof(sabr_value_t) * a.u);
+	if (!sabr_interpreter_push(inter, b)) return SABR_OPERR_STACK;
 	return SABR_OPERR_NONE;
 }
 
 const uint32_t sabr_interpreter_op(op_free)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_value_t a;
+	if (!sabr_interpreter_pop(inter, &a)) return SABR_OPERR_STACK;
+	free(a.p);
 	return SABR_OPERR_NONE;
 }
 
