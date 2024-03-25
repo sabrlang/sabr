@@ -95,7 +95,7 @@ Control keywords, built-in operators, literals cannot become identifiers.
 
 * `ref` ( addr id -- ) \
 	Declares a reference to memory cell *addr*.
-	Reference used like variable.
+	References are used like variables.
 
 ### Memory access
 * `fetch` ( addr -- x ) \
