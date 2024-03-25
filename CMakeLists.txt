@@ -67,19 +67,6 @@ file(
 	"${PROJECT_SOURCE_DIR}/include/compiler/*.h"
 )
 
-# add_executable(
-# 	sabre
-# 	${inter_srcs} ${common_srcs}
-# )
-
-# add_executable(
-# 	sabrc
-# 	${comp_srcs} ${common_srcs}
-# )
-
-# target_link_libraries(sabrc m)
-# target_link_libraries(sabre m)
-
 add_executable(
 	sabr
 	${comp_srcs} ${inter_srcs} ${common_srcs}
