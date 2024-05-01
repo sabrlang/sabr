@@ -876,6 +876,8 @@ const uint32_t sabr_interpreter_op(op_resize)(sabr_interpreter_t* inter, sabr_bc
 	if (!sabr_interpreter_pop(inter, &a)) return SABR_OPERR_STACK;
 	b.p = (uint64_t*) realloc(b.p, sizeof(sabr_value_t) * a.u);
 	if (!sabr_interpreter_push(inter, b)) return SABR_OPERR_STACK;
+
+	
 	return SABR_OPERR_NONE;
 }
 
