@@ -1,1 +1,1 @@
-$sin { __bif_mi_math__ 0 call_bif } #macro 
+$sin { 0 0 call_bif } #macro 
