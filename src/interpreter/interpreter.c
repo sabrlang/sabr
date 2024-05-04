@@ -185,6 +185,10 @@ bool sabr_interpreter_push(sabr_interpreter_t* inter, sabr_value_t v) {
 }
 
 uint32_t sabr_interpreter_exec_identifier(sabr_interpreter_t* inter, sabr_value_t identifier, size_t* index) {
+	if (!identifier.u) {
+		if (!sabr_interpreter_pop(inter, &identifier)) return SABR_OPERR_STACK;
+	}
+
 	sabr_def_data_t* def_data = NULL;
 	rbt(sabr_def_data_t)* local_words = NULL;
 	def_data = rbt_find(sabr_def_data_t, &inter->global_words, identifier.u);
