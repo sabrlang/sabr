@@ -1,6 +1,8 @@
 #include "bif.h"
 
-const sabr_bif_func_t* sabr_bif_modules[] = {
+#include "bif_math.h"
+
+sabr_bif_func_t* sabr_bif_modules[] = {
 	sabr_bif_math_functions
 };
-size_t sabr_bif_modules_len = sizeof(sabr_bif_modules) / sizeof(sabr_bif_func_t);
+size_t sabr_bif_modules_len = sizeof(sabr_bif_modules) / sizeof(sabr_bif_func_t*);

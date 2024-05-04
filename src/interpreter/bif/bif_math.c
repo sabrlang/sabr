@@ -24,9 +24,9 @@ const uint32_t sabr_bif_func(math, tan)(sabr_interpreter_t* inter) {
 	return SABR_OPERR_NONE;
 }
 
-const uint32_t (*sabr_bif_math_functions[])(sabr_interpreter_t*) = {
+sabr_bif_func_t sabr_bif_math_functions[] = {
 	sabr_bif_func(math, sin),
 	sabr_bif_func(math, cos),
 	sabr_bif_func(math, tan)
 };
-size_t sabr_bif_math_functions_len = sizeof(sabr_bif_math_functions) / sizeof(void*);
+size_t sabr_bif_math_functions_len = sizeof(sabr_bif_math_functions) / sizeof(sabr_bif_func_t);
