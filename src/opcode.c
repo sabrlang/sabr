@@ -37,6 +37,8 @@ const char* sabr_opcode_names[] = {
 	"OP_ADDR",
 	"OP_REF",
 
+	"OP_CALL_BIF",
+
 	"OP_ADD",
 	"OP_SUB",
 	"OP_MUL",

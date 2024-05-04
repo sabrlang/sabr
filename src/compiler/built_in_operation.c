@@ -7,6 +7,7 @@ const char* sabr_bio_names[] = {
 	"set",
 	"addr",
 	"ref",
+	"call_bif",
 
 	"+",
 	"-",
@@ -104,6 +105,7 @@ const sabr_opcode_t sabr_bio_indices[] = {
 	SABR_OP_SET,
 	SABR_OP_ADDR,
 	SABR_OP_REF,
+	SABR_OP_CALL_BIF,
 
 	SABR_OP_ADD,
 	SABR_OP_SUB,

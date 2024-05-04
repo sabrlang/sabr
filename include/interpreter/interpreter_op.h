@@ -5,27 +5,8 @@
 
 typedef struct sabr_interpreter_struct sabr_interpreter_t;
 
-typedef enum sabr_interpreter_op_errcode_enum {
-	SABR_OPERR_NONE,
-	SABR_OPERR_STACK,
-	SABR_OPERR_SWITCH,
-	SABR_OPERR_FOR,
-	SABR_OPERR_REDEFINE,
-	SABR_OPERR_DEFINE,
-	SABR_OPERR_UNDEFINED,
-	SABR_OPERR_EXEC,
-	SABR_OPERR_STRUCT,
-	SABR_OPERR_INVALID_IDENT,
-	SABR_OPERR_DIV_BY_ZERO,
-	SABR_OPERR_STDIN,
-	SABR_OPERR_STDOUT,
-	SABR_OPERR_UNICODE,
-	SABR_OPERR_MEMORY,
-	SABR_OPERR_WHAT
-} sabr_interpreter_op_errcode_t;
-
-extern size_t interpreter_op_functions_len;
-extern const uint32_t (*interpreter_op_functions[])(sabr_interpreter_t*, sabr_bcop_t, size_t*);
+extern size_t sabr_interpreter_op_functions_len;
+extern const uint32_t (*sabr_interpreter_op_functions[])(sabr_interpreter_t*, sabr_bcop_t, size_t*);
 
 #define sabr_interpreter_op(OP) cctl_join(sabr_interpreter, OP)
 
@@ -56,6 +37,7 @@ const uint32_t sabr_interpreter_op(op_set)(sabr_interpreter_t* inter, sabr_bcop_
 const uint32_t sabr_interpreter_op(op_exec)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index);
 const uint32_t sabr_interpreter_op(op_addr)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index);
 const uint32_t sabr_interpreter_op(op_ref)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index);
+const uint32_t sabr_interpreter_op(op_call_bif)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index);
 const uint32_t sabr_interpreter_op(op_add)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index);
 const uint32_t sabr_interpreter_op(op_sub)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index);
 const uint32_t sabr_interpreter_op(op_mul)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index);

@@ -42,6 +42,8 @@ typedef enum sabr_opcode_enum {
 	SABR_OP_ADDR,
 	SABR_OP_REF,
 
+	SABR_OP_CALL_BIF,
+
 	SABR_OP_ADD,
 	SABR_OP_SUB,
 	SABR_OP_MUL,

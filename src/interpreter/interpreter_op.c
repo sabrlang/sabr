@@ -1,4 +1,5 @@
 #include "interpreter_op.h"
+#include "bif.h"
 
 const uint32_t sabr_interpreter_op(op_exit)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
 	*index = UINT64_MAX;
@@ -365,6 +366,15 @@ const uint32_t sabr_interpreter_op(op_ref)(sabr_interpreter_t* inter, sabr_bcop_
 	if (!sabr_interpreter_pop(inter, &addr)) return SABR_OPERR_STACK;
 
 	return sabr_interpreter_ref_variable(inter, identifier, (sabr_value_t*) addr.p);
+}
+
+const uint32_t sabr_interpreter_op(op_call_bif)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_value_t module_index, func_index;
+	
+	if (!sabr_interpreter_pop(inter, &func_index)) return SABR_OPERR_STACK;
+	if (!sabr_interpreter_pop(inter, &module_index)) return SABR_OPERR_STACK;
+	
+	return sabr_bif_modules[module_index.u][func_index.u](inter);
 }
 
 const uint32_t sabr_interpreter_op(op_add)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
@@ -1115,8 +1125,7 @@ const uint32_t sabr_interpreter_op(op_show)(sabr_interpreter_t* inter, sabr_bcop
 	return SABR_OPERR_NONE;
 }
 
-
-const uint32_t (*interpreter_op_functions[])(sabr_interpreter_t*, sabr_bcop_t, size_t*) = {
+const uint32_t (*sabr_interpreter_op_functions[])(sabr_interpreter_t*, sabr_bcop_t, size_t*) = {
 	sabr_interpreter_op(op_exit),
 	sabr_interpreter_op(op_value),
 	sabr_interpreter_op(op_if),
@@ -1144,6 +1153,7 @@ const uint32_t (*interpreter_op_functions[])(sabr_interpreter_t*, sabr_bcop_t, s
 	sabr_interpreter_op(op_exec),
 	sabr_interpreter_op(op_addr),
 	sabr_interpreter_op(op_ref),
+	sabr_interpreter_op(op_call_bif),
 	sabr_interpreter_op(op_add),
 	sabr_interpreter_op(op_sub),
 	sabr_interpreter_op(op_mul),
@@ -1222,4 +1232,4 @@ const uint32_t (*interpreter_op_functions[])(sabr_interpreter_t*, sabr_bcop_t, s
 	sabr_interpreter_op(op_show)
 };
 
-size_t interpreter_op_functions_len = sizeof(interpreter_op_functions) / sizeof(char*);
+size_t sabr_interpreter_op_functions_len = sizeof(sabr_interpreter_op_functions) / sizeof(void*);

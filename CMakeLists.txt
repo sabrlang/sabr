@@ -40,9 +40,11 @@ include_directories(
 	${PROJECT_SOURCE_DIR}/include/cctl
 	${PROJECT_SOURCE_DIR}/include/compiler
 	${PROJECT_SOURCE_DIR}/include/interpreter
+	${PROJECT_SOURCE_DIR}/include/interpreter/bif
 	${PROJECT_SOURCE_DIR}/src
 	${PROJECT_SOURCE_DIR}/src/compiler
 	${PROJECT_SOURCE_DIR}/src/interpreter
+	${PROJECT_SOURCE_DIR}/src/interpreter/bif
 )
 
 file(
@@ -57,7 +59,9 @@ file(
 	GLOB
 	inter_srcs
 	"${PROJECT_SOURCE_DIR}/src/interpreter/*.c"
+	"${PROJECT_SOURCE_DIR}/src/interpreter/bif/*.c"
 	"${PROJECT_SOURCE_DIR}/include/interpreter/*.h"
+	"${PROJECT_SOURCE_DIR}/include/interpreter/bif/*.h"
 )
 
 file(

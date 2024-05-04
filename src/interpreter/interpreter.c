@@ -126,7 +126,7 @@ bool sabr_interpreter_run_bytecode(sabr_interpreter_t* inter, sabr_bytecode_t* b
 	for (size_t index = 0; index < bc->bcop_vec.size; index++) {
 		sabr_bcop_t bcop = *vector_at(sabr_bcop_t, &bc->bcop_vec, index);
 		if (bcop.oc == SABR_OP_NONE) continue;
-		uint32_t result = interpreter_op_functions[bcop.oc - 1](inter, bcop, &index);
+		uint32_t result = sabr_interpreter_op_functions[bcop.oc - 1](inter, bcop, &index);
 		if (result) {
 			fprintf(stderr, "result: %u, index: %zu\n", result, index);
 			return false;

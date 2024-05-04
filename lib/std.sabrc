@@ -72,3 +72,6 @@ $alloc~? { alloc dup not if } #macro ( u -- addr )
 $method {
 	func $this set
 } #macro ( id -- | func ... )
+
+
+$__bif_mi_math__ 0 #macro

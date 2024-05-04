@@ -57,6 +57,25 @@ struct sabr_interpreter_struct {
 	vector(cctl_ptr(vector(sabr_value_t))) array_vector;
 };
 
+typedef enum sabr_interpreter_op_errcode_enum {
+	SABR_OPERR_NONE,
+	SABR_OPERR_STACK,
+	SABR_OPERR_SWITCH,
+	SABR_OPERR_FOR,
+	SABR_OPERR_REDEFINE,
+	SABR_OPERR_DEFINE,
+	SABR_OPERR_UNDEFINED,
+	SABR_OPERR_EXEC,
+	SABR_OPERR_STRUCT,
+	SABR_OPERR_INVALID_IDENT,
+	SABR_OPERR_DIV_BY_ZERO,
+	SABR_OPERR_STDIN,
+	SABR_OPERR_STDOUT,
+	SABR_OPERR_UNICODE,
+	SABR_OPERR_MEMORY,
+	SABR_OPERR_WHAT
+} sabr_interpreter_op_errcode_t;
+
 bool sabr_interpreter_init(sabr_interpreter_t* inter);
 bool sabr_interpreter_del(sabr_interpreter_t* inter);
 bool sabr_interpreter_memory_pool_init(sabr_interpreter_t* inter, size_t size, size_t global_size);
