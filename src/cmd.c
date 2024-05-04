@@ -129,7 +129,6 @@ void sabr_cmd_get_opt_out(sabr_cmd_t* cmd) {
 }
 
 void sabr_cmd_get_opt_memory(sabr_cmd_t* cmd) {
-	sscanf_s(optarg, "%zu", &cmd->memory_pool_size);
 	cmd->flags.memory = true;
 }
 
