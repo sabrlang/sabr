@@ -1,1 +1,3 @@
-$sin { 0 0 call_bif } #macro 
+$sin { 0 0 call_bif } #macro
+$cos { 0 1 call_bif } #macro
+$tan { 0 2 call_bif } #macro
