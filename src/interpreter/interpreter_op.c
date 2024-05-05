@@ -1075,9 +1075,11 @@ const uint32_t sabr_interpreter_op(op_gets)(sabr_interpreter_t* inter, sabr_bcop
 }
 
 const uint32_t sabr_interpreter_op(op_putc)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
-	sabr_value_t v;
-	if (!sabr_interpreter_pop(inter, &v)) return SABR_OPERR_STACK;
-	if (!sabr_interpreter_putc(inter, v)) return SABR_OPERR_UNICODE;
+	sabr_value_t character;
+	sabr_value_t file;
+	file.p = (uint64_t*) stdout;
+	if (!sabr_interpreter_pop(inter, &character)) return SABR_OPERR_STACK;
+	if (!sabr_interpreter_fputc(inter, character, file)) return SABR_OPERR_UNICODE;
 	return SABR_OPERR_NONE;
 }
 
@@ -1103,15 +1105,11 @@ const uint32_t sabr_interpreter_op(op_putf)(sabr_interpreter_t* inter, sabr_bcop
 }
 
 const uint32_t sabr_interpreter_op(op_puts)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
-	sabr_value_t a;
-	sabr_value_t b;
-	if (!sabr_interpreter_pop(inter, &a)) return SABR_OPERR_STACK;
-
-	while (*a.p) {
-		b.u = *(a.p);
-		if (!sabr_interpreter_putc(inter, b)) return SABR_OPERR_UNICODE;
-		a.p++;
-	}
+	sabr_value_t addr;
+	sabr_value_t file;
+	file.p = (uint64_t*) stdout;
+	if (!sabr_interpreter_pop(inter, &addr)) return SABR_OPERR_STACK;
+	if (!sabr_interpreter_fputs(inter, addr, file)) return SABR_OPERR_UNICODE;
 	return SABR_OPERR_NONE;
 }
 
