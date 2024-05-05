@@ -1,6 +1,8 @@
 #ifndef __INTERPRETER_H__
 #define __INTERPRETER_H__
 
+#define _USE_MATH_DEFINES
+
 #include <inttypes.h>
 #include <locale.h>
 #include <math.h>
