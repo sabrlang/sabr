@@ -1492,7 +1492,7 @@ bool sabr_compiler_compile_keyword(sabr_compiler_t* const comp, sabr_bytecode_t*
 					check_bcop->operand = pos;
 
 					if (continue_vec.size > 0) {
-						for (size_t i = 1; i < continue_vec.size; i++) {
+						for (size_t i = 0; i < continue_vec.size; i++) {
 							sabr_keyword_data_t* iter_kd = vector_at(sabr_keyword_data_t, &continue_vec, i);
 							temp_bcop = sabr_compiler_get_bcop(bc_data, iter_kd->index);
 							if (!temp_bcop) goto FREE_ALL;
