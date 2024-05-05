@@ -27,10 +27,10 @@ const char* sabr_opcode_names[] = {
 	"OP_LOCAL_END",
 	"OP_DEFINE",
 
-	"OP_STRUCT",
+	"OP_DATAGROUP",
 	"OP_MEMBER",
-	"OP_STRUCT_END",
-	"OP_STRUCT_EXEC",
+	"OP_DATAGROUP_END",
+	"OP_DATAGROUP_EXEC",
 	
 	"OP_SET",
 	"OP_EXEC",
@@ -143,6 +143,7 @@ bool sabr_opcode_has_operand(sabr_opcode_t oc) {
 		case SABR_OP_FOR_NEXT:
 		case SABR_OP_LAMBDA:
 		case SABR_OP_EXEC:
+		case SABR_OP_DATAGROUP:
 			return true;
 		default:
 			return false;

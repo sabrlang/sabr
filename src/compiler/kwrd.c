@@ -22,6 +22,7 @@ const char* sabr_keyword_names[] = {
 	"defer",
 	"return",
 	"struct",
+	"enum",
 	"member",
 	"[",
 	",",

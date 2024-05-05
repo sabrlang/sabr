@@ -215,11 +215,12 @@ uint32_t sabr_interpreter_exec_identifier(sabr_interpreter_t* inter, sabr_value_
 			v.u = p->u;
 			if (!sabr_interpreter_push(inter, v)) return SABR_OPERR_STACK;
 		} break;
+		case SABR_DETY_ENUM:
 		case SABR_DETY_STRUCT: {
 			sabr_value_t v;
 			vector(sabr_value_t)* struct_data_vector = *vector_at(cctl_ptr(vector(sabr_value_t)), &inter->struct_vector, def_data->data);
 			if (!struct_data_vector) return SABR_OPERR_WHAT;
-			v.u = struct_data_vector->size * sizeof(sabr_value_t);
+			v.u = struct_data_vector->size * (def_data->dety == SABR_DETY_STRUCT ? sizeof(sabr_value_t) : 1);
 			if (!sabr_interpreter_push(inter, v)) return SABR_OPERR_STACK;
 		} break;
 	}

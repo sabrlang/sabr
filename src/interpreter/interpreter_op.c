@@ -263,8 +263,9 @@ const uint32_t sabr_interpreter_op(op_define)(sabr_interpreter_t* inter, sabr_bc
 	return SABR_OPERR_NONE;
 }
 
-const uint32_t sabr_interpreter_op(op_struct)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
-	sabr_value_t identifier;
+const uint32_t sabr_interpreter_op(op_datagroup)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+	sabr_value_t identifier, defdata_type;
+	defdata_type = bcop.operand;
 	if (!sabr_interpreter_pop(inter, &identifier)) return SABR_OPERR_STACK;
 
 	sabr_def_data_t* def_data;
@@ -273,7 +274,7 @@ const uint32_t sabr_interpreter_op(op_struct)(sabr_interpreter_t* inter, sabr_bc
 	if (def_data) return SABR_OPERR_REDEFINE;
 
 	new_def_data.data = inter->struct_vector.size;
-	new_def_data.dety = SABR_DETY_STRUCT;
+	new_def_data.dety = defdata_type.u ? SABR_DETY_ENUM : SABR_DETY_STRUCT;
 	if (!rbt_insert(sabr_def_data_t, &inter->global_words, identifier.u, new_def_data)) return SABR_OPERR_WHAT;
 
 	vector(sabr_value_t)* struct_data_vector = (vector(sabr_value_t)*) malloc(sizeof(vector(sabr_value_t)));
@@ -299,14 +300,13 @@ const uint32_t sabr_interpreter_op(op_member)(sabr_interpreter_t* inter, sabr_bc
 	return SABR_OPERR_NONE;
 }
 
-const uint32_t sabr_interpreter_op(op_struct_end)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+const uint32_t sabr_interpreter_op(op_datagroup_end)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
 	return SABR_OPERR_NONE;
 }
 
-const uint32_t sabr_interpreter_op(op_struct_exec)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
+const uint32_t sabr_interpreter_op(op_datagroup_exec)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index) {
 	sabr_value_t identifier_struct;
 	sabr_value_t identifier_member;
-	sabr_value_t addr;
 	sabr_def_data_t* def_data;
 
 	if (!sabr_interpreter_pop(inter, &identifier_member)) return SABR_OPERR_STACK;
@@ -314,23 +314,42 @@ const uint32_t sabr_interpreter_op(op_struct_exec)(sabr_interpreter_t* inter, sa
 
 	def_data = rbt_find(sabr_def_data_t, &inter->global_words, identifier_struct.u);
 	if (!def_data) return SABR_OPERR_WHAT;
-	if (def_data->dety != SABR_DETY_STRUCT) return SABR_OPERR_WHAT;
+	if (def_data->dety == SABR_DETY_STRUCT) {
+		sabr_value_t addr;
+		vector(sabr_value_t)* struct_data_vector = *vector_at(cctl_ptr(vector(sabr_value_t)), &inter->struct_vector, def_data->data);
+		if (!struct_data_vector) return SABR_OPERR_WHAT;
 
-	vector(sabr_value_t)* struct_data_vector = *vector_at(cctl_ptr(vector(sabr_value_t)), &inter->struct_vector, def_data->data);
-	if (!struct_data_vector) return SABR_OPERR_WHAT;
-
-	uint64_t i;
-	bool check = true;
-	for (i = 0; i < struct_data_vector->size; i++) {
-		if (identifier_member.u == vector_at(sabr_value_t, struct_data_vector, i)->u) {
-			check = false;
-			break;
+		uint64_t i;
+		bool check = true;
+		for (i = 0; i < struct_data_vector->size; i++) {
+			if (identifier_member.u == vector_at(sabr_value_t, struct_data_vector, i)->u) {
+				check = false;
+				break;
+			}
 		}
+		if (check) return SABR_OPERR_WHAT;
+		if (!sabr_interpreter_pop(inter, &addr)) return SABR_OPERR_STACK;
+		addr.u += (i * 8);
+		if (!sabr_interpreter_push(inter, addr)) return SABR_OPERR_STACK;
 	}
-	if (check) return SABR_OPERR_WHAT;
-	if (!sabr_interpreter_pop(inter, &addr)) return SABR_OPERR_STACK;
-	addr.u += (i * 8);
-	if (!sabr_interpreter_push(inter, addr)) return SABR_OPERR_STACK;
+	else if (def_data->dety == SABR_DETY_ENUM) {
+		sabr_value_t index;
+		vector(sabr_value_t)* struct_data_vector = *vector_at(cctl_ptr(vector(sabr_value_t)), &inter->struct_vector, def_data->data);
+
+		uint64_t i;
+		bool check = true;
+		if (!struct_data_vector) return SABR_OPERR_WHAT;
+			for (i = 0; i < struct_data_vector->size; i++) {
+			if (identifier_member.u == vector_at(sabr_value_t, struct_data_vector, i)->u) {
+				check = false;
+				break;
+			}
+		}
+		if (check) return SABR_OPERR_WHAT;
+		index.u = i;
+		if (!sabr_interpreter_push(inter, index)) return SABR_OPERR_STACK;
+	}
+	else return SABR_OPERR_WHAT;
 	return SABR_OPERR_NONE;
 }
 
@@ -1143,10 +1162,10 @@ const uint32_t (*sabr_interpreter_op_functions[])(sabr_interpreter_t*, sabr_bcop
 	sabr_interpreter_op(op_local),
 	sabr_interpreter_op(op_local_end),
 	sabr_interpreter_op(op_define),
-	sabr_interpreter_op(op_struct),
+	sabr_interpreter_op(op_datagroup),
 	sabr_interpreter_op(op_member),
-	sabr_interpreter_op(op_struct_end),
-	sabr_interpreter_op(op_struct_exec),
+	sabr_interpreter_op(op_datagroup_end),
+	sabr_interpreter_op(op_datagroup_exec),
 	sabr_interpreter_op(op_set),
 	sabr_interpreter_op(op_exec),
 	sabr_interpreter_op(op_addr),

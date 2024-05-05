@@ -9,9 +9,9 @@ typedef union sabr_value_union {
 	double f;
 	uint64_t* p;
 	uint8_t bytes[8];
-#if defined(__GNUC__) || defined(__INTEL_COMPILER)
-	_Decimal64 d;
-#endif
+// #if defined(__GNUC__) || defined(__INTEL_COMPILER)
+// 	_Decimal64 d;
+// #endif
 } sabr_value_t;
 
 sabr_value_t sabr_value_zero();

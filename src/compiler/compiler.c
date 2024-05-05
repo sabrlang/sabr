@@ -876,7 +876,7 @@ sabr_bytecode_t* sabr_compiler_compile_tokens(sabr_compiler_t* const comp, vecto
 					if (!sabr_compiler_parse_struct_member(comp, current_token.data, &value_a, &value_b)) goto PRINT_ERR_POS;
 					if (!sabr_bytecode_write_bcop_with_value(bc_data, SABR_OP_VALUE, value_a)) goto PRINT_ERR_POS;
 					if (!sabr_bytecode_write_bcop_with_value(bc_data, SABR_OP_VALUE, value_b)) goto PRINT_ERR_POS;
-					if (!sabr_bytecode_write_bcop(bc_data, SABR_OP_STRUCT_EXEC)) goto PRINT_ERR_POS;
+					if (!sabr_bytecode_write_bcop(bc_data, SABR_OP_DATAGROUP_EXEC)) goto PRINT_ERR_POS;
 			}
 		}
 	}
@@ -1316,14 +1316,17 @@ bool sabr_compiler_compile_keyword(sabr_compiler_t* const comp, sabr_bytecode_t*
 			if (!sabr_bytecode_write_bcop_with_null(bc_data, SABR_OP_JUMP)) goto FREE_ALL;
 			break;
 		case SABR_KWRD_STRUCT:
+		case SABR_KWRD_ENUM: {
+			sabr_value_t dg_type;
+			dg_type.u = current_kd.kwrd == SABR_KWRD_STRUCT ? 0 : 1;
 			temp_kd_vec = (vector(sabr_keyword_data_t)*) malloc(sizeof(vector(sabr_keyword_data_t)));
 			if (!temp_kd_vec) goto FAILURE_ALLOC;
 			vector_init(sabr_keyword_data_t, temp_kd_vec);
 			if (!vector_push_back(sabr_keyword_data_t, temp_kd_vec, current_kd)) goto FAILURE_ALLOC;
 			if (!vector_push_back(cctl_ptr(vector(sabr_keyword_data_t)), &comp->keyword_data_stack, temp_kd_vec))
 				goto FAILURE_ALLOC;
-			if (!sabr_bytecode_write_bcop(bc_data, SABR_OP_STRUCT)) goto FREE_ALL;
-			break;
+			if (!sabr_bytecode_write_bcop_with_value(bc_data, SABR_OP_DATAGROUP, dg_type)) goto FREE_ALL;
+		} break;
 		case SABR_KWRD_MEMBER:
 			if (!comp->keyword_data_stack.size) goto FAILURE_WRONG;
 			temp_kd_vec = *vector_back(cctl_ptr(vector(sabr_keyword_data_t)), &comp->keyword_data_stack);
@@ -1721,6 +1724,7 @@ bool sabr_compiler_compile_keyword(sabr_compiler_t* const comp, sabr_bytecode_t*
 					free_func_vecs();
 					#undef free_func_vecs
 				} break;
+				case SABR_KWRD_ENUM:
 				case SABR_KWRD_STRUCT:
 					for (size_t i = 1; i < temp_kd_vec->size; i++) {
 						sabr_keyword_data_t* iter_kd = vector_at(sabr_keyword_data_t, temp_kd_vec, i);
@@ -1729,7 +1733,7 @@ bool sabr_compiler_compile_keyword(sabr_compiler_t* const comp, sabr_bytecode_t*
 							default: goto FAILURE_WRONG;
 						}
 					}
-					if (!sabr_bytecode_write_bcop(bc_data, SABR_OP_STRUCT_END)) goto FREE_ALL;
+					if (!sabr_bytecode_write_bcop(bc_data, SABR_OP_DATAGROUP_END)) goto FREE_ALL;
 					break;
 				default: goto FAILURE_WRONG;
 			}

@@ -36,7 +36,8 @@ enum sabr_def_type_enum {
     SABR_DETY_NONE,
     SABR_DETY_CALLABLE,
     SABR_DETY_VARIABLE,
-    SABR_DETY_STRUCT
+    SABR_DETY_STRUCT,
+    SABR_DETY_ENUM
 };
 
 typedef struct def_data_struct sabr_def_data_t;

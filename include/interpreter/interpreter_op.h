@@ -29,10 +29,10 @@ const uint32_t sabr_interpreter_op(op_return)(sabr_interpreter_t* inter, sabr_bc
 const uint32_t sabr_interpreter_op(op_local)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index);
 const uint32_t sabr_interpreter_op(op_local_end)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index);
 const uint32_t sabr_interpreter_op(op_define)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index);
-const uint32_t sabr_interpreter_op(op_struct)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index);
+const uint32_t sabr_interpreter_op(op_datagroup)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index);
 const uint32_t sabr_interpreter_op(op_member)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index);
-const uint32_t sabr_interpreter_op(op_struct_end)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index);
-const uint32_t sabr_interpreter_op(op_struct_exec)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index);
+const uint32_t sabr_interpreter_op(op_datagroup_end)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index);
+const uint32_t sabr_interpreter_op(op_datagroup_exec)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index);
 const uint32_t sabr_interpreter_op(op_set)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index);
 const uint32_t sabr_interpreter_op(op_exec)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index);
 const uint32_t sabr_interpreter_op(op_addr)(sabr_interpreter_t* inter, sabr_bcop_t bcop, size_t* index);
