@@ -1,5 +1,7 @@
-$sin { 0 0 call_bif } #macro
-$cos { 0 1 call_bif } #macro
-$tan { 0 2 call_bif } #macro
+$bif_mi_math 0 #macro
+
+$sin { bif_mi_math 0 call_bif } #macro
+$cos { bif_mi_math 1 call_bif } #macro
+$tan { bif_mi_math 2 call_bif } #macro
 
 $PI { 3.14159265358979323846 } #macro
