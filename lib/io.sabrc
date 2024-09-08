@@ -1,1 +1,7 @@
 $bif_mi_io 1 #macro
+
+$stdout { bif_mi_io 0 call_bif } #macro
+$printf { stdout bif_mi_io 5 call_bif } #macro
+$gotoxy { stdout bif_mi_io 6 call_bif } #macro
+$cls { stdout bif_mi_io 7 call_bif } #macro
+$toggle_cursor { stdout bif_mi_io 8 call_bif } #macro

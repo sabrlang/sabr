@@ -7,6 +7,21 @@ const uint32_t sabr_bif_func(io, std_out)(sabr_interpreter_t* inter) {
 	return SABR_OPERR_NONE;
 }
 
+const uint32_t sabr_bif_func(io, std_err)(sabr_interpreter_t* inter) {
+	sabr_value_t file;
+	file.p = (uint64_t*) stderr;
+	if (!sabr_interpreter_push(inter, file)) return SABR_OPERR_STACK;
+	return SABR_OPERR_NONE;
+}
+
+const uint32_t sabr_bif_func(io, std_in)(sabr_interpreter_t* inter) {
+	sabr_value_t file;
+	file.p = (uint64_t*) stderr;
+	if (!sabr_interpreter_push(inter, file)) return SABR_OPERR_STACK;
+	return SABR_OPERR_NONE;
+}
+
+
 const uint32_t sabr_bif_func(io, File__putc)(sabr_interpreter_t* inter) {
 	sabr_value_t file, character;
 	if (!sabr_interpreter_pop(inter, &file)) return SABR_OPERR_STACK;
@@ -20,6 +35,121 @@ const uint32_t sabr_bif_func(io, File__puts)(sabr_interpreter_t* inter) {
 	if (!sabr_interpreter_pop(inter, &file)) return SABR_OPERR_STACK;
 	if (!sabr_interpreter_pop(inter, &addr)) return SABR_OPERR_STACK;
 	if (!sabr_interpreter_fputs(inter, addr, file)) return SABR_OPERR_UNICODE;
+	return SABR_OPERR_NONE;
+}
+
+const uint32_t sabr_bif_func(io, File__printf)(sabr_interpreter_t* inter) {
+	sabr_value_t file, addr;
+	if (!sabr_interpreter_pop(inter, &file)) return SABR_OPERR_STACK;
+	if (!sabr_interpreter_pop(inter, &addr)) return SABR_OPERR_STACK;
+	sabr_value_t value;
+	sabr_value_t character;
+
+	while (*addr.p) {
+		character.u = *addr.p;
+		if (character.u == '%') {
+			char format_buffer[256] = "%";
+			size_t format_buffer_index = 1;
+
+			addr.p++;
+			character.u = *addr.p;
+			bool is_flag_field = true;
+			while (is_flag_field) {
+				switch (character.u) {
+					case '-': case '+': case ' ': case '0': case '#':
+						format_buffer[format_buffer_index++] = (char) character.u;
+						addr.p++;
+						character.u = *addr.p;
+						break;
+					default: is_flag_field = false;
+				}
+			}
+
+			bool is_width_field = true;
+			while (is_width_field) {
+				switch (character.u) {
+					case '0' ... '9':
+						format_buffer[format_buffer_index++] = (char) character.u;
+						addr.p++;
+						character.u = *addr.p;
+						break;
+					default: is_width_field = false;
+				}
+			}
+
+			bool is_precision_field = character.u == '.';
+			if (is_precision_field) {
+				format_buffer[format_buffer_index++] = (char) character.u;
+				addr.p++;
+				character.u = *addr.p;
+			}
+			while (is_precision_field) {
+				switch (character.u) {
+					case '0' ... '9':
+						format_buffer[format_buffer_index++] = (char) character.u;
+						addr.p++;
+						character.u = *addr.p;
+						break;
+					default: is_precision_field = false;
+				}
+			}
+
+			int length_field_count = 2;
+			while (length_field_count > 0) {
+				switch (character.u) {
+					case 'h': case 'x': case 'l': case 'L': case 'z': case 'j': case 't':
+						format_buffer[format_buffer_index++] = (char) character.u;
+						addr.p++;
+						character.u = *addr.p;
+						length_field_count--;
+						break;
+					default: length_field_count = 0;
+				}
+			}
+
+			switch (character.u) {
+				case '%': case 'd': case 'i': case 'u':
+				case 'f': case 'F': case 'e': case 'E':
+				case 'g': case 'G': case 'x': case 'X':
+				case 'o': case 'c': case 'p':
+				case 'a': case 'A': case 'n':
+					format_buffer[format_buffer_index++] = (char) character.u;
+					if (!sabr_interpreter_pop(inter, &value)) return SABR_OPERR_STACK;
+					printf(format_buffer, value.u);
+					break;
+				case 's': {
+					vector(char) string_buffer;
+					vector_init(char, &string_buffer);
+
+					format_buffer[format_buffer_index++] = (char) character.u;
+					if (!sabr_interpreter_pop(inter, &value)) return SABR_OPERR_STACK;
+
+					while (*value.p) {
+						character.u = *value.p;
+						if (character.u < 127) if (!vector_push_back(char, &string_buffer, character.u)) return SABR_OPERR_UNICODE;
+						else {
+							char out[8];
+							size_t rc = c32rtomb(out, (char32_t) character.u, &(inter->convert_state));
+							if (rc == -1) return SABR_OPERR_UNICODE;
+							for (size_t i = 0; i < rc; i++) if (!vector_push_back(char, &string_buffer, out[i])) return SABR_OPERR_UNICODE;
+						}
+						value.p++;
+					}
+					if (!vector_push_back(char, &string_buffer, 0)) return SABR_OPERR_UNICODE;
+
+					printf(format_buffer, string_buffer.p_data);
+
+					vector_free(char, &string_buffer);
+				} break;
+				default:
+			}
+		}
+		else {
+			if (!sabr_interpreter_fputc(inter, character, file)) return SABR_OPERR_UNICODE;
+		}
+		addr.p++;
+	}
+
 	return SABR_OPERR_NONE;
 }
 
@@ -79,8 +209,11 @@ const uint32_t sabr_bif_func(io, File__toggle_cursor)(sabr_interpreter_t* inter)
 
 sabr_bif_func_t sabr_bif_io_functions[] = {
 	sabr_bif_func(io, std_out),
+	sabr_bif_func(io, std_err),
+	sabr_bif_func(io, std_in),
 	sabr_bif_func(io, File__putc),
 	sabr_bif_func(io, File__puts),
+	sabr_bif_func(io, File__printf),
 	sabr_bif_func(io, File__set_cursor_pos),
 	sabr_bif_func(io, File__clear_screen),
 	sabr_bif_func(io, File__toggle_cursor)
