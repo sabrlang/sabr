@@ -2,3 +2,4 @@
 
 vector_imp_c(sabr_value_t);
 vector_imp_c(sabr_bcop_t);
+vector_imp_c(char);

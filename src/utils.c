@@ -102,3 +102,23 @@
 		if (with_ext) strcat(dest, ".sabrc");
 	}
 #endif
+
+bool sabr_convert_vstr_to_cvec(sabr_value_t src, vector(char)* dest, mbstate_t* convert_state) {
+	sabr_value_t character;
+
+	while (*src.p) {
+		character.u = *src.p;
+		if (character.u < 127) {
+			if (!vector_push_back(char, dest, (char) character.u)) return false;
+		}
+		else {
+			char out[8];
+			size_t rc = c32rtomb(out, (char32_t) character.u, convert_state);
+			if (rc == -1) return false;
+			for (size_t i = 0; i < rc; i++) if (!vector_push_back(char, dest, out[i])) return false;
+		}
+		src.p++;
+	}
+	if (!vector_push_back(char, dest, 0)) return false;
+	return true;
+}

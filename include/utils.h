@@ -16,6 +16,9 @@
 	#endif
 #endif
 
+#include "value.h"
+#include "cctl_define.h"
+
 #if defined (_WIN32)
     bool sabr_convert_string_mbr2c16(const char* src, wchar_t* dest, mbstate_t* convert_state);
     bool sabr_get_full_path(const char* src_mbr, char* dest_mbr, wchar_t* dest_utf16, mbstate_t* convert_state);
@@ -29,5 +32,6 @@
     void sabr_get_local_file_path(char* dest, const char* current_filename, const char* filename, bool with_ext);
 #endif
 
+bool sabr_convert_vstr_to_cvec(sabr_value_t src, vector(char)* dest, mbstate_t* convert_state);
 
 #endif

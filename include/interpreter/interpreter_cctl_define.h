@@ -23,8 +23,6 @@ vector_fd(sabr_value_t);
 cctl_ptr_def(vector(sabr_value_t));
 vector_fd(cctl_ptr(vector(sabr_value_t)));
 
-vector_fd(char);
-
 rbt_imp_h(sabr_def_data_t);
 deque_imp_h(cctl_ptr(rbt(sabr_def_data_t)));
 deque_imp_h(sabr_value_t);
@@ -34,7 +32,5 @@ deque_imp_h(sabr_cs_data_t);
 deque_imp_h(sabr_local_data_t);
 
 vector_imp_h(cctl_ptr(vector(sabr_value_t)));
-
-vector_imp_h(char);
 
 #endif

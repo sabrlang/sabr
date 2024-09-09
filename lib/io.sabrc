@@ -1,7 +1,21 @@
 $bif_mi_io 1 #macro
 
 $stdout { bif_mi_io 0 call_bif } #macro
-$printf { stdout bif_mi_io 5 call_bif } #macro
-$gotoxy { stdout bif_mi_io 6 call_bif } #macro
-$cls { stdout bif_mi_io 7 call_bif } #macro
-$toggle_cursor { stdout bif_mi_io 8 call_bif } #macro
+$stderr { bif_mi_io 1 call_bif } #macro
+$stdin { bif_mi_io 2 call_bif } #macro
+
+$File.putc { bif_mi_io 3 call_bif } #macro
+$File.puts { bif_mi_io 4 call_bif } #macro
+
+$File.printf { bif_mi_io 5 call_bif } #macro
+$open { bif_mi_io 6 call_bif } #macro
+$File.close { bif_mi_io 7 call_bif } #macro
+
+$File.gotoxy { bif_mi_io 8 call_bif } #macro
+$File.cls { bif_mi_io 9 call_bif } #macro
+$File.toggle_cursor { bif_mi_io 10 call_bif } #macro
+
+$printf { stdout File.printf } #macro
+$gotoxy { stdout File.gotoxy } #macro
+$cls { stdout File.cls } #macro
+$toggle_cursor { stdout File.toggle_cursor } #macro

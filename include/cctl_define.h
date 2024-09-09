@@ -12,4 +12,7 @@ vector_imp_h(sabr_value_t);
 vector_fd(sabr_bcop_t);
 vector_imp_h(sabr_bcop_t);
 
+vector_fd(char);
+vector_imp_h(char);
+
 #endif

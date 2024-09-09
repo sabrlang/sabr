@@ -124,20 +124,20 @@ const uint32_t sabr_bif_func(io, File__printf)(sabr_interpreter_t* inter) {
 					format_buffer[format_buffer_index++] = (char) character.u;
 					if (!sabr_interpreter_pop(inter, &value)) return SABR_OPERR_STACK;
 
-					while (*value.p) {
-						character.u = *value.p;
-						if (character.u < 127) {
-							if (!vector_push_back(char, &string_buffer, character.u)) return SABR_OPERR_UNICODE;
-						}
-						else {
-							char out[8];
-							size_t rc = c32rtomb(out, (char32_t) character.u, &(inter->convert_state));
-							if (rc == -1) return SABR_OPERR_UNICODE;
-							for (size_t i = 0; i < rc; i++) if (!vector_push_back(char, &string_buffer, out[i])) return SABR_OPERR_UNICODE;
-						}
-						value.p++;
-					}
-					if (!vector_push_back(char, &string_buffer, 0)) return SABR_OPERR_UNICODE;
+					if (!sabr_convert_vstr_to_cvec(value, &string_buffer, &inter->convert_state)) return SABR_OPERR_UNICODE;
+					// while (*value.p) {
+					// 	character.u = *value.p;
+					// 	if (character.u < 127) {
+					// 		if (!vector_push_back(char, &string_buffer, character.u)) return SABR_OPERR_UNICODE;
+					// 	}
+					// 	else {
+					// 		char out[8];
+					// 		size_t rc = c32rtomb(out, (char32_t) character.u, &(inter->convert_state));
+					// 		if (rc == -1) return SABR_OPERR_UNICODE;
+					// 		for (size_t i = 0; i < rc; i++) if (!vector_push_back(char, &string_buffer, out[i])) return SABR_OPERR_UNICODE;
+					// 	}
+					// 	value.p++;
+					// }
 
 					printf(format_buffer, string_buffer.p_data);
 
@@ -152,6 +152,62 @@ const uint32_t sabr_bif_func(io, File__printf)(sabr_interpreter_t* inter) {
 		addr.p++;
 	}
 
+	return SABR_OPERR_NONE;
+}
+
+const uint32_t sabr_bif_func(io, File__open)(sabr_interpreter_t* inter) {
+	uint32_t result = SABR_OPERR_NONE;
+
+	sabr_value_t mode, filename, file_value;
+
+	FILE* file = NULL;
+
+	vector(char) filename_string_buffer;
+	vector_init(char, &filename_string_buffer);
+
+	vector(char) mode_string_buffer;
+	vector_init(char, &mode_string_buffer);
+
+	if (!sabr_interpreter_pop(inter, &filename)) { result = SABR_OPERR_STACK; goto RETURN_RESULT; }
+	if (!sabr_interpreter_pop(inter, &mode)) { result = SABR_OPERR_STACK; goto RETURN_RESULT; }
+
+	if (!sabr_convert_vstr_to_cvec(filename, &filename_string_buffer, &inter->convert_state)) { result = SABR_OPERR_UNICODE; goto RETURN_RESULT; }
+	if (!sabr_convert_vstr_to_cvec(mode, &mode_string_buffer, &inter->convert_state)) { result = SABR_OPERR_UNICODE; goto RETURN_RESULT; }
+
+#ifdef _WIN32
+	wchar_t filename_windows[PATH_MAX] = {0, };
+	if (!sabr_convert_string_mbr2c16(filename_string_buffer.p_data, filename_windows, &inter->convert_state)) { result = SABR_OPERR_UNICODE; goto RETURN_RESULT; }
+	wchar_t mode_windows[4] = {0, };
+	if (!sabr_convert_string_mbr2c16(mode_string_buffer.p_data, mode_windows, &inter->convert_state)) { result = SABR_OPERR_UNICODE; goto RETURN_RESULT; }
+
+	file = _wfopen(filename_windows, mode_windows);
+#else
+	file = fopen(filename_string_buffer.p_data, mode_string_buffer.p_data);
+#endif
+
+RETURN_RESULT:
+	if (result) {
+		if (file) fclose(file);
+		file = NULL;
+	}
+
+	file_value.p = (uint64_t*) file;
+
+	if (!sabr_interpreter_push(inter, file_value)) return SABR_OPERR_STACK;
+
+	vector_free(char, &filename_string_buffer);
+	vector_free(char, &mode_string_buffer);
+	return result;
+}
+
+const uint32_t sabr_bif_func(io, File__close)(sabr_interpreter_t* inter) {
+	sabr_value_t file_value, result_value;
+	FILE* file = NULL;
+	if (!sabr_interpreter_pop(inter, &file_value)) return;
+	file = (FILE*) file_value.p;
+
+	result_value.u = fclose(file);
+	if (!sabr_interpreter_push(inter, result_value)) return;
 	return SABR_OPERR_NONE;
 }
 
@@ -216,6 +272,8 @@ sabr_bif_func_t sabr_bif_io_functions[] = {
 	sabr_bif_func(io, File__putc),
 	sabr_bif_func(io, File__puts),
 	sabr_bif_func(io, File__printf),
+	sabr_bif_func(io, File__open),
+	sabr_bif_func(io, File__close),
 	sabr_bif_func(io, File__set_cursor_pos),
 	sabr_bif_func(io, File__clear_screen),
 	sabr_bif_func(io, File__toggle_cursor)
