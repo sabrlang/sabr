@@ -126,7 +126,9 @@ const uint32_t sabr_bif_func(io, File__printf)(sabr_interpreter_t* inter) {
 
 					while (*value.p) {
 						character.u = *value.p;
-						if (character.u < 127) if (!vector_push_back(char, &string_buffer, character.u)) return SABR_OPERR_UNICODE;
+						if (character.u < 127) {
+							if (!vector_push_back(char, &string_buffer, character.u)) return SABR_OPERR_UNICODE;
+						}
 						else {
 							char out[8];
 							size_t rc = c32rtomb(out, (char32_t) character.u, &(inter->convert_state));
