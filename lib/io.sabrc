@@ -1,19 +1,28 @@
 $bif_mi_io 1 #macro
 
-$stdout { bif_mi_io 0 call_bif } #macro
-$stderr { bif_mi_io 1 call_bif } #macro
-$stdin { bif_mi_io 2 call_bif } #macro
+$bif_mi_io_index 0 #macro
+$bif_mi_io_index_inc { bif_mi_io_index #dup 1 #+ $bif_mi_io_index #swap #macro } #macro
+$bif_mi_io_def { { bif_mi_io } bif_mi_io_index_inc #concat { call_bif } #concat #macro } #macro
 
-$File.putc { bif_mi_io 3 call_bif } #macro
-$File.puts { bif_mi_io 4 call_bif } #macro
+$stdout	bif_mi_io_def
+$stderr bif_mi_io_def
+$stdin bif_mi_io_def
+$File.putc bif_mi_io_def
+$File.puts bif_mi_io_def
+$File.printf bif_mi_io_def
+$open bif_mi_io_def
+$File.close bif_mi_io_def
+$File.seek bif_mi_io_def
+$File.tell bif_mi_io_def
+$File.rewind bif_mi_io_def
+$File.read bif_mi_io_def
+$File.gotoxy bif_mi_io_def
+$File.cls bif_mi_io_def
+$File.toggle_cursor bif_mi_io_def
 
-$File.printf { bif_mi_io 5 call_bif } #macro
-$open { bif_mi_io 6 call_bif } #macro
-$File.close { bif_mi_io 7 call_bif } #macro
-
-$File.gotoxy { bif_mi_io 8 call_bif } #macro
-$File.cls { bif_mi_io 9 call_bif } #macro
-$File.toggle_cursor { bif_mi_io 10 call_bif } #macro
+$SEEK_SET 0 #macro
+$SEEK_CUR 1 #macro
+$SEEK_END 2 #macro
 
 $printf { stdout File.printf } #macro
 $gotoxy { stdout File.gotoxy } #macro
