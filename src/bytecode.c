@@ -2,6 +2,8 @@
 
 void sabr_bytecode_print(sabr_bytecode_t* bc) {
 	size_t j = 0;
+	puts("Index\tByte\t\tOpCode\t\t\tOperand");
+	puts("==============================================================");
 	for (size_t i = 0; i < bc->bcop_vec.size; i++) {
 		sabr_bcop_t bcop = *vector_at(sabr_bcop_t, &bc->bcop_vec, i);
 		printf("%5zu\t%5zu\t\t%-10.20s", i, j, sabr_opcode_names[bcop.oc]);
@@ -12,8 +14,8 @@ void sabr_bytecode_print(sabr_bytecode_t* bc) {
 		j++;
 		putchar('\n');
 	}
+	puts("==============================================================\n");
 }
-
 void sabr_bytecode_init(sabr_bytecode_t* bc) {
 	vector_init(sabr_bcop_t, &bc->bcop_vec);
 	bc->current_index = 0;
