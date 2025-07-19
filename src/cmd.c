@@ -70,10 +70,11 @@ int sabr_cmd_run(sabr_cmd_t* cmd, sabr_compiler_t* comp, sabr_interpreter_t* int
 		if (!std_lib_bc) goto FAILURE;
 
 		if (!cmd->flags.out)
-			strncpy(cmd->out_filename, cmd->flags.preprocess ? "out.sabrc": "out.sabre", PATH_MAX);
+			strncpy(cmd->out_filename, cmd->flags.preprocess ? "out.sabrc" : "out.sabre", PATH_MAX);
 		if (cmd->flags.preprocess) {
 			vector(sabr_token_t)* tokens = sabr_compiler_preprocess_file(comp, cmd->src_filename);
 			if (!tokens) goto FAILURE;
+			
 		}
 		else {
 			src_bc = sabr_compiler_compile_file(comp, cmd->src_filename);

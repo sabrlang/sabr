@@ -1,20 +1,20 @@
 #include "bif_io.h"
 
-const uint32_t sabr_bif_func(io, std_out)(sabr_interpreter_t* inter) {
+const uint32_t sabr_bif_func(io, std_out)(sabr_interpreter_t* inter, size_t* index) {
 	sabr_value_t v_file;
 	v_file.p = (uint64_t*) stdout;
 	if (!sabr_interpreter_push(inter, v_file)) return SABR_OPERR_STACK;
 	return SABR_OPERR_NONE;
 }
 
-const uint32_t sabr_bif_func(io, std_err)(sabr_interpreter_t* inter) {
+const uint32_t sabr_bif_func(io, std_err)(sabr_interpreter_t* inter, size_t* index) {
 	sabr_value_t v_file;
 	v_file.p = (uint64_t*) stderr;
 	if (!sabr_interpreter_push(inter, v_file)) return SABR_OPERR_STACK;
 	return SABR_OPERR_NONE;
 }
 
-const uint32_t sabr_bif_func(io, std_in)(sabr_interpreter_t* inter) {
+const uint32_t sabr_bif_func(io, std_in)(sabr_interpreter_t* inter, size_t* index) {
 	sabr_value_t v_file;
 	v_file.p = (uint64_t*) stderr;
 	if (!sabr_interpreter_push(inter, v_file)) return SABR_OPERR_STACK;
@@ -22,7 +22,7 @@ const uint32_t sabr_bif_func(io, std_in)(sabr_interpreter_t* inter) {
 }
 
 
-const uint32_t sabr_bif_func(io, File__putc)(sabr_interpreter_t* inter) {
+const uint32_t sabr_bif_func(io, File__putc)(sabr_interpreter_t* inter, size_t* index) {
 	sabr_value_t v_file, v_character;
 	if (!sabr_interpreter_pop(inter, &v_file)) return SABR_OPERR_STACK;
 	if (!sabr_interpreter_pop(inter, &v_character)) return SABR_OPERR_STACK;
@@ -30,7 +30,7 @@ const uint32_t sabr_bif_func(io, File__putc)(sabr_interpreter_t* inter) {
 	return SABR_OPERR_NONE;
 }
 
-const uint32_t sabr_bif_func(io, File__puts)(sabr_interpreter_t* inter) {
+const uint32_t sabr_bif_func(io, File__puts)(sabr_interpreter_t* inter, size_t* index) {
 	sabr_value_t v_file, v_addr;
 	if (!sabr_interpreter_pop(inter, &v_file)) return SABR_OPERR_STACK;
 	if (!sabr_interpreter_pop(inter, &v_addr)) return SABR_OPERR_STACK;
@@ -38,7 +38,7 @@ const uint32_t sabr_bif_func(io, File__puts)(sabr_interpreter_t* inter) {
 	return SABR_OPERR_NONE;
 }
 
-const uint32_t sabr_bif_func(io, File__printf)(sabr_interpreter_t* inter) {
+const uint32_t sabr_bif_func(io, File__printf)(sabr_interpreter_t* inter, size_t* index) {
 	sabr_value_t v_file, v_format;
 	if (!sabr_interpreter_pop(inter, &v_file)) return SABR_OPERR_STACK;
 	if (!sabr_interpreter_pop(inter, &v_format)) return SABR_OPERR_STACK;
@@ -139,7 +139,7 @@ const uint32_t sabr_bif_func(io, File__printf)(sabr_interpreter_t* inter) {
 	return SABR_OPERR_NONE;
 }
 
-const uint32_t sabr_bif_func(io, File__open)(sabr_interpreter_t* inter) {
+const uint32_t sabr_bif_func(io, File__open)(sabr_interpreter_t* inter, size_t* index) {
 	uint32_t result = SABR_OPERR_NONE;
 
 	sabr_value_t v_mode, v_filename, v_file;
@@ -184,7 +184,7 @@ RETURN_RESULT:
 	return result;
 }
 
-const uint32_t sabr_bif_func(io, File__close)(sabr_interpreter_t* inter) {
+const uint32_t sabr_bif_func(io, File__close)(sabr_interpreter_t* inter, size_t* index) {
 	sabr_value_t v_file, v_result;
 	if (!sabr_interpreter_pop(inter, &v_file)) return SABR_OPERR_STACK;
 	v_result.u = fclose((FILE*) v_file.p);
@@ -192,7 +192,7 @@ const uint32_t sabr_bif_func(io, File__close)(sabr_interpreter_t* inter) {
 	return SABR_OPERR_NONE;
 }
 
-const uint32_t sabr_bif_func(io, File__seek)(sabr_interpreter_t* inter) {
+const uint32_t sabr_bif_func(io, File__seek)(sabr_interpreter_t* inter, size_t* index) {
 	sabr_value_t v_origin, v_offset, v_file, v_result;
 	if (!sabr_interpreter_pop(inter, &v_file)) return SABR_OPERR_STACK;
 	if (!sabr_interpreter_pop(inter, &v_offset)) return SABR_OPERR_STACK;
@@ -202,7 +202,7 @@ const uint32_t sabr_bif_func(io, File__seek)(sabr_interpreter_t* inter) {
 	return SABR_OPERR_NONE;
 }
 
-const uint32_t sabr_bif_func(io, File__tell)(sabr_interpreter_t* inter) {
+const uint32_t sabr_bif_func(io, File__tell)(sabr_interpreter_t* inter, size_t* index) {
 	sabr_value_t v_file, v_result;
 	if (!sabr_interpreter_pop(inter, &v_file)) return SABR_OPERR_STACK;
 	v_result.i = ftell((FILE*) v_file.p);
@@ -210,20 +210,44 @@ const uint32_t sabr_bif_func(io, File__tell)(sabr_interpreter_t* inter) {
 	return SABR_OPERR_NONE;
 }
 
-const uint32_t sabr_bif_func(io, File__rewind)(sabr_interpreter_t* inter) {
+const uint32_t sabr_bif_func(io, File__rewind)(sabr_interpreter_t* inter, size_t* index) {
 	sabr_value_t v_file;
 	if (!sabr_interpreter_pop(inter, &v_file)) return SABR_OPERR_STACK;
 	rewind((FILE*) v_file.p);
 	return SABR_OPERR_NONE;
 }
-const uint32_t sabr_bif_func(io, File__read)(sabr_interpreter_t* inter) {
-	sabr_value_t v_count, v_dst, v_file, v_result;
+const uint32_t sabr_bif_func(io, File__read_utf8)(sabr_interpreter_t* inter, size_t* index) {
+	sabr_value_t v_bytes, v_dst, v_file, v_result;
 	if (!sabr_interpreter_pop(inter, &v_file)) return SABR_OPERR_STACK;
 	if (!sabr_interpreter_pop(inter, &v_dst)) return SABR_OPERR_STACK;
-	if (!sabr_interpreter_pop(inter, &v_count)) return SABR_OPERR_STACK;
+	if (!sabr_interpreter_pop(inter, &v_bytes)) return SABR_OPERR_STACK;
 
+	char* buffer = (char*) malloc(v_bytes.u + 1);
+	memset(buffer, 0, v_bytes.u + 1);
+	if (!buffer) return SABR_OPERR_MEMORY;
+
+	size_t read_result = fread(buffer, 1, v_bytes.u, (FILE*) v_file.p);
+	v_result.u = read_result;
+	char* buffer_end = buffer + read_result + 1;
+	char* current_buffer = buffer;
+	size_t rc;
+	char32_t out;
+	while ((rc = mbrtoc32(&out, current_buffer, buffer_end - current_buffer, &inter->convert_state))) {
+		if (rc >= (size_t) -3) { free(buffer); return SABR_OPERR_UNICODE; }
+		current_buffer += rc;
+		*(v_dst.p++) = out;
+	}
+	if (!sabr_interpreter_push(inter, v_result)) return SABR_OPERR_STACK;
+	return SABR_OPERR_NONE;
+}
+
+const uint32_t sabr_bif_func(io, File__read_bytes)(sabr_interpreter_t* inter, size_t* index) {
+	sabr_value_t v_bytes, v_dst, v_file, v_result;
+	if (!sabr_interpreter_pop(inter, &v_file)) return SABR_OPERR_STACK;
+	if (!sabr_interpreter_pop(inter, &v_dst)) return SABR_OPERR_STACK;
+	if (!sabr_interpreter_pop(inter, &v_bytes)) return SABR_OPERR_STACK;
 	v_result.u = 0;
-	for (size_t i = 0; i < v_count.u; i++) {
+	for (size_t i = 0; i < v_bytes.u; i++) {
 		sabr_value_t v_buffer = {0, };
 		size_t current_result;
 		current_result = fread(&v_buffer, sizeof(char), 1, (FILE*) v_file.p);
@@ -235,7 +259,7 @@ const uint32_t sabr_bif_func(io, File__read)(sabr_interpreter_t* inter) {
 	return SABR_OPERR_NONE;
 }
 
-const uint32_t sabr_bif_func(io, File__set_cursor_pos)(sabr_interpreter_t* inter) {
+const uint32_t sabr_bif_func(io, File__set_cursor_pos)(sabr_interpreter_t* inter, size_t* index) {
 	sabr_value_t v_x, v_y, v_file;
 	if (!sabr_interpreter_pop(inter, &v_file)) return SABR_OPERR_STACK;
 	if (!sabr_interpreter_pop(inter, &v_y)) return SABR_OPERR_STACK;
@@ -250,7 +274,7 @@ const uint32_t sabr_bif_func(io, File__set_cursor_pos)(sabr_interpreter_t* inter
 	return SABR_OPERR_NONE;
 }
 
-const uint32_t sabr_bif_func(io, File__clear_screen)(sabr_interpreter_t* inter) {
+const uint32_t sabr_bif_func(io, File__clear_screen)(sabr_interpreter_t* inter, size_t* index) {
 	sabr_value_t v_file;
 	if (!sabr_interpreter_pop(inter, &v_file)) return SABR_OPERR_STACK;
 #ifdef _WIN32
@@ -273,7 +297,7 @@ const uint32_t sabr_bif_func(io, File__clear_screen)(sabr_interpreter_t* inter) 
 	return SABR_OPERR_NONE;
 }
 
-const uint32_t sabr_bif_func(io, File__toggle_cursor)(sabr_interpreter_t* inter) {
+const uint32_t sabr_bif_func(io, File__toggle_cursor)(sabr_interpreter_t* inter, size_t* index) {
 	sabr_value_t v_flag, v_file;
 	if (!sabr_interpreter_pop(inter, &v_file)) return SABR_OPERR_STACK;
 	if (!sabr_interpreter_pop(inter, &v_flag)) return SABR_OPERR_STACK;
@@ -301,7 +325,8 @@ sabr_bif_func_t sabr_bif_io_functions[] = {
 	sabr_bif_func(io, File__seek),
 	sabr_bif_func(io, File__tell),
 	sabr_bif_func(io, File__rewind),
-	sabr_bif_func(io, File__read),
+	sabr_bif_func(io, File__read_utf8),
+	sabr_bif_func(io, File__read_bytes),
 	sabr_bif_func(io, File__set_cursor_pos),
 	sabr_bif_func(io, File__clear_screen),
 	sabr_bif_func(io, File__toggle_cursor)

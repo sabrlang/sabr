@@ -1,7 +1,11 @@
 $bif_mi_math 0 #macro
 
-$sin { bif_mi_math 0 call_bif } #macro
-$cos { bif_mi_math 1 call_bif } #macro
-$tan { bif_mi_math 2 call_bif } #macro
+$bif_mi_math_index 0 #macro
+$bif_mi_math_index_inc { bif_mi_math_index #dup 1 #+ $bif_mi_math_index #swap #macro } #macro
+$bif_mi_math_def { { bif_mi_math } bif_mi_math_index_inc #concat { call_bif } #concat #macro } #macro
+
+$sin bif_mi_math_def
+$cos bif_mi_math_def
+$tan bif_mi_math_def
 
 $PI { 3.14159265358979323846 } #macro

@@ -15,7 +15,8 @@ $File.close bif_mi_io_def
 $File.seek bif_mi_io_def
 $File.tell bif_mi_io_def
 $File.rewind bif_mi_io_def
-$File.read bif_mi_io_def
+$File.read_utf8 bif_mi_io_def
+$File.read_bytes bif_mi_io_def
 $File.gotoxy bif_mi_io_def
 $File.cls bif_mi_io_def
 $File.toggle_cursor bif_mi_io_def

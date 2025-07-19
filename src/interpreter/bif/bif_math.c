@@ -1,6 +1,6 @@
 #include "bif_math.h"
 
-const uint32_t sabr_bif_func(math, sin)(sabr_interpreter_t* inter) {
+const uint32_t sabr_bif_func(math, sin)(sabr_interpreter_t* inter, size_t* index) {
 	sabr_value_t a;
 	if (!sabr_interpreter_pop(inter, &a)) return SABR_OPERR_STACK;
 	a.f = sin(a.f);
@@ -8,7 +8,7 @@ const uint32_t sabr_bif_func(math, sin)(sabr_interpreter_t* inter) {
 	return SABR_OPERR_NONE;
 }
 
-const uint32_t sabr_bif_func(math, cos)(sabr_interpreter_t* inter) {
+const uint32_t sabr_bif_func(math, cos)(sabr_interpreter_t* inter, size_t* index) {
 	sabr_value_t a;
 	if (!sabr_interpreter_pop(inter, &a)) return SABR_OPERR_STACK;
 	a.f = cos(a.f);
@@ -16,7 +16,7 @@ const uint32_t sabr_bif_func(math, cos)(sabr_interpreter_t* inter) {
 	return SABR_OPERR_NONE;
 }
 
-const uint32_t sabr_bif_func(math, tan)(sabr_interpreter_t* inter) {
+const uint32_t sabr_bif_func(math, tan)(sabr_interpreter_t* inter, size_t* index) {
 	sabr_value_t a;
 	if (!sabr_interpreter_pop(inter, &a)) return SABR_OPERR_STACK;
 	a.f = tan(a.f);

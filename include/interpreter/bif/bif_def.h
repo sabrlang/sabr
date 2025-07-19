@@ -5,7 +5,7 @@
 
 typedef struct sabr_interpreter_struct sabr_interpreter_t;
 
-typedef const uint32_t (*sabr_bif_func_t)(sabr_interpreter_t*);
+typedef const uint32_t (*sabr_bif_func_t)(sabr_interpreter_t*, size_t*);
 
 #define sabr_bif_func(MODULE, FUNC) cctl_join(sabr_bif, cctl_join(MODULE, FUNC))
 

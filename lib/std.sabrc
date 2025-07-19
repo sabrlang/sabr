@@ -1,5 +1,3 @@
-\ $#call { #dup #len 1 #swap #substr } #macro ( id -- ? )
-
 $true -1 #macro ( -- b )
 $false 0 #macro ( -- b)
 $null 0 #macro ( -- addr )

@@ -123,6 +123,8 @@ sabr_bytecode_t* sabr_interpreter_load_bytecode(sabr_interpreter_t* inter, const
 }
 
 bool sabr_interpreter_run_bytecode(sabr_interpreter_t* inter, sabr_bytecode_t* bc) {
+	inter->bc = bc;
+
 	for (size_t index = 0; index < bc->bcop_vec.size; index++) {
 		sabr_bcop_t bcop = *vector_at(sabr_bcop_t, &bc->bcop_vec, index);
 		if (bcop.oc == SABR_OP_NONE) continue;
@@ -184,11 +186,7 @@ bool sabr_interpreter_push(sabr_interpreter_t* inter, sabr_value_t v) {
 	return true;
 }
 
-uint32_t sabr_interpreter_exec_identifier(sabr_interpreter_t* inter, sabr_value_t identifier, size_t* index) {
-	if (!identifier.u) {
-		if (!sabr_interpreter_pop(inter, &identifier)) return SABR_OPERR_STACK;
-	}
-
+sabr_def_data_t* sabr_interpreter_find_identifier(sabr_interpreter_t* inter, sabr_value_t identifier) {
 	sabr_def_data_t* def_data = NULL;
 	rbt(sabr_def_data_t)* local_words = NULL;
 	def_data = rbt_find(sabr_def_data_t, &inter->global_words, identifier.u);
@@ -198,6 +196,15 @@ uint32_t sabr_interpreter_exec_identifier(sabr_interpreter_t* inter, sabr_value_
 			def_data = rbt_find(sabr_def_data_t, local_words, identifier.u);
 		}
 	}
+	return def_data;
+}
+
+uint32_t sabr_interpreter_exec_identifier(sabr_interpreter_t* inter, sabr_value_t identifier, size_t* index) {
+	if (!identifier.u) {
+		if (!sabr_interpreter_pop(inter, &identifier)) return SABR_OPERR_STACK;
+	}
+
+	sabr_def_data_t* def_data = sabr_interpreter_find_identifier(inter, identifier);
 	if (!def_data) return SABR_OPERR_UNDEFINED;
 
 	sabr_cs_data_t csd;
